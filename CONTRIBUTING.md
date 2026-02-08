@@ -1,6 +1,6 @@
 # Contributing to KolbBot
 
-Welcome to the lobster tank! 🦞
+Welcome aboard, captain! ☠️
 
 ## Quick Links
 

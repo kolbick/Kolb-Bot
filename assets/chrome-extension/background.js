@@ -1,7 +1,7 @@
 const DEFAULT_PORT = 18792
 
 const BADGE = {
-  on: { text: 'ON', color: '#FF5A36' },
+  on: { text: 'ON', color: '#9B30FF' },
   off: { text: '', color: '#000000' },
   connecting: { text: '…', color: '#F59E0B' },
   error: { text: '!', color: '#B91C1C' },

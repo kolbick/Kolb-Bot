@@ -6,8 +6,8 @@
     "library": "lucide"
   },
   "logo": {
-    "light": "/assets/pixel-lobster.svg",
-    "dark": "/assets/pixel-lobster.svg"
+    "light": "/assets/kolb-bot-skull.svg",
+    "dark": "/assets/kolb-bot-skull.svg"
   },
   "fonts": {
     "body": {
@@ -17,11 +17,11 @@
       "family": "DM Sans"
     }
   },
-  "favicon": "/assets/pixel-lobster.svg",
+  "favicon": "/assets/kolb-bot-skull.svg",
   "colors": {
-    "primary": "#FF5A36",
-    "dark": "#FF5A36",
-    "light": "#FF8A6B"
+    "primary": "#9B30FF",
+    "dark": "#9B30FF",
+    "light": "#BA55D3"
   },
   "navbar": {
     "links": [

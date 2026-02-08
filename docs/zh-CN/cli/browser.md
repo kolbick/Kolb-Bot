@@ -49,7 +49,7 @@ kolb-bot browser --browser-profile kolb-bot snapshot
 
 ```bash
 kolb-bot browser profiles
-kolb-bot browser create-profile --name work --color "#FF5A36"
+kolb-bot browser create-profile --name work --color "#9B30FF"
 kolb-bot browser delete-profile --name work
 ```
 
