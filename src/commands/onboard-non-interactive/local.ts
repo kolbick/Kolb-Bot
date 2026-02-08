@@ -94,7 +94,7 @@ export async function runNonInteractiveOnboardingLocal(params: {
   logConfigUpdated(runtime);
 
   await ensureWorkspaceAndSessions(workspaceDir, runtime, {
-    skipBootstrap: Boolean(nextConfig.agents?.defaults?.skipBootstrap),
+    skipBootstrap: true,
   });
 
   await installGatewayDaemonNonInteractive({
