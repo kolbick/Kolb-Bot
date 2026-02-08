@@ -58,8 +58,8 @@ metadata:
 
     // Verify the metadata is valid JSON
     const parsed = JSON.parse(result.metadata);
-    expect(parsed.kolb - bot.emoji).toBe("💾");
-    expect(parsed.kolb - bot.events).toEqual(["command:new"]);
+    expect(parsed["kolb-bot"].emoji).toBe("💾");
+    expect(parsed["kolb-bot"].events).toEqual(["command:new"]);
   });
 
   it("parses multi-line metadata with complex nested structure", () => {
@@ -83,10 +83,10 @@ metadata:
     expect(result.metadata).toBeDefined();
 
     const parsed = JSON.parse(result.metadata);
-    expect(parsed.kolb - bot.emoji).toBe("📝");
-    expect(parsed.kolb - bot.events).toEqual(["command"]);
-    expect(parsed.kolb - bot.requires.config).toEqual(["workspace.dir"]);
-    expect(parsed.kolb - bot.install[0].kind).toBe("bundled");
+    expect(parsed["kolb-bot"].emoji).toBe("📝");
+    expect(parsed["kolb-bot"].events).toEqual(["command"]);
+    expect(parsed["kolb-bot"].requires.config).toEqual(["workspace.dir"]);
+    expect(parsed["kolb-bot"].install[0].kind).toBe("bundled");
   });
 
   it("handles single-line metadata (inline JSON)", () => {
