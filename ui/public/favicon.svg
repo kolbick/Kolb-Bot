@@ -1,0 +1,29 @@
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="skull-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#BA55D3"/>
+      <stop offset="100%" stop-color="#7B1FA2"/>
+    </linearGradient>
+  </defs>
+  <!-- Skull -->
+  <path d="M60 8 C30 8 15 30 15 55 C15 72 25 85 40 90 L40 105 L50 105 L50 95 L55 100 L65 100 L70 95 L70 105 L80 105 L80 90 C95 85 105 72 105 55 C105 30 90 8 60 8Z" fill="url(#skull-gradient)"/>
+  <!-- Left Eye -->
+  <ellipse cx="42" cy="48" rx="10" ry="11" fill="#1a0033"/>
+  <ellipse cx="43" cy="47" rx="4" ry="5" fill="#FFB300"/>
+  <!-- Right Eye -->
+  <ellipse cx="78" cy="48" rx="10" ry="11" fill="#1a0033"/>
+  <ellipse cx="79" cy="47" rx="4" ry="5" fill="#FFB300"/>
+  <!-- Nose -->
+  <path d="M55 65 L60 72 L65 65Z" fill="#4A0080"/>
+  <!-- Teeth -->
+  <rect x="42" y="85" width="8" height="12" rx="2" fill="#E8D5F5"/>
+  <rect x="52" y="85" width="8" height="14" rx="2" fill="#E8D5F5"/>
+  <rect x="62" y="85" width="8" height="12" rx="2" fill="#E8D5F5"/>
+  <!-- Crossbones -->
+  <g stroke="#FFB300" stroke-width="6" stroke-linecap="round">
+    <line x1="15" y1="100" x2="45" y2="115"/>
+    <line x1="45" y1="100" x2="15" y2="115"/>
+    <line x1="75" y1="100" x2="105" y2="115"/>
+    <line x1="105" y1="100" x2="75" y2="115"/>
+  </g>
+</svg>

@@ -1,0 +1,14 @@
+{
+  "name": "@kolb-bot/llm-task",
+  "version": "2026.2.6-3",
+  "description": "KolbBot JSON-only LLM task plugin",
+  "type": "module",
+  "devDependencies": {
+    "kolb-bot": "workspace:*"
+  },
+  "kolb-bot": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="Kolb-Bot">
+  <rect width="48" height="48" rx="6" fill="#1a0033"/>
+  <g fill="#9B30FF">
+    <circle cx="24" cy="20" r="12"/>
+    <rect x="16" y="30" width="4" height="8" rx="1"/>
+    <rect x="22" y="30" width="4" height="10" rx="1"/>
+    <rect x="28" y="30" width="4" height="8" rx="1"/>
+  </g>
+  <g fill="#FFB300">
+    <circle cx="19" cy="18" r="3"/>
+    <circle cx="29" cy="18" r="3"/>
+  </g>
+  <g fill="#1a0033">
+    <circle cx="19" cy="18" r="1.5"/>
+    <circle cx="29" cy="18" r="1.5"/>
+  </g>
+  <path d="M21 24 L24 27 L27 24Z" fill="#7B1FA2"/>
+</svg>

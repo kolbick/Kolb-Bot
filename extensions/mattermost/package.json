@@ -1,0 +1,28 @@
+{
+  "name": "@kolb-bot/mattermost",
+  "version": "2026.2.6-3",
+  "description": "KolbBot Mattermost channel plugin",
+  "type": "module",
+  "devDependencies": {
+    "kolb-bot": "workspace:*"
+  },
+  "kolb-bot": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "channel": {
+      "id": "mattermost",
+      "label": "Mattermost",
+      "selectionLabel": "Mattermost (plugin)",
+      "docsPath": "/channels/mattermost",
+      "docsLabel": "mattermost",
+      "blurb": "self-hosted Slack-style chat; install the plugin to enable.",
+      "order": 65
+    },
+    "install": {
+      "npmSpec": "@kolb-bot/mattermost",
+      "localPath": "extensions/mattermost",
+      "defaultChoice": "npm"
+    }
+  }
+}

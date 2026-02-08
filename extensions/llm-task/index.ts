@@ -1,0 +1,6 @@
+import type { KolbBotPluginApi } from "../../src/plugins/types.js";
+import { createLlmTaskTool } from "./src/llm-task-tool.js";
+
+export default function register(api: KolbBotPluginApi) {
+  api.registerTool(createLlmTaskTool(api), { optional: true });
+}

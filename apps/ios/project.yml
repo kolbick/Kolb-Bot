@@ -1,0 +1,134 @@
+name: KolbBot
+options:
+  bundleIdPrefix: ai.kolb-bot
+  deploymentTarget:
+    iOS: "18.0"
+  xcodeVersion: "16.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+
+packages:
+  KolbBotKit:
+    path: ../shared/KolbBotKit
+  Swabble:
+    path: ../../Swabble
+
+schemes:
+  KolbBot:
+    shared: true
+    build:
+      targets:
+        KolbBot: all
+    test:
+      targets:
+        - KolbBotTests
+
+targets:
+  KolbBot:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+    dependencies:
+      - package: KolbBotKit
+      - package: KolbBotKit
+        product: KolbBotChatUI
+      - package: KolbBotKit
+        product: KolbBotProtocol
+      - package: Swabble
+        product: SwabbleKit
+      - sdk: AppIntents.framework
+    preBuildScripts:
+      - name: SwiftFormat (lint)
+        basedOnDependencyAnalysis: false
+        inputFileLists:
+          - $(SRCROOT)/SwiftSources.input.xcfilelist
+        script: |
+          set -euo pipefail
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          if ! command -v swiftformat >/dev/null 2>&1; then
+            echo "error: swiftformat not found (brew install swiftformat)" >&2
+            exit 1
+          fi
+          swiftformat --lint --config "$SRCROOT/../../.swiftformat" \
+            --filelist "$SRCROOT/SwiftSources.input.xcfilelist"
+      - name: SwiftLint
+        basedOnDependencyAnalysis: false
+        inputFileLists:
+          - $(SRCROOT)/SwiftSources.input.xcfilelist
+        script: |
+          set -euo pipefail
+          export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+          if ! command -v swiftlint >/dev/null 2>&1; then
+            echo "error: swiftlint not found (brew install swiftlint)" >&2
+            exit 1
+          fi
+          swiftlint lint --config "$SRCROOT/.swiftlint.yml" --use-script-input-file-lists
+    settings:
+      base:
+        CODE_SIGN_IDENTITY: "Apple Development"
+        CODE_SIGN_STYLE: Manual
+        DEVELOPMENT_TEAM: Y5PE65HELJ
+        PRODUCT_BUNDLE_IDENTIFIER: ai.kolb-bot.ios
+        PROVISIONING_PROFILE_SPECIFIER: "ai.kolb-bot.ios Development"
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        ENABLE_APPINTENTS_METADATA: NO
+    info:
+      path: Sources/Info.plist
+      properties:
+        CFBundleDisplayName: KolbBot
+        CFBundleIconName: AppIcon
+        CFBundleShortVersionString: "2026.2.6"
+        CFBundleVersion: "20260202"
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UIBackgroundModes:
+          - audio
+        NSLocalNetworkUsageDescription: KolbBot discovers and connects to your KolbBot gateway on the local network.
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoadsInWebContent: true
+        NSBonjourServices:
+          - _kolb-bot-gw._tcp
+        NSCameraUsageDescription: KolbBot can capture photos or short video clips when requested via the gateway.
+        NSLocationWhenInUseUsageDescription: KolbBot uses your location when you allow location sharing.
+        NSLocationAlwaysAndWhenInUseUsageDescription: KolbBot can share your location in the background when you enable Always.
+        NSMicrophoneUsageDescription: KolbBot needs microphone access for voice wake.
+        NSSpeechRecognitionUsageDescription: KolbBot uses on-device speech recognition for voice wake.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+
+  KolbBotTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: KolbBot
+      - package: Swabble
+        product: SwabbleKit
+      - sdk: AppIntents.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: ai.kolb-bot.ios.tests
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/KolbBot.app/KolbBot"
+        BUNDLE_LOADER: "$(TEST_HOST)"
+    info:
+      path: Tests/Info.plist
+      properties:
+        CFBundleDisplayName: KolbBotTests
+        CFBundleShortVersionString: "2026.2.6"
+        CFBundleVersion: "20260202"

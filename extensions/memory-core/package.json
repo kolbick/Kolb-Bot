@@ -1,0 +1,17 @@
+{
+  "name": "@kolb-bot/memory-core",
+  "version": "2026.2.6-3",
+  "description": "KolbBot core memory search plugin",
+  "type": "module",
+  "devDependencies": {
+    "kolb-bot": "workspace:*"
+  },
+  "peerDependencies": {
+    "kolb-bot": ">=2026.1.26"
+  },
+  "kolb-bot": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
