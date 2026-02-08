@@ -128,8 +128,8 @@ describe("config identity defaults", () => {
                   id: "main",
                   identity: {
                     name: "Samantha Sloth",
-                    theme: "space lobster",
-                    emoji: "🦞",
+                    theme: "pirate skull",
+                    emoji: "☠️",
                   },
                   groupChat: { mentionPatterns: ["@kolb-bot"] },
                 },
@@ -164,7 +164,7 @@ describe("config identity defaults", () => {
           {
             messages: {
               messagePrefix: "[kolb-bot]",
-              responsePrefix: "🦞",
+              responsePrefix: "☠️",
             },
             channels: {
               whatsapp: { allowFrom: ["+15555550123"], textChunkLimit: 4444 },
@@ -328,8 +328,8 @@ describe("config identity defaults", () => {
                   id: "main",
                   identity: {
                     name: "KolbBot",
-                    theme: "space lobster",
-                    emoji: "🦞",
+                    theme: "pirate skull",
+                    emoji: "☠️",
                   },
                 },
               ],

@@ -155,7 +155,7 @@ ${theme.muted("Docs:")} ${formatDocsLink("/cli/agent", "docs.kolb-bot.ai/cli/age
         `
 ${theme.heading("Examples:")}
 ${formatHelpExamples([
-  ['kolb-bot agents set-identity --agent main --name "KolbBot" --emoji "🦞"', "Set name + emoji."],
+  ['kolb-bot agents set-identity --agent main --name "KolbBot" --emoji "☠️"', "Set name + emoji."],
   ["kolb-bot agents set-identity --agent main --avatar avatars/kolb-bot.png", "Set avatar path."],
   [
     "kolb-bot agents set-identity --workspace ~/.kolb-bot/workspace --from-identity",

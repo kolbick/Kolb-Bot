@@ -69,7 +69,7 @@ describe("browser chrome profile decoration", () => {
   it("best-effort writes name when color is invalid", async () => {
     const userDataDir = await fsp.mkdtemp(path.join(os.tmpdir(), "kolb-bot-chrome-test-"));
     try {
-      decorateKolbBotProfile(userDataDir, { color: "lobster-orange" });
+      decorateKolbBotProfile(userDataDir, { color: "pirate-purple" });
       const localState = await readJson(path.join(userDataDir, "Local State"));
       const profile = localState.profile as Record<string, unknown>;
       const infoCache = profile.info_cache as Record<string, unknown>;

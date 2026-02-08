@@ -110,7 +110,7 @@ describe("web auto-reply", () => {
       channels: { whatsapp: { allowFrom: ["*"] } },
       messages: {
         messagePrefix: undefined,
-        responsePrefix: "🦞",
+        responsePrefix: "☠️",
       },
     }));
 
@@ -141,7 +141,7 @@ describe("web auto-reply", () => {
     });
 
     const replies = reply.mock.calls.map((call) => call[0]);
-    expect(replies).toEqual(["🦞 final"]);
+    expect(replies).toEqual(["☠️ final"]);
     resetLoadConfigMock();
   });
   it("uses identity.name for messagePrefix when set", async () => {
@@ -151,7 +151,7 @@ describe("web auto-reply", () => {
           {
             id: "main",
             default: true,
-            identity: { name: "Mainbot", emoji: "🦞", theme: "space lobster" },
+            identity: { name: "Mainbot", emoji: "☠️", theme: "pirate skull" },
           },
           {
             id: "rich",
@@ -210,7 +210,7 @@ describe("web auto-reply", () => {
           {
             id: "main",
             default: true,
-            identity: { name: "Mainbot", emoji: "🦞", theme: "space lobster" },
+            identity: { name: "Mainbot", emoji: "☠️", theme: "pirate skull" },
           },
           {
             id: "rich",
