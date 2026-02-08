@@ -182,7 +182,7 @@ export async function applyAuthChoiceOpenAI(
       spin.stop("OpenAI OAuth failed");
       params.runtime.error(String(err));
       await params.prompter.note(
-        "Trouble with OAuth? See https://docs.kolb-bot.ai/start/faq",
+        "Trouble with OAuth? See https://github.com/kolbick/Kolb-Bot/blob/main/docs/start/faq",
         "OAuth help",
       );
     }

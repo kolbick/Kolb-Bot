@@ -333,7 +333,7 @@ export async function agentsAddCommand(
         await prompter.note(
           [
             "Routing unchanged. Add bindings when you're ready.",
-            "Docs: https://docs.kolb-bot.ai/concepts/multi-agent",
+            "Docs: https://github.com/kolbick/Kolb-Bot/blob/main/docs/concepts/multi-agent",
           ].join("\n"),
           "Routing",
         );

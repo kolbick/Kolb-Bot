@@ -72,7 +72,7 @@ async function requireRiskAcknowledgement(params: {
       "kolb-bot security audit --deep",
       "kolb-bot security audit --fix",
       "",
-      "Must read: https://docs.kolb-bot.ai/gateway/security",
+      "Must read: https://github.com/kolbick/Kolb-Bot/blob/main/docs/gateway/security",
     ].join("\n"),
     "Security",
   );
@@ -105,7 +105,7 @@ export async function runOnboardingWizard(
         [
           ...snapshot.issues.map((iss) => `- ${iss.path}: ${iss.message}`),
           "",
-          "Docs: https://docs.kolb-bot.ai/gateway/configuration",
+          "Docs: https://github.com/kolbick/Kolb-Bot/blob/main/docs/gateway/configuration",
         ].join("\n"),
         "Config issues",
       );

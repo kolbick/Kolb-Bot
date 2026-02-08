@@ -46,7 +46,7 @@ export function registerDirectoryCli(program: Command) {
       () =>
         `\n${theme.muted("Docs:")} ${formatDocsLink(
           "/cli/directory",
-          "docs.kolb-bot.ai/cli/directory",
+          "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/directory",
         )}\n`,
     )
     .action(() => {

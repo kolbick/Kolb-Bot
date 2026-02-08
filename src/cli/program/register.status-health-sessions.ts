@@ -53,7 +53,7 @@ export function registerStatusHealthSessionsCommands(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/status", "docs.kolb-bot.ai/cli/status")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/status", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/status")}\n`,
     )
     .action(async (opts) => {
       const verbose = resolveVerbose(opts);
@@ -87,7 +87,7 @@ export function registerStatusHealthSessionsCommands(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/health", "docs.kolb-bot.ai/cli/health")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/health", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/health")}\n`,
     )
     .action(async (opts) => {
       const verbose = resolveVerbose(opts);
@@ -130,7 +130,7 @@ export function registerStatusHealthSessionsCommands(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/sessions", "docs.kolb-bot.ai/cli/sessions")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/sessions", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/sessions")}\n`,
     )
     .action(async (opts) => {
       setVerbose(Boolean(opts.verbose));

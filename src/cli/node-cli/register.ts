@@ -24,7 +24,7 @@ export function registerNodeCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/node", "docs.kolb-bot.ai/cli/node")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/node", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/node")}\n`,
     );
 
   node

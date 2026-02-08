@@ -151,7 +151,7 @@ function buildDocsSection(params: { docsPath?: string; isMinimal: boolean; readT
   return [
     "## Documentation",
     `KolbBot docs: ${docsPath}`,
-    "Mirror: https://docs.kolb-bot.ai",
+    "Mirror: https://github.com/kolbick/Kolb-Bot/blob/main/docs",
     "Source: https://github.com/kolb-bot/kolb-bot",
     "Community: https://discord.com/invite/clawd",
     "Find new skills: https://clawhub.com",

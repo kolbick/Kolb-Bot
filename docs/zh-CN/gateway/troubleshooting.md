@@ -545,13 +545,13 @@ kolb-bot gateway restart
 切换**到 git 安装**：
 
 ```bash
-curl -fsSL https://kolb-bot.ai/install.sh | bash -s -- --install-method git --no-onboard
+curl -fsSL https://github.com/kolbick/Kolb-Bot/install.sh | bash -s -- --install-method git --no-onboard
 ```
 
 切换**到 npm 全局**：
 
 ```bash
-curl -fsSL https://kolb-bot.ai/install.sh | bash
+curl -fsSL https://github.com/kolbick/Kolb-Bot/install.sh | bash
 ```
 
 注意事项：
@@ -683,13 +683,13 @@ kolb-bot channels login --verbose
 
 ## 日志位置
 
-| 日志                             | 位置                                                                                                                                                                                                                                                                                                                      |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Gateway 网关文件日志（结构化）   | `/tmp/kolb-bot/kolb-bot-YYYY-MM-DD.log`（或 `logging.file`）                                                                                                                                                                                                                                                              |
+| 日志                             | 位置                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Gateway 网关文件日志（结构化）   | `/tmp/kolb-bot/kolb-bot-YYYY-MM-DD.log`（或 `logging.file`）                                                                                                                                                                                                                                                             |
 | Gateway 网关服务日志（监管程序） | macOS：`$KOLB_BOT_STATE_DIR/logs/gateway.log` + `gateway.err.log`（默认：`~/.kolb-bot/logs/...`；配置文件使用 `~/.kolb-bot-<profile>/logs/...`）<br />Linux：`journalctl --user -u kolb-bot-gateway[-<profile>].service -n 200 --no-pager`<br />Windows：`schtasks /Query /TN "KolbBot Gateway (<profile>)" /V /FO LIST` |
-| 会话文件                         | `$KOLB_BOT_STATE_DIR/agents/<agentId>/sessions/`                                                                                                                                                                                                                                                                          |
-| 媒体缓存                         | `$KOLB_BOT_STATE_DIR/media/`                                                                                                                                                                                                                                                                                              |
-| 凭证                             | `$KOLB_BOT_STATE_DIR/credentials/`                                                                                                                                                                                                                                                                                        |
+| 会话文件                         | `$KOLB_BOT_STATE_DIR/agents/<agentId>/sessions/`                                                                                                                                                                                                                                                                         |
+| 媒体缓存                         | `$KOLB_BOT_STATE_DIR/media/`                                                                                                                                                                                                                                                                                             |
+| 凭证                             | `$KOLB_BOT_STATE_DIR/credentials/`                                                                                                                                                                                                                                                                                       |
 
 ## 健康检查
 

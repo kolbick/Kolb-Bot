@@ -16,7 +16,7 @@ export function registerCronCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/cron", "docs.kolb-bot.ai/cli/cron")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/cron", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/cron")}\n`,
     );
 
   registerCronStatusCommand(cron);

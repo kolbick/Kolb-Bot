@@ -5,7 +5,7 @@ import { runCommandWithTimeout } from "../process/exec.js";
 import { formatDocsLink } from "../terminal/links.js";
 import { isRich, theme } from "../terminal/theme.js";
 
-const SEARCH_TOOL = "https://docs.kolb-bot.ai/mcp.SearchKolbBot";
+const SEARCH_TOOL = "https://github.com/kolbick/Kolb-Bot/blob/main/docs/mcp.SearchKolbBot";
 const SEARCH_TIMEOUT_MS = 30_000;
 const DEFAULT_SNIPPET_MAX = 220;
 
@@ -160,12 +160,12 @@ async function renderMarkdown(markdown: string, runtime: RuntimeEnv) {
 export async function docsSearchCommand(queryParts: string[], runtime: RuntimeEnv) {
   const query = queryParts.join(" ").trim();
   if (!query) {
-    const docs = formatDocsLink("/", "docs.kolb-bot.ai");
+    const docs = formatDocsLink("/", "github.com/kolbick/Kolb-Bot/blob/main/docs");
     if (isRich()) {
       runtime.log(`${theme.muted("Docs:")} ${docs}`);
       runtime.log(`${theme.muted("Search:")} ${formatCliCommand('kolb-bot docs "your query"')}`);
     } else {
-      runtime.log("Docs: https://docs.kolb-bot.ai/");
+      runtime.log("Docs: https://github.com/kolbick/Kolb-Bot/blob/main/docs/");
       runtime.log(`Search: ${formatCliCommand('kolb-bot docs "your query"')}`);
     }
     return;

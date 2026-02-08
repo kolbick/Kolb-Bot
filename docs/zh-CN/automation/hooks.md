@@ -134,7 +134,7 @@ Hook 包可以附带依赖；它们将安装在 `~/.kolb-bot/hooks/<id>` 下。
 ---
 name: my-hook
 description: "Short description of what this hook does"
-homepage: https://docs.kolb-bot.ai/hooks#my-hook
+homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#my-hook
 metadata:
   { "kolb-bot": { "emoji": "🔗", "events": ["command:new"], "requires": { "bins": ["node"] } } }
 ---

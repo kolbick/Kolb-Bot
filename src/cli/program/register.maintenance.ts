@@ -15,7 +15,7 @@ export function registerMaintenanceCommands(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/doctor", "docs.kolb-bot.ai/cli/doctor")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/doctor", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/doctor")}\n`,
     )
     .option("--no-workspace-suggestions", "Disable workspace memory system suggestions", false)
     .option("--yes", "Accept defaults without prompting", false)
@@ -45,7 +45,7 @@ export function registerMaintenanceCommands(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/dashboard", "docs.kolb-bot.ai/cli/dashboard")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/dashboard", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/dashboard")}\n`,
     )
     .option("--no-open", "Print URL but do not launch a browser", false)
     .action(async (opts) => {
@@ -62,7 +62,7 @@ export function registerMaintenanceCommands(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/reset", "docs.kolb-bot.ai/cli/reset")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/reset", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/reset")}\n`,
     )
     .option("--scope <scope>", "config|config+creds+sessions|full (default: interactive prompt)")
     .option("--yes", "Skip confirmation prompts", false)
@@ -85,7 +85,7 @@ export function registerMaintenanceCommands(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/uninstall", "docs.kolb-bot.ai/cli/uninstall")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/uninstall", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/uninstall")}\n`,
     )
     .option("--service", "Remove the gateway service", false)
     .option("--state", "Remove state + config", false)

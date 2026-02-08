@@ -76,7 +76,7 @@ export function registerChannelsCli(program: Command) {
       () =>
         `\n${theme.muted("Docs:")} ${formatDocsLink(
           "/cli/channels",
-          "docs.kolb-bot.ai/cli/channels",
+          "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/channels",
         )}\n`,
     );
 

@@ -80,7 +80,7 @@ Multi-account config (advanced):
 
 ## Full documentation
 
-See https://docs.kolb-bot.ai/channels/twitch for:
+See https://github.com/kolbick/Kolb-Bot/blob/main/docs/channels/twitch for:
 
 - Token refresh setup
 - Access control patterns

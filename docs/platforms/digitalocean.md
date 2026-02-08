@@ -67,7 +67,7 @@ curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt install -y nodejs
 
 # Install KolbBot
-curl -fsSL https://kolb-bot.ai/install.sh | bash
+curl -fsSL https://github.com/kolbick/Kolb-Bot/install.sh | bash
 
 # Verify
 kolb-bot --version

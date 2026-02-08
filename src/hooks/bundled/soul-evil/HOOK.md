@@ -1,7 +1,7 @@
 ---
 name: soul-evil
 description: "Swap SOUL.md with SOUL_EVIL.md during a purge window or by random chance"
-homepage: https://docs.kolb-bot.ai/hooks/soul-evil
+homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks/soul-evil
 metadata:
   {
     "kolb-bot":

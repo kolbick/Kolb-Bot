@@ -67,7 +67,7 @@ export function registerSandboxCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/sandbox", "docs.kolb-bot.ai/cli/sandbox")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/sandbox", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/sandbox")}\n`,
     )
     .action(() => {
       sandbox.help({ error: true });

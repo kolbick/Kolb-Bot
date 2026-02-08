@@ -99,7 +99,7 @@ tailscale status
 ## 5) Install KolbBot
 
 ```bash
-curl -fsSL https://kolb-bot.ai/install.sh | bash
+curl -fsSL https://github.com/kolbick/Kolb-Bot/install.sh | bash
 source ~/.bashrc
 ```
 

@@ -624,8 +624,10 @@ export async function statusCommand(
   }
 
   runtime.log("");
-  runtime.log("FAQ: https://docs.kolb-bot.ai/faq");
-  runtime.log("Troubleshooting: https://docs.kolb-bot.ai/troubleshooting");
+  runtime.log("FAQ: https://github.com/kolbick/Kolb-Bot/blob/main/docs/faq");
+  runtime.log(
+    "Troubleshooting: https://github.com/kolbick/Kolb-Bot/blob/main/docs/troubleshooting",
+  );
   runtime.log("");
   const updateHint = formatUpdateAvailableHint(update);
   if (updateHint) {

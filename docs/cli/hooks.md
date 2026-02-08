@@ -90,7 +90,7 @@ Details:
   Source: kolb-bot-bundled
   Path: /path/to/kolb-bot/hooks/bundled/session-memory/HOOK.md
   Handler: /path/to/kolb-bot/hooks/bundled/session-memory/handler.ts
-  Homepage: https://docs.kolb-bot.ai/hooks#session-memory
+  Homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#session-memory
   Events: command:new
 
 Requirements:

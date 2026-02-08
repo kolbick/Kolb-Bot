@@ -18,7 +18,7 @@ export function registerDaemonCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/gateway", "docs.kolb-bot.ai/cli/gateway")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/gateway", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/gateway")}\n`,
     );
 
   daemon

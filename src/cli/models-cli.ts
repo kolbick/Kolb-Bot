@@ -47,7 +47,7 @@ export function registerModelsCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/models", "docs.kolb-bot.ai/cli/models")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/models", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/models")}\n`,
     );
 
   models

@@ -9,8 +9,8 @@ Providers:
 - **Plivo** (Voice API + XML transfer + GetInput speech)
 - **Mock** (dev/no network)
 
-Docs: `https://docs.kolb-bot.ai/plugins/voice-call`
-Plugin system: `https://docs.kolb-bot.ai/plugin`
+Docs: `https://github.com/kolbick/Kolb-Bot/blob/main/docs/plugins/voice-call`
+Plugin system: `https://github.com/kolbick/Kolb-Bot/blob/main/docs/plugin`
 
 ## Install (local dev)
 

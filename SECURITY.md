@@ -22,7 +22,7 @@ The best way to help the project right now is by sending PRs.
 
 For threat model + hardening guidance (including `kolb-bot security audit --deep` and `--fix`), see:
 
-- `https://docs.kolb-bot.ai/gateway/security`
+- `https://github.com/kolbick/Kolb-Bot/blob/main/docs/gateway/security`
 
 ### Web Interface Safety
 

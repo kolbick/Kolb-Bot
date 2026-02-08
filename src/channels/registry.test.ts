@@ -34,6 +34,6 @@ describe("channel registry", () => {
     );
     expect(line).not.toContain("Docs:");
     expect(line).toContain("/channels/telegram");
-    expect(line).toContain("https://kolb-bot.ai");
+    expect(line).toContain("https://github.com/kolbick/Kolb-Bot");
   });
 });

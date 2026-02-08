@@ -1,7 +1,7 @@
 ---
 name: boot-md
 description: "Run BOOT.md on gateway startup"
-homepage: https://docs.kolb-bot.ai/hooks#boot-md
+homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#boot-md
 metadata:
   {
     "kolb-bot":

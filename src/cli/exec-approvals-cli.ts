@@ -244,7 +244,7 @@ export function registerExecApprovalsCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/approvals", "docs.kolb-bot.ai/cli/approvals")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/approvals", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/approvals")}\n`,
     );
 
   const getCmd = approvals
@@ -348,7 +348,7 @@ export function registerExecApprovalsCli(program: Command) {
         )}\n${formatExample(
           'kolb-bot approvals allowlist remove "~/Projects/**/bin/rg"',
           "Remove an allowlist pattern.",
-        )}\n\n${theme.muted("Docs:")} ${formatDocsLink("/cli/approvals", "docs.kolb-bot.ai/cli/approvals")}\n`,
+        )}\n\n${theme.muted("Docs:")} ${formatDocsLink("/cli/approvals", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/approvals")}\n`,
     );
 
   const allowlistAdd = allowlist

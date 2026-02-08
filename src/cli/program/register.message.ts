@@ -46,7 +46,7 @@ ${formatHelpExamples([
   ],
 ])}
 
-${theme.muted("Docs:")} ${formatDocsLink("/cli/message", "docs.kolb-bot.ai/cli/message")}`,
+${theme.muted("Docs:")} ${formatDocsLink("/cli/message", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/message")}`,
     )
     .action(() => {
       message.help({ error: true });

@@ -73,5 +73,5 @@ scripts/pi/run-tests.sh --live
 
 ## 参考资料
 
-- https://docs.kolb-bot.ai/testing
-- https://docs.kolb-bot.ai/start/getting-started
+- https://github.com/kolbick/Kolb-Bot/blob/main/docs/testing
+- https://github.com/kolbick/Kolb-Bot/blob/main/docs/start/getting-started

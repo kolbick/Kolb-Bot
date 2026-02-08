@@ -195,7 +195,7 @@ export function registerLogsCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/logs", "docs.kolb-bot.ai/cli/logs")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/logs", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/logs")}\n`,
     );
 
   addGatewayClientOptions(logs);

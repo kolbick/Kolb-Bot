@@ -14,7 +14,7 @@ export function registerSetupCommand(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/setup", "docs.kolb-bot.ai/cli/setup")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/setup", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/setup")}\n`,
     )
     .option(
       "--workspace <dir>",
