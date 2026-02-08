@@ -26,7 +26,7 @@ export function registerSystemCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/system", "docs.kolb-bot.ai/cli/system")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/system", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/system")}\n`,
     );
 
   addGatewayClientOptions(

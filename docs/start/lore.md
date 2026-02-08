@@ -119,7 +119,7 @@ In just 3 hours:
 - GitHub renamed: `github.com/kolb-bot/kolb-bot` ✅
 - X handle `@kolb-bot` secured with GOLD CHECKMARK 💰
 - npm packages released under new name
-- Docs migrated to `docs.kolb-bot.ai`
+- Docs migrated to `github.com/kolbick/Kolb-Bot/blob/main/docs`
 - 200K+ views on announcement in 90 minutes
 
 **The Heroes:**

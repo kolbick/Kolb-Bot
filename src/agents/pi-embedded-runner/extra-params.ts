@@ -5,7 +5,7 @@ import type { KolbBotConfig } from "../../config/config.js";
 import { log } from "./logger.js";
 
 const OPENROUTER_APP_HEADERS: Record<string, string> = {
-  "HTTP-Referer": "https://kolb-bot.ai",
+  "HTTP-Referer": "https://github.com/kolbick/Kolb-Bot",
   "X-Title": "KolbBot",
 };
 

@@ -32,12 +32,12 @@ Check your Node version with `node --version` if you are unsure.
     <Tabs>
       <Tab title="macOS/Linux">
         ```bash
-        curl -fsSL https://kolb-bot.ai/install.sh | bash
+        curl -fsSL https://github.com/kolbick/Kolb-Bot/install.sh | bash
         ```
       </Tab>
       <Tab title="Windows (PowerShell)">
         ```powershell
-        iwr -useb https://kolb-bot.ai/install.ps1 | iex
+        iwr -useb https://github.com/kolbick/Kolb-Bot/install.ps1 | iex
         ```
       </Tab>
     </Tabs>

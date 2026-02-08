@@ -41,7 +41,7 @@ stay consistent across channels.
 Input Markdown:
 
 ```markdown
-Hello **world** — see [docs](https://docs.kolb-bot.ai).
+Hello **world** — see [docs](https://github.com/kolbick/Kolb-Bot/blob/main/docs).
 ```
 
 IR (schematic):
@@ -50,7 +50,9 @@ IR (schematic):
 {
   "text": "Hello world — see docs.",
   "styles": [{ "start": 6, "end": 11, "style": "bold" }],
-  "links": [{ "start": 19, "end": 23, "href": "https://docs.kolb-bot.ai" }]
+  "links": [
+    { "start": 19, "end": 23, "href": "https://github.com/kolbick/Kolb-Bot/blob/main/docs" }
+  ]
 }
 ```
 

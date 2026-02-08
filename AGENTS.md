@@ -10,7 +10,7 @@
 - Docs: `docs/` (images, queue, Pi config). Built output lives in `dist/`.
 - Plugins/extensions: live under `extensions/*` (workspace packages). Keep plugin-only deps in the extension `package.json`; do not add them to the root `package.json` unless core uses them.
 - Plugins: install runs `npm install --omit=dev` in plugin dir; runtime deps must live in `dependencies`. Avoid `workspace:*` in `dependencies` (npm install breaks); put `kolb-bot` in `devDependencies` or `peerDependencies` instead (runtime resolves `kolb-bot/plugin-sdk` via jiti alias).
-- Installers served from `https://kolb-bot.ai/*`: live in the sibling repo `../kolb-bot.ai` (`public/install.sh`, `public/install-cli.sh`, `public/install.ps1`).
+- Installers served from `https://github.com/kolbick/Kolb-Bot/*`: live in the sibling repo `../github.com/kolbick/Kolb-Bot` (`public/install.sh`, `public/install-cli.sh`, `public/install.ps1`).
 - Messaging channels: always consider **all** built-in + extension channels when refactoring shared logic (routing, allowlists, pairing, command gating, onboarding, docs).
   - Core channel docs: `docs/channels/`
   - Core channel code: `src/telegram`, `src/discord`, `src/slack`, `src/signal`, `src/imessage`, `src/web` (WhatsApp web), `src/channels`, `src/routing`
@@ -19,13 +19,13 @@
 
 ## Docs Linking (Mintlify)
 
-- Docs are hosted on Mintlify (docs.kolb-bot.ai).
+- Docs are hosted on Mintlify (github.com/kolbick/Kolb-Bot/blob/main/docs).
 - Internal doc links in `docs/**/*.md`: root-relative, no `.md`/`.mdx` (example: `[Config](/configuration)`).
 - Section cross-references: use anchors on root-relative paths (example: `[Hooks](/configuration#hooks)`).
 - Doc headings and anchors: avoid em dashes and apostrophes in headings because they break Mintlify anchor links.
-- When Peter asks for links, reply with full `https://docs.kolb-bot.ai/...` URLs (not root-relative).
-- When you touch docs, end the reply with the `https://docs.kolb-bot.ai/...` URLs you referenced.
-- README (GitHub): keep absolute docs URLs (`https://docs.kolb-bot.ai/...`) so links work on GitHub.
+- When Peter asks for links, reply with full `https://github.com/kolbick/Kolb-Bot/blob/main/docs/...` URLs (not root-relative).
+- When you touch docs, end the reply with the `https://github.com/kolbick/Kolb-Bot/blob/main/docs/...` URLs you referenced.
+- README (GitHub): keep absolute docs URLs (`https://github.com/kolbick/Kolb-Bot/blob/main/docs/...`) so links work on GitHub.
 - Docs content must be generic: no personal device names/hostnames/paths; use placeholders like `user@gateway-host` and “gateway host”.
 
 ## Docs i18n (zh-CN)
@@ -95,8 +95,8 @@
 - Group related changes; avoid bundling unrelated refactors.
 - Changelog workflow: keep latest released version at top (no `Unreleased`); after publishing, bump version and start a new top section.
 - PRs should summarize scope, note testing performed, and mention any user-facing changes or new flags.
-- Read this when submitting a PR: `docs/help/submitting-a-pr.md` ([Submitting a PR](https://docs.kolb-bot.ai/help/submitting-a-pr))
-- Read this when submitting an issue: `docs/help/submitting-an-issue.md` ([Submitting an Issue](https://docs.kolb-bot.ai/help/submitting-an-issue))
+- Read this when submitting a PR: `docs/help/submitting-a-pr.md` ([Submitting a PR](https://github.com/kolbick/Kolb-Bot/blob/main/docs/help/submitting-a-pr))
+- Read this when submitting an issue: `docs/help/submitting-an-issue.md` ([Submitting an Issue](https://github.com/kolbick/Kolb-Bot/blob/main/docs/help/submitting-an-issue))
 - PR review flow: when given a PR link, review via `gh pr view`/`gh pr diff` and do **not** change branches.
 - PR review calls: prefer a single `gh pr view --json ...` to batch metadata/comments; run `gh pr diff` only when needed.
 - Before starting a review when a GH Issue/PR is pasted: run `git pull`; if there are local changes or unpushed commits, stop and alert the user before reviewing.
@@ -164,7 +164,7 @@
   - If staged+unstaged diffs are formatting-only, auto-resolve without asking.
   - If commit/push already requested, auto-stage and include formatting-only follow-ups in the same commit (or a tiny follow-up commit if needed), no extra confirmation.
   - Only ask when changes are semantic (logic/data/behavior).
-- Lobster seam: use the shared CLI palette in `src/terminal/palette.ts` (no hardcoded colors); apply palette to onboarding/config prompts and other TTY UI output as needed.
+- Palette seam: use the shared CLI palette in `src/terminal/palette.ts` (no hardcoded colors); apply palette to onboarding/config prompts and other TTY UI output as needed.
 - **Multi-agent safety:** focus reports on your edits; avoid guard-rail disclaimers unless truly blocked; when multiple agents touch the same file, continue if safe; end with a brief “other files present” note only if relevant.
 - Bug investigations: read source code of relevant npm dependencies and all related local code before concluding; aim for high-confidence root cause.
 - Code style: add brief comments for tricky logic; keep files under ~500 LOC when feasible (split/refactor as needed).

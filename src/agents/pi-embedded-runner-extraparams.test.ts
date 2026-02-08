@@ -86,7 +86,7 @@ describe("applyExtraParamsToAgent", () => {
 
     expect(calls).toHaveLength(1);
     expect(calls[0]?.headers).toEqual({
-      "HTTP-Referer": "https://kolb-bot.ai",
+      "HTTP-Referer": "https://github.com/kolbick/Kolb-Bot",
       "X-Title": "KolbBot",
       "X-Custom": "1",
     });

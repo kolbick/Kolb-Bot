@@ -44,7 +44,7 @@ export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv =
     runtime.error(
       [
         "Non-interactive onboarding requires explicit risk acknowledgement.",
-        "Read: https://docs.kolb-bot.ai/security",
+        "Read: https://github.com/kolbick/Kolb-Bot/blob/main/docs/security",
         `Re-run with: ${formatCliCommand("kolb-bot onboard --non-interactive --accept-risk ...")}`,
       ].join("\n"),
     );
@@ -66,7 +66,7 @@ export async function onboardCommand(opts: OnboardOptions, runtime: RuntimeEnv =
         "Windows detected — KolbBot runs great on WSL2!",
         "Native Windows might be trickier.",
         "Quick setup: wsl --install (one command, one reboot)",
-        "Guide: https://docs.kolb-bot.ai/windows",
+        "Guide: https://github.com/kolbick/Kolb-Bot/blob/main/docs/windows",
       ].join("\n"),
     );
   }

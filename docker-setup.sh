@@ -196,7 +196,7 @@ echo "Telegram (bot token):"
 echo "  ${COMPOSE_HINT} run --rm kolb-bot-cli channels add --channel telegram --token <token>"
 echo "Discord (bot token):"
 echo "  ${COMPOSE_HINT} run --rm kolb-bot-cli channels add --channel discord --token <token>"
-echo "Docs: https://docs.kolb-bot.ai/channels"
+echo "Docs: https://github.com/kolbick/Kolb-Bot/blob/main/docs/channels"
 
 echo ""
 echo "==> Starting gateway"

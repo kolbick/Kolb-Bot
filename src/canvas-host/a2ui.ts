@@ -105,9 +105,9 @@ export function injectCanvasLiveReload(html: string): string {
 (() => {
   // Cross-platform action bridge helper.
   // Works on:
-  // - iOS: window.webkit.messageHandlers.kolb-botCanvasA2UIAction.postMessage(...)
-  // - Android: window.kolb-botCanvasA2UIAction.postMessage(...)
-  const handlerNames = ["kolb-botCanvasA2UIAction"];
+  // - iOS: window.webkit.messageHandlers.kolbBotCanvasA2UIAction.postMessage(...)
+  // - Android: window.kolbBotCanvasA2UIAction.postMessage(...)
+  const handlerNames = ["kolbBotCanvasA2UIAction"];
   function postToNode(payload) {
     try {
       const raw = typeof payload === "string" ? payload : JSON.stringify(payload);
@@ -137,8 +137,8 @@ export function injectCanvasLiveReload(html: string): string {
   globalThis.KolbBot = globalThis.KolbBot ?? {};
   globalThis.KolbBot.postMessage = postToNode;
   globalThis.KolbBot.sendUserAction = sendUserAction;
-  globalThis.kolb-botPostMessage = postToNode;
-  globalThis.kolb-botSendUserAction = sendUserAction;
+  globalThis.kolbBotPostMessage = postToNode;
+  globalThis.kolbBotSendUserAction = sendUserAction;
 
   try {
     const proto = location.protocol === "https:" ? "wss" : "ws";

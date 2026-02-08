@@ -92,7 +92,7 @@ export function configureProgramHelp(program: Command, ctx: ProgramContext) {
     if (command !== program) {
       return "";
     }
-    const docs = formatDocsLink("/cli", "docs.kolb-bot.ai/cli");
+    const docs = formatDocsLink("/cli", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli");
     return `\n${theme.heading("Examples:")}\n${fmtExamples}\n\n${theme.muted("Docs:")} ${docs}\n`;
   });
 }

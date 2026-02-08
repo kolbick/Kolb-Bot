@@ -14,7 +14,7 @@ async function writeJsonSchema() {
 
   const rootSchema = {
     $schema: "http://json-schema.org/draft-07/schema#",
-    $id: "https://kolb-bot.ai/protocol.schema.json",
+    $id: "https://github.com/kolbick/Kolb-Bot/protocol.schema.json",
     title: "KolbBot Gateway Protocol",
     description: "Handshake, request/response, and event frames for the Gateway WebSocket.",
     oneOf: [

@@ -345,8 +345,8 @@ actor MacNodeRuntime {
         let sessionKey = self.mainSessionKey
         let json = try await CanvasManager.shared.eval(sessionKey: sessionKey, javaScript: """
         (() => {
-          const host = globalThis.kolb-botA2UI;
-          if (!host) return JSON.stringify({ ok: false, error: "missing kolb-botA2UI" });
+          const host = globalThis.kolbBotA2UI;
+          if (!host) return JSON.stringify({ ok: false, error: "missing kolbBotA2UI" });
           return JSON.stringify(host.reset());
         })()
         """)
@@ -375,8 +375,8 @@ actor MacNodeRuntime {
         let js = """
         (() => {
           try {
-            const host = globalThis.kolb-botA2UI;
-            if (!host) return JSON.stringify({ ok: false, error: "missing kolb-botA2UI" });
+            const host = globalThis.kolbBotA2UI;
+            if (!host) return JSON.stringify({ ok: false, error: "missing kolbBotA2UI" });
             const messages = \(messagesJSON);
             return JSON.stringify(host.applyMessages(messages));
           } catch (e) {
@@ -420,7 +420,7 @@ actor MacNodeRuntime {
                 let sessionKey = self.mainSessionKey
                 let ready = try await CanvasManager.shared.eval(sessionKey: sessionKey, javaScript: """
                 (() => {
-                  const host = globalThis.kolb-botA2UI;
+                  const host = globalThis.kolbBotA2UI;
                   return String(Boolean(host));
                 })()
                 """)

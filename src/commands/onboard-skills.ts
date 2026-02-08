@@ -177,7 +177,7 @@ export async function setupSkills(
       runtime.log(
         `Tip: run \`${formatCliCommand("kolb-bot doctor")}\` to review skills + requirements.`,
       );
-      runtime.log("Docs: https://docs.kolb-bot.ai/skills");
+      runtime.log("Docs: https://github.com/kolbick/Kolb-Bot/blob/main/docs/skills");
     }
   }
 

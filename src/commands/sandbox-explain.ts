@@ -30,7 +30,7 @@ type SandboxExplainOptions = {
   json: boolean;
 };
 
-const SANDBOX_DOCS_URL = "https://docs.kolb-bot.ai/sandbox";
+const SANDBOX_DOCS_URL = "https://github.com/kolbick/Kolb-Bot/blob/main/docs/sandbox";
 
 function normalizeExplainSessionKey(params: {
   cfg: KolbBotConfig;
@@ -331,7 +331,9 @@ export async function sandboxExplainCommand(
     lines.push(`  - ${key}`);
   }
   lines.push("");
-  lines.push(`${key("Docs:")} ${formatDocsLink("/sandbox", "docs.kolb-bot.ai/sandbox")}`);
+  lines.push(
+    `${key("Docs:")} ${formatDocsLink("/sandbox", "github.com/kolbick/Kolb-Bot/blob/main/docs/sandbox")}`,
+  );
 
   runtime.log(`${lines.join("\n")}\n`);
 }

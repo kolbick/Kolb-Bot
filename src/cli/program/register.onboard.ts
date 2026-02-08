@@ -44,7 +44,7 @@ export function registerOnboardCommand(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/onboard", "docs.kolb-bot.ai/cli/onboard")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/onboard", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/onboard")}\n`,
     )
     .option("--workspace <dir>", "Agent workspace directory (default: ~/.kolb-bot/workspace)")
     .option("--reset", "Reset config + credentials + sessions + workspace before running wizard")

@@ -30,7 +30,7 @@ export function registerBrowserCli(program: Command) {
           true,
         )}\n\n${theme.muted("Docs:")} ${formatDocsLink(
           "/cli/browser",
-          "docs.kolb-bot.ai/cli/browser",
+          "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/browser",
         )}\n`,
     )
     .action(() => {

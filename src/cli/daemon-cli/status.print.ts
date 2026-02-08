@@ -317,5 +317,7 @@ export function printDaemonStatus(status: DaemonStatus, opts: { json: boolean })
   }
 
   defaultRuntime.log(`${label("Troubles:")} run ${formatCliCommand("kolb-bot status")}`);
-  defaultRuntime.log(`${label("Troubleshooting:")} https://docs.kolb-bot.ai/troubleshooting`);
+  defaultRuntime.log(
+    `${label("Troubleshooting:")} https://github.com/kolbick/Kolb-Bot/blob/main/docs/troubleshooting`,
+  );
 }

@@ -329,7 +329,7 @@ struct MenuContent: View {
         NSApp.activate(ignoringOtherApps: true)
         self.openSettings()
         DispatchQueue.main.async {
-            NotificationCenter.default.post(name: .kolb-botSelectSettingsTab, object: tab)
+            NotificationCenter.default.post(name: .kolbBotSelectSettingsTab, object: tab)
         }
     }
 

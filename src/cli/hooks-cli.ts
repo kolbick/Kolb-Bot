@@ -441,7 +441,7 @@ export function registerHooksCli(program: Command): void {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/hooks", "docs.kolb-bot.ai/cli/hooks")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/hooks", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/hooks")}\n`,
     );
 
   hooks

@@ -147,9 +147,11 @@ export async function configureGatewayForOnboarding(
   let tailscaleResetOnExit = flow === "quickstart" ? quickstartGateway.tailscaleResetOnExit : false;
   if (tailscaleMode !== "off" && flow !== "quickstart") {
     await prompter.note(
-      ["Docs:", "https://docs.kolb-bot.ai/gateway/tailscale", "https://docs.kolb-bot.ai/web"].join(
-        "\n",
-      ),
+      [
+        "Docs:",
+        "https://github.com/kolbick/Kolb-Bot/blob/main/docs/gateway/tailscale",
+        "https://github.com/kolbick/Kolb-Bot/blob/main/docs/web",
+      ].join("\n"),
       "Tailscale",
     );
     tailscaleResetOnExit = Boolean(

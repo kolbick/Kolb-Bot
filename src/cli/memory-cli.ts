@@ -490,7 +490,7 @@ export function registerMemoryCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/memory", "docs.kolb-bot.ai/cli/memory")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/memory", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/memory")}\n`,
     );
 
   memory

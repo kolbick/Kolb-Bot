@@ -34,12 +34,12 @@ The **installer script** is the recommended way to install KolbBot. It handles N
     <Tabs>
       <Tab title="macOS / Linux / WSL2">
         ```bash
-        curl -fsSL https://kolb-bot.ai/install.sh | bash
+        curl -fsSL https://github.com/kolbick/Kolb-Bot/install.sh | bash
         ```
       </Tab>
       <Tab title="Windows (PowerShell)">
         ```powershell
-        iwr -useb https://kolb-bot.ai/install.ps1 | iex
+        iwr -useb https://github.com/kolbick/Kolb-Bot/install.ps1 | iex
         ```
       </Tab>
     </Tabs>
@@ -51,12 +51,12 @@ The **installer script** is the recommended way to install KolbBot. It handles N
     <Tabs>
       <Tab title="macOS / Linux / WSL2">
         ```bash
-        curl -fsSL https://kolb-bot.ai/install.sh | bash -s -- --no-onboard
+        curl -fsSL https://github.com/kolbick/Kolb-Bot/install.sh | bash -s -- --no-onboard
         ```
       </Tab>
       <Tab title="Windows (PowerShell)">
         ```powershell
-        & ([scriptblock]::Create((iwr -useb https://kolb-bot.ai/install.ps1))) -NoOnboard
+        & ([scriptblock]::Create((iwr -useb https://github.com/kolbick/Kolb-Bot/install.ps1))) -NoOnboard
         ```
       </Tab>
     </Tabs>

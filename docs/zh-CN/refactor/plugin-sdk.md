@@ -196,7 +196,7 @@ export type PluginRuntime = {
 
 - SDK：语义化版本控制，已发布，变更有文档记录。
 - 运行时：按核心版本进行版本控制。添加 `api.runtime.version`。
-- 插件声明所需的运行时版本范围（例如 `kolb-botRuntime: ">=2026.2.0"`）。
+- 插件声明所需的运行时版本范围（例如 `kolbBotRuntime: ">=2026.2.0"`）。
 
 ## 测试策略
 

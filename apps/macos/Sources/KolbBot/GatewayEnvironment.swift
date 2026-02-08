@@ -123,7 +123,7 @@ enum GatewayEnvironment {
                 requiredGateway: expectedString,
                 message: RuntimeLocator.describeFailure(err))
         case let .success(runtime):
-            let gatewayBin = CommandResolver.kolb-botExecutable()
+            let gatewayBin = CommandResolver.kolbBotExecutable()
 
             if gatewayBin == nil, projectEntrypoint == nil {
                 return GatewayEnvironmentStatus(
@@ -181,7 +181,7 @@ enum GatewayEnvironment {
         let projectRoot = CommandResolver.projectRoot()
         let projectEntrypoint = CommandResolver.gatewayEntrypoint(in: projectRoot)
         let status = self.check()
-        let gatewayBin = CommandResolver.kolb-botExecutable()
+        let gatewayBin = CommandResolver.kolbBotExecutable()
         let runtime = RuntimeLocator.resolve(searchPaths: CommandResolver.preferredPaths())
 
         guard case .ok = status.kind else {

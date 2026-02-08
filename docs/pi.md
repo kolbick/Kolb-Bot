@@ -33,7 +33,7 @@ KolbBot uses the pi SDK to embed an AI coding agent into its messaging gateway a
 | `pi-ai`           | Core LLM abstractions: `Model`, `streamSimple`, message types, provider APIs                           |
 | `pi-agent-core`   | Agent loop, tool execution, `AgentMessage` types                                                       |
 | `pi-coding-agent` | High-level SDK: `createAgentSession`, `SessionManager`, `AuthStorage`, `ModelRegistry`, built-in tools |
-| `pi-tui`          | Terminal UI components (used in KolbBot's local TUI mode)                                             |
+| `pi-tui`          | Terminal UI components (used in KolbBot's local TUI mode)                                              |
 
 ## File Structure
 
@@ -142,7 +142,7 @@ const result = await runEmbeddedPiAgent({
   sessionKey: "main:whatsapp:+1234567890",
   sessionFile: "/path/to/session.jsonl",
   workspaceDir: "/path/to/workspace",
-  config: kolb-botConfig,
+  config: kolbBotConfig,
   prompt: "Hello, how are you?",
   provider: "anthropic",
   model: "claude-sonnet-4-20250514",
@@ -511,10 +511,10 @@ This provides the interactive terminal experience similar to pi's native mode.
 
 ## Key Differences from Pi CLI
 
-| Aspect          | Pi CLI                  | KolbBot Embedded                                                                              |
+| Aspect          | Pi CLI                  | KolbBot Embedded                                                                               |
 | --------------- | ----------------------- | ---------------------------------------------------------------------------------------------- |
 | Invocation      | `pi` command / RPC      | SDK via `createAgentSession()`                                                                 |
-| Tools           | Default coding tools    | Custom KolbBot tool suite                                                                     |
+| Tools           | Default coding tools    | Custom KolbBot tool suite                                                                      |
 | System prompt   | AGENTS.md + prompts     | Dynamic per-channel/context                                                                    |
 | Session storage | `~/.pi/agent/sessions/` | `~/.kolb-bot/agents/<agentId>/sessions/` (or `$KOLB_BOT_STATE_DIR/agents/<agentId>/sessions/`) |
 | Auth            | Single credential       | Multi-profile with rotation                                                                    |

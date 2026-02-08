@@ -16,10 +16,10 @@ describe("browser config", () => {
     expect(profile?.cdpPort).toBe(18792);
     expect(profile?.cdpUrl).toBe("http://127.0.0.1:18792");
 
-    const kolb-bot = resolveProfile(resolved, "kolb-bot");
-    expect(kolb-bot?.driver).toBe("kolb-bot");
-    expect(kolb-bot?.cdpPort).toBe(18800);
-    expect(kolb-bot?.cdpUrl).toBe("http://127.0.0.1:18800");
+    const kolbBot = resolveProfile(resolved, "kolb-bot");
+    expect(kolbBot?.driver).toBe("kolb-bot");
+    expect(kolbBot?.cdpPort).toBe(18800);
+    expect(kolbBot?.cdpUrl).toBe("http://127.0.0.1:18800");
     expect(resolved.remoteCdpTimeoutMs).toBe(1500);
     expect(resolved.remoteCdpHandshakeTimeoutMs).toBe(3000);
   });
@@ -35,9 +35,9 @@ describe("browser config", () => {
       expect(chrome?.cdpPort).toBe(19004);
       expect(chrome?.cdpUrl).toBe("http://127.0.0.1:19004");
 
-      const kolb-bot = resolveProfile(resolved, "kolb-bot");
-      expect(kolb-bot?.cdpPort).toBe(19012);
-      expect(kolb-bot?.cdpUrl).toBe("http://127.0.0.1:19012");
+      const kolbBot = resolveProfile(resolved, "kolb-bot");
+      expect(kolbBot?.cdpPort).toBe(19012);
+      expect(kolbBot?.cdpUrl).toBe("http://127.0.0.1:19012");
     } finally {
       if (prev === undefined) {
         delete process.env.KOLB_BOT_GATEWAY_PORT;
@@ -58,9 +58,9 @@ describe("browser config", () => {
       expect(chrome?.cdpPort).toBe(19014);
       expect(chrome?.cdpUrl).toBe("http://127.0.0.1:19014");
 
-      const kolb-bot = resolveProfile(resolved, "kolb-bot");
-      expect(kolb-bot?.cdpPort).toBe(19022);
-      expect(kolb-bot?.cdpUrl).toBe("http://127.0.0.1:19022");
+      const kolbBot = resolveProfile(resolved, "kolb-bot");
+      expect(kolbBot?.cdpPort).toBe(19022);
+      expect(kolbBot?.cdpUrl).toBe("http://127.0.0.1:19022");
     } finally {
       if (prev === undefined) {
         delete process.env.KOLB_BOT_GATEWAY_PORT;
@@ -143,7 +143,7 @@ describe("browser config", () => {
   it("does not add the built-in chrome extension profile if the derived relay port is already used", () => {
     const resolved = resolveBrowserConfig({
       profiles: {
-        kolb-bot: { cdpPort: 18792, color: "#FF4500" },
+        "kolb-bot": { cdpPort: 18792, color: "#FF4500" },
       },
     });
     expect(resolveProfile(resolved, "chrome")).toBe(null);

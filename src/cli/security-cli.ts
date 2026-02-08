@@ -33,7 +33,7 @@ export function registerSecurityCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/security", "docs.kolb-bot.ai/cli/security")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/security", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/security")}\n`,
     );
 
   security

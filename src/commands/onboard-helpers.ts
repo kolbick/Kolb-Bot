@@ -199,8 +199,8 @@ export function formatControlUiSshHint(params: {
     localUrl,
     authedUrl,
     "Docs:",
-    "https://docs.kolb-bot.ai/gateway/remote",
-    "https://docs.kolb-bot.ai/web/control-ui",
+    "https://github.com/kolbick/Kolb-Bot/blob/main/docs/gateway/remote",
+    "https://github.com/kolbick/Kolb-Bot/blob/main/docs/web/control-ui",
   ]
     .filter(Boolean)
     .join("\n");

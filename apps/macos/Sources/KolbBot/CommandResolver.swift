@@ -7,8 +7,8 @@ enum CommandResolver {
     static func gatewayEntrypoint(in root: URL) -> String? {
         let distEntry = root.appendingPathComponent("dist/index.js").path
         if FileManager().isReadableFile(atPath: distEntry) { return distEntry }
-        let kolb-botEntry = root.appendingPathComponent("kolb-bot.mjs").path
-        if FileManager().isReadableFile(atPath: kolb-botEntry) { return kolb-botEntry }
+        let kolbBotEntry = root.appendingPathComponent("kolb-bot.mjs").path
+        if FileManager().isReadableFile(atPath: kolbBotEntry) { return kolbBotEntry }
         let binEntry = root.appendingPathComponent("bin/kolb-bot.js").path
         if FileManager().isReadableFile(atPath: binEntry) { return binEntry }
         return nil
@@ -89,17 +89,17 @@ enum CommandResolver {
         // Dev-only convenience. Avoid project-local PATH hijacking in release builds.
         extras.insert(projectRoot.appendingPathComponent("node_modules/.bin").path, at: 0)
         #endif
-        let kolb-botPaths = self.kolb-botManagedPaths(home: home)
-        if !kolb-botPaths.isEmpty {
-            extras.insert(contentsOf: kolb-botPaths, at: 1)
+        let kolbBotPaths = self.kolbBotManagedPaths(home: home)
+        if !kolbBotPaths.isEmpty {
+            extras.insert(contentsOf: kolbBotPaths, at: 1)
         }
-        extras.insert(contentsOf: self.nodeManagerBinPaths(home: home), at: 1 + kolb-botPaths.count)
+        extras.insert(contentsOf: self.nodeManagerBinPaths(home: home), at: 1 + kolbBotPaths.count)
         var seen = Set<String>()
         // Preserve order while stripping duplicates so PATH lookups remain deterministic.
         return (extras + current).filter { seen.insert($0).inserted }
     }
 
-    private static func kolb-botManagedPaths(home: URL) -> [String] {
+    private static func kolbBotManagedPaths(home: URL) -> [String] {
         let bases = [
             home.appendingPathComponent(".kolb-bot"),
         ]
@@ -193,7 +193,7 @@ enum CommandResolver {
         return nil
     }
 
-    static func kolb-botExecutable(searchPaths: [String]? = nil) -> String? {
+    static func kolbBotExecutable(searchPaths: [String]? = nil) -> String? {
         self.findExecutable(named: self.helperName, searchPaths: searchPaths)
     }
 
@@ -220,7 +220,7 @@ enum CommandResolver {
     }
 
     static func hasAnyKolbBotInvoker(searchPaths: [String]? = nil) -> Bool {
-        if self.kolb-botExecutable(searchPaths: searchPaths) != nil { return true }
+        if self.kolbBotExecutable(searchPaths: searchPaths) != nil { return true }
         if self.findExecutable(named: "pnpm", searchPaths: searchPaths) != nil { return true }
         if self.findExecutable(named: "node", searchPaths: searchPaths) != nil,
            self.nodeCliPath() != nil
@@ -230,7 +230,7 @@ enum CommandResolver {
         return false
     }
 
-    static func kolb-botNodeCommand(
+    static func kolbBotNodeCommand(
         subcommand: String,
         extraArgs: [String] = [],
         defaults: UserDefaults = .standard,
@@ -251,8 +251,8 @@ enum CommandResolver {
         switch runtimeResult {
         case let .success(runtime):
             let root = self.projectRoot()
-            if let kolb-botPath = self.projectKolbBotExecutable(projectRoot: root) {
-                return [kolb-botPath, subcommand] + extraArgs
+            if let kolbBotPath = self.projectKolbBotExecutable(projectRoot: root) {
+                return [kolbBotPath, subcommand] + extraArgs
             }
 
             if let entry = self.gatewayEntrypoint(in: root) {
@@ -266,8 +266,8 @@ enum CommandResolver {
                 // Use --silent to avoid pnpm lifecycle banners that would corrupt JSON outputs.
                 return [pnpm, "--silent", "kolb-bot", subcommand] + extraArgs
             }
-            if let kolb-botPath = self.kolb-botExecutable(searchPaths: searchPaths) {
-                return [kolb-botPath, subcommand] + extraArgs
+            if let kolbBotPath = self.kolbBotExecutable(searchPaths: searchPaths) {
+                return [kolbBotPath, subcommand] + extraArgs
             }
 
             let missingEntry = """
@@ -280,14 +280,14 @@ enum CommandResolver {
         }
     }
 
-    static func kolb-botCommand(
+    static func kolbBotCommand(
         subcommand: String,
         extraArgs: [String] = [],
         defaults: UserDefaults = .standard,
         configRoot: [String: Any]? = nil,
         searchPaths: [String]? = nil) -> [String]
     {
-        self.kolb-botNodeCommand(
+        self.kolbBotNodeCommand(
             subcommand: subcommand,
             extraArgs: extraArgs,
             defaults: defaults,

@@ -16,7 +16,7 @@ const report: HookStatusReport = {
       handlerPath: "/tmp/hooks/session-memory/handler.js",
       hookKey: "session-memory",
       emoji: "💾",
-      homepage: "https://docs.kolb-bot.ai/hooks#session-memory",
+      homepage: "https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#session-memory",
       events: ["command:new"],
       always: false,
       disabled: false,

@@ -141,7 +141,7 @@ export async function runNonInteractiveOnboardingLocal(params: {
 
   if (!opts.json) {
     runtime.log(
-      `Tip: run \`${formatCliCommand("kolb-bot configure --section web")}\` to store your Brave API key for web_search. Docs: https://docs.kolb-bot.ai/tools/web`,
+      `Tip: run \`${formatCliCommand("kolb-bot configure --section web")}\` to store your Brave API key for web_search. Docs: https://github.com/kolbick/Kolb-Bot/blob/main/docs/tools/web`,
     );
   }
 }

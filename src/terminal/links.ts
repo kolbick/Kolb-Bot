@@ -1,6 +1,6 @@
 import { formatTerminalLink } from "../utils.js";
 
-export const DOCS_ROOT = "https://docs.kolb-bot.ai";
+export const DOCS_ROOT = "https://github.com/kolbick/Kolb-Bot/blob/main/docs";
 
 export function formatDocsLink(
   path: string,

@@ -52,10 +52,10 @@ jobs:
 
       - name: Run installer docker tests
         env:
-          CLAWDBOT_INSTALL_URL: https://kolb-bot.ai/install.sh
-          CLAWDBOT_INSTALL_CLI_URL: https://kolb-bot.ai/install-cli.sh
-          CLAWDBOT_NO_ONBOARD: "1"
-          CLAWDBOT_INSTALL_SMOKE_SKIP_CLI: "1"
-          CLAWDBOT_INSTALL_SMOKE_SKIP_NONROOT: ${{ github.event_name == 'pull_request' && '1' || '0' }}
-          CLAWDBOT_INSTALL_SMOKE_SKIP_PREVIOUS: "1"
+          KOLB_BOT_INSTALL_URL: https://raw.githubusercontent.com/kolbick/Kolb-Bot/main/install.sh
+          KOLB_BOT_INSTALL_CLI_URL: https://raw.githubusercontent.com/kolbick/Kolb-Bot/main/install-cli.sh
+          KOLB_BOT_NO_ONBOARD: "1"
+          KOLB_BOT_INSTALL_SMOKE_SKIP_CLI: "1"
+          KOLB_BOT_INSTALL_SMOKE_SKIP_NONROOT: ${{ github.event_name == 'pull_request' && '1' || '0' }}
+          KOLB_BOT_INSTALL_SMOKE_SKIP_PREVIOUS: "1"
         run: pnpm test:install:smoke

@@ -2,7 +2,7 @@
 
 Small persona swap hook for KolbBot.
 
-Docs: https://docs.kolb-bot.ai/hooks/soul-evil
+Docs: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks/soul-evil
 
 ## Setup
 

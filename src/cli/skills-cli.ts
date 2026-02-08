@@ -346,7 +346,7 @@ export function registerSkillsCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/skills", "docs.kolb-bot.ai/cli/skills")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/skills", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/skills")}\n`,
     );
 
   skills

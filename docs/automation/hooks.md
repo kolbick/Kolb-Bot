@@ -128,7 +128,7 @@ The `HOOK.md` file contains metadata in YAML frontmatter plus Markdown documenta
 ---
 name: my-hook
 description: "Short description of what this hook does"
-homepage: https://docs.kolb-bot.ai/hooks#my-hook
+homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#my-hook
 metadata:
   { "kolb-bot": { "emoji": "🔗", "events": ["command:new"], "requires": { "bins": ["node"] } } }
 ---

@@ -178,9 +178,9 @@ export function resolveDefaultConfigCandidates(
   }
 
   const candidates: string[] = [];
-  const kolb-botStateDir = env.KOLB_BOT_STATE_DIR?.trim() || env.CLAWDBOT_STATE_DIR?.trim();
-  if (kolb-botStateDir) {
-    const resolved = resolveUserPath(kolb-botStateDir);
+  const kolbBotStateDir = env.KOLB_BOT_STATE_DIR?.trim() || env.CLAWDBOT_STATE_DIR?.trim();
+  if (kolbBotStateDir) {
+    const resolved = resolveUserPath(kolbBotStateDir);
     candidates.push(path.join(resolved, CONFIG_FILENAME));
     candidates.push(...LEGACY_CONFIG_FILENAMES.map((name) => path.join(resolved, name)));
   }

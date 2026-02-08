@@ -63,7 +63,7 @@ kolb-bot browser --browser-profile work tabs
 
 ```bash
 kolb-bot browser tabs
-kolb-bot browser open https://docs.kolb-bot.ai
+kolb-bot browser open https://github.com/kolbick/Kolb-Bot/blob/main/docs
 kolb-bot browser focus <targetId>
 kolb-bot browser close <targetId>
 ```

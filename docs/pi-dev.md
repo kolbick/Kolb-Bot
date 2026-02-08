@@ -66,5 +66,5 @@ If you only want to reset sessions, delete `agents/<agentId>/sessions/` and `age
 
 ## References
 
-- [https://docs.kolb-bot.ai/testing](https://docs.kolb-bot.ai/testing)
-- [https://docs.kolb-bot.ai/start/getting-started](https://docs.kolb-bot.ai/start/getting-started)
+- [https://github.com/kolbick/Kolb-Bot/blob/main/docs/testing](https://github.com/kolbick/Kolb-Bot/blob/main/docs/testing)
+- [https://github.com/kolbick/Kolb-Bot/blob/main/docs/start/getting-started](https://github.com/kolbick/Kolb-Bot/blob/main/docs/start/getting-started)

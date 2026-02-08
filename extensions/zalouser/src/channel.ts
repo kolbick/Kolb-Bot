@@ -505,7 +505,7 @@ export const zalouserPlugin: ChannelPlugin<ResolvedZalouserAccount> = {
       const ok = await checkZcaInstalled();
       if (!ok) {
         throw new Error(
-          "Missing dependency: `zca` not found in PATH. See docs.kolb-bot.ai/channels/zalouser",
+          "Missing dependency: `zca` not found in PATH. See github.com/kolbick/Kolb-Bot/blob/main/docs/channels/zalouser",
         );
       }
       runtime.log(

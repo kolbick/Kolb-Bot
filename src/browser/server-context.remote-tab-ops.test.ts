@@ -37,7 +37,7 @@ function makeState(
           cdpPort: 443,
           color: "#00AA00",
         },
-        kolb-bot: { cdpPort: 18800, color: "#FF4500" },
+        "kolb-bot": { cdpPort: 18800, color: "#FF4500" },
       },
     },
     profiles: new Map(),
@@ -279,9 +279,9 @@ describe("browser server-context tab selection state", () => {
     const { createBrowserRouteContext } = await import("./server-context.js");
     const state = makeState("kolb-bot");
     const ctx = createBrowserRouteContext({ getState: () => state });
-    const kolb-bot = ctx.forProfile("kolb-bot");
+    const kolbBot = ctx.forProfile("kolb-bot");
 
-    const opened = await kolb-bot.openTab("https://created.example");
+    const opened = await kolbBot.openTab("https://created.example");
     expect(opened.targetId).toBe("CREATED");
     expect(state.profiles.get("kolb-bot")?.lastTargetId).toBe("CREATED");
   });

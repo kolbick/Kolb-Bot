@@ -15,7 +15,7 @@ export async function setupInternalHooks(
       "Hooks let you automate actions when agent commands are issued.",
       "Example: Save session context to memory when you issue /new.",
       "",
-      "Learn more: https://docs.kolb-bot.ai/hooks",
+      "Learn more: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks",
     ].join("\n"),
     "Hooks",
   );

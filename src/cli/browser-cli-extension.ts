@@ -102,7 +102,7 @@ export function registerBrowserExtensionCommands(
             `- “Load unpacked” → select: ${displayPath}`,
             `- Pin “KolbBot Browser Relay”, then click it on the tab (badge shows ON)`,
             "",
-            `${theme.muted("Docs:")} ${formatDocsLink("/tools/chrome-extension", "docs.kolb-bot.ai/tools/chrome-extension")}`,
+            `${theme.muted("Docs:")} ${formatDocsLink("/tools/chrome-extension", "github.com/kolbick/Kolb-Bot/blob/main/docs/tools/chrome-extension")}`,
           ].join("\n"),
         ),
       );
@@ -119,7 +119,7 @@ export function registerBrowserExtensionCommands(
           danger(
             [
               `Chrome extension is not installed. Run: "${formatCliCommand("kolb-bot browser extension install")}"`,
-              `Docs: ${formatDocsLink("/tools/chrome-extension", "docs.kolb-bot.ai/tools/chrome-extension")}`,
+              `Docs: ${formatDocsLink("/tools/chrome-extension", "github.com/kolbick/Kolb-Bot/blob/main/docs/tools/chrome-extension")}`,
             ].join("\n"),
           ),
         );

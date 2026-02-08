@@ -1,7 +1,7 @@
 ---
 name: session-memory
 description: "Save session context to memory when /new command is issued"
-homepage: https://docs.kolb-bot.ai/hooks#session-memory
+homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#session-memory
 metadata:
   {
     "kolb-bot":

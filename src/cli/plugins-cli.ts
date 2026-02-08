@@ -103,7 +103,7 @@ export function registerPluginsCli(program: Command) {
     .addHelpText(
       "after",
       () =>
-        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/plugins", "docs.kolb-bot.ai/cli/plugins")}\n`,
+        `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/plugins", "github.com/kolbick/Kolb-Bot/blob/main/docs/cli/plugins")}\n`,
     );
 
   plugins
@@ -541,7 +541,7 @@ export function registerPluginsCli(program: Command) {
           lines.push(`- ${target}${diag.message}`);
         }
       }
-      const docs = formatDocsLink("/plugin", "docs.kolb-bot.ai/plugin");
+      const docs = formatDocsLink("/plugin", "github.com/kolbick/Kolb-Bot/blob/main/docs/plugin");
       lines.push("");
       lines.push(`${theme.muted("Docs:")} ${docs}`);
       defaultRuntime.log(lines.join("\n"));

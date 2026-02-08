@@ -54,7 +54,10 @@ export function registerVoiceCallCli(params: {
   const root = program
     .command("voicecall")
     .description("Voice call utilities")
-    .addHelpText("after", () => `\nDocs: https://docs.kolb-bot.ai/cli/voicecall\n`);
+    .addHelpText(
+      "after",
+      () => `\nDocs: https://github.com/kolbick/Kolb-Bot/blob/main/docs/cli/voicecall\n`,
+    );
 
   root
     .command("call")

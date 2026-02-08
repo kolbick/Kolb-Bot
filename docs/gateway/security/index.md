@@ -818,7 +818,7 @@ Mario asking for find ~
 
 Found a vulnerability in KolbBot? Please report responsibly:
 
-1. Email: [security@kolb-bot.ai](mailto:security@kolb-bot.ai)
+1. Email: [security@github.com/kolbick/Kolb-Bot](mailto:security@github.com/kolbick/Kolb-Bot)
 2. Don't post publicly until fixed
 3. We'll credit you (unless you prefer anonymity)
 
