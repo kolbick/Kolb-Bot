@@ -5,7 +5,7 @@ import Foundation
 import WebKit
 
 final class CanvasA2UIActionMessageHandler: NSObject, WKScriptMessageHandler {
-    static let messageName = "kolb-botCanvasA2UIAction"
+    static let messageName = "kolbBotCanvasA2UIAction"
     static let allMessageNames = [messageName]
 
     private let sessionKey: String

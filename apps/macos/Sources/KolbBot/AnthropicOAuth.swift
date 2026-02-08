@@ -197,7 +197,7 @@ enum AnthropicOAuth {
 enum KolbBotOAuthStore {
     static let oauthFilename = "oauth.json"
     private static let providerKey = "anthropic"
-    private static let kolb-botOAuthDirEnv = "KOLB_BOT_OAUTH_DIR"
+    private static let kolbBotOAuthDirEnv = "KOLB_BOT_OAUTH_DIR"
     private static let legacyPiDirEnv = "PI_CODING_AGENT_DIR"
 
     enum AnthropicOAuthStatus: Equatable {
@@ -226,7 +226,7 @@ enum KolbBotOAuthStore {
     }
 
     static func oauthDir() -> URL {
-        if let override = ProcessInfo.processInfo.environment[self.kolb-botOAuthDirEnv]?
+        if let override = ProcessInfo.processInfo.environment[self.kolbBotOAuthDirEnv]?
             .trimmingCharacters(in: .whitespacesAndNewlines),
             !override.isEmpty
         {

@@ -13,7 +13,7 @@ final class PeekabooBridgeHostCoordinator {
 
     private var host: PeekabooBridgeHost?
     private var services: KolbBotPeekabooBridgeServices?
-    private static var kolb-botSocketPath: String {
+    private static var kolbBotSocketPath: String {
         let fileManager = FileManager.default
         let base = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? fileManager.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
@@ -54,7 +54,7 @@ final class PeekabooBridgeHostCoordinator {
             allowlistedBundles: allowlistedBundles)
 
         let host = PeekabooBridgeHost(
-            socketPath: Self.kolb-botSocketPath,
+            socketPath: Self.kolbBotSocketPath,
             server: server,
             allowedTeamIDs: allowlistedTeamIDs,
             requestTimeoutSec: 10)
@@ -64,7 +64,7 @@ final class PeekabooBridgeHostCoordinator {
 
         await host.start()
         self.logger
-            .info("PeekabooBridge host started at \(Self.kolb-botSocketPath, privacy: .public)")
+            .info("PeekabooBridge host started at \(Self.kolbBotSocketPath, privacy: .public)")
     }
 
     private static func currentTeamID() -> String? {

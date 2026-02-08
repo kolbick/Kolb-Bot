@@ -102,14 +102,14 @@ function defaultIndexHTML() {
     !!(
       window.webkit &&
       window.webkit.messageHandlers &&
-      window.webkit.messageHandlers.kolb-botCanvasA2UIAction
+      window.webkit.messageHandlers.kolbBotCanvasA2UIAction
     );
   const hasAndroid = () =>
     !!(
-      (window.kolb-botCanvasA2UIAction &&
-        typeof window.kolb-botCanvasA2UIAction.postMessage === "function")
+      (window.kolbBotCanvasA2UIAction &&
+        typeof window.kolbBotCanvasA2UIAction.postMessage === "function")
     );
-  const hasHelper = () => typeof window.kolb-botSendUserAction === "function";
+  const hasHelper = () => typeof window.kolbBotSendUserAction === "function";
   statusEl.innerHTML =
     "Bridge: " +
     (hasHelper() ? "<span class='ok'>ready</span>" : "<span class='bad'>missing</span>") +
@@ -128,8 +128,8 @@ function defaultIndexHTML() {
       return;
     }
     const sendUserAction =
-      typeof window.kolb-botSendUserAction === "function"
-        ? window.kolb-botSendUserAction
+      typeof window.kolbBotSendUserAction === "function"
+        ? window.kolbBotSendUserAction
         : undefined;
     const ok = sendUserAction({
       name,

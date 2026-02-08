@@ -1207,7 +1207,7 @@ private const val a2uiReadyCheckJS: String =
   """
   (() => {
     try {
-      const host = globalThis.kolb-botA2UI;
+      const host = globalThis.kolbBotA2UI;
       return !!host && typeof host.applyMessages === 'function';
     } catch (_) {
       return false;
@@ -1219,8 +1219,8 @@ private const val a2uiResetJS: String =
   """
   (() => {
     try {
-      const host = globalThis.kolb-botA2UI;
-      if (!host) return { ok: false, error: "missing kolb-botA2UI" };
+      const host = globalThis.kolbBotA2UI;
+      if (!host) return { ok: false, error: "missing kolbBotA2UI" };
       return host.reset();
     } catch (e) {
       return { ok: false, error: String(e?.message ?? e) };
@@ -1232,8 +1232,8 @@ private fun a2uiApplyMessagesJS(messagesJson: String): String {
   return """
     (() => {
       try {
-        const host = globalThis.kolb-botA2UI;
-        if (!host) return { ok: false, error: "missing kolb-botA2UI" };
+        const host = globalThis.kolbBotA2UI;
+        if (!host) return { ok: false, error: "missing kolbBotA2UI" };
         const messages = $messagesJson;
         return host.applyMessages(messages);
       } catch (e) {

@@ -61,8 +61,8 @@ final class CanvasWindowController: NSWindowController, WKNavigationDelegate, NS
             const allowedSchemes = \(String(describing: CanvasScheme.allSchemes));
             const protocol = location.protocol.replace(':', '');
             if (!allowedSchemes.includes(protocol)) return;
-            if (globalThis.__kolb-botA2UIBridgeInstalled) return;
-            globalThis.__kolb-botA2UIBridgeInstalled = true;
+            if (globalThis.__kolbBotA2UIBridgeInstalled) return;
+            globalThis.__kolbBotA2UIBridgeInstalled = true;
 
             const deepLinkKey = \(Self.jsStringLiteral(deepLinkKey));
             const sessionKey = \(Self.jsStringLiteral(injectedSessionKey));
@@ -89,12 +89,12 @@ final class CanvasWindowController: NSWindowController, WKNavigationDelegate, NS
                   ...(context.length ? { context } : {}),
                 };
 
-                const handler = globalThis.webkit?.messageHandlers?.kolb-botCanvasA2UIAction;
+                const handler = globalThis.webkit?.messageHandlers?.kolbBotCanvasA2UIAction;
 
                 // If the bundled A2UI shell is present, let it forward actions so we keep its richer
                 // context resolution (data model path lookups, surface detection, etc.).
                 const hasBundledA2UIHost =
-                  !!globalThis.kolb-botA2UI ||
+                  !!globalThis.kolbBotA2UI ||
                   !!document.querySelector('kolb-bot-a2ui-host');
                 if (hasBundledA2UIHost && handler?.postMessage) return;
 
@@ -278,7 +278,7 @@ final class CanvasWindowController: NSWindowController, WKNavigationDelegate, NS
         let js = """
         (() => {
           try {
-            const api = globalThis.__kolb-bot;
+            const api = globalThis.__kolbBot;
             if (!api) return;
             if (typeof api.setDebugStatusEnabled === 'function') {
               api.setDebugStatusEnabled(\(enabled ? "true" : "false"));

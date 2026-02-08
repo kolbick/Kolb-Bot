@@ -189,7 +189,7 @@ Notes:
 
 - SDK: semver, published, documented changes.
 - Runtime: versioned per core release. Add `api.runtime.version`.
-- Plugins declare a required runtime range (e.g., `kolb-botRuntime: ">=2026.2.0"`).
+- Plugins declare a required runtime range (e.g., `kolbBotRuntime: ">=2026.2.0"`).
 
 ## Testing strategy
 

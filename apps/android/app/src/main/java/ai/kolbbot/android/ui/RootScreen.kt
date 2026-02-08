@@ -424,6 +424,6 @@ private class CanvasA2UIActionBridge(private val onMessage: (String) -> Unit) {
   }
 
   companion object {
-    const val interfaceName: String = "kolb-botCanvasA2UIAction"
+    const val interfaceName: String = "kolbBotCanvasA2UIAction"
   }
 }

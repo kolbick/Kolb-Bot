@@ -699,8 +699,8 @@ final class NodeAppModel {
 
             let json = try await self.screen.eval(javaScript: """
             (() => {
-              const host = globalThis.kolb-botA2UI;
-              if (!host) return JSON.stringify({ ok: false, error: "missing kolb-botA2UI" });
+              const host = globalThis.kolbBotA2UI;
+              if (!host) return JSON.stringify({ ok: false, error: "missing kolbBotA2UI" });
               return JSON.stringify(host.reset());
             })()
             """)
@@ -743,8 +743,8 @@ final class NodeAppModel {
             let js = """
             (() => {
               try {
-                const host = globalThis.kolb-botA2UI;
-                if (!host) return JSON.stringify({ ok: false, error: "missing kolb-botA2UI" });
+                const host = globalThis.kolbBotA2UI;
+                if (!host) return JSON.stringify({ ok: false, error: "missing kolbBotA2UI" });
                 const messages = \(messagesJSON);
                 return JSON.stringify(host.applyMessages(messages));
               } catch (e) {

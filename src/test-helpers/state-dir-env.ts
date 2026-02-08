@@ -1,25 +1,25 @@
 type StateDirEnvSnapshot = {
-  kolb-botStateDir: string | undefined;
-  kolb-botStateDir: string | undefined;
+  kolbBotStateDir: string | undefined;
+  kolbBotStateDir: string | undefined;
 };
 
 export function snapshotStateDirEnv(): StateDirEnvSnapshot {
   return {
-    kolb-botStateDir: process.env.KOLB_BOT_STATE_DIR,
-    kolb-botStateDir: process.env.CLAWDBOT_STATE_DIR,
+    kolbBotStateDir: process.env.KOLB_BOT_STATE_DIR,
+    kolbBotStateDir: process.env.CLAWDBOT_STATE_DIR,
   };
 }
 
 export function restoreStateDirEnv(snapshot: StateDirEnvSnapshot): void {
-  if (snapshot.kolb-botStateDir === undefined) {
+  if (snapshot.kolbBotStateDir === undefined) {
     delete process.env.KOLB_BOT_STATE_DIR;
   } else {
-    process.env.KOLB_BOT_STATE_DIR = snapshot.kolb-botStateDir;
+    process.env.KOLB_BOT_STATE_DIR = snapshot.kolbBotStateDir;
   }
-  if (snapshot.kolb-botStateDir === undefined) {
+  if (snapshot.kolbBotStateDir === undefined) {
     delete process.env.CLAWDBOT_STATE_DIR;
   } else {
-    process.env.CLAWDBOT_STATE_DIR = snapshot.kolb-botStateDir;
+    process.env.CLAWDBOT_STATE_DIR = snapshot.kolbBotStateDir;
   }
 }
 

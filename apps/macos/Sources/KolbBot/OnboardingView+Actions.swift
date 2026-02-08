@@ -47,7 +47,7 @@ extension OnboardingView {
         SettingsTabRouter.request(tab)
         self.openSettings()
         DispatchQueue.main.async {
-            NotificationCenter.default.post(name: .kolb-botSelectSettingsTab, object: tab)
+            NotificationCenter.default.post(name: .kolbBotSelectSettingsTab, object: tab)
         }
     }
 

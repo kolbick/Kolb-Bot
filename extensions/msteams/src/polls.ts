@@ -102,11 +102,11 @@ export function extractMSTeamsPollVote(
     return null;
   }
   const pollId =
-    readNestedString(value, ["kolb-botPollId"]) ??
+    readNestedString(value, ["kolbBotPollId"]) ??
     readNestedString(value, ["pollId"]) ??
     readNestedString(value, ["kolb-bot", "pollId"]) ??
     readNestedString(value, ["kolb-bot", "poll", "id"]) ??
-    readNestedString(value, ["data", "kolb-botPollId"]) ??
+    readNestedString(value, ["data", "kolbBotPollId"]) ??
     readNestedString(value, ["data", "pollId"]) ??
     readNestedString(value, ["data", "kolb-bot", "pollId"]);
   if (!pollId) {
@@ -185,14 +185,14 @@ export function buildMSTeamsPollCard(params: {
         type: "Action.Submit",
         title: "Vote",
         data: {
-          kolb-botPollId: pollId,
+          kolbBotPollId: pollId,
           pollId,
         },
         msteams: {
           type: "messageBack",
           text: "kolb-bot poll vote",
           displayText: "Vote recorded",
-          value: { kolb-botPollId: pollId, pollId },
+          value: { kolbBotPollId: pollId, pollId },
         },
       },
     ],
