@@ -78,7 +78,7 @@ describe("discoverKolbBotPlugins", () => {
       path.join(globalExt, "package.json"),
       JSON.stringify({
         name: "pack",
-        kolb-bot: { extensions: ["./src/one.ts", "./src/two.ts"] },
+        "kolb-bot": { extensions: ["./src/one.ts", "./src/two.ts"] },
       }),
       "utf-8",
     );
@@ -112,7 +112,7 @@ describe("discoverKolbBotPlugins", () => {
       path.join(globalExt, "package.json"),
       JSON.stringify({
         name: "@kolb-bot/voice-call",
-        kolb-bot: { extensions: ["./src/index.ts"] },
+        "kolb-bot": { extensions: ["./src/index.ts"] },
       }),
       "utf-8",
     );
@@ -140,7 +140,7 @@ describe("discoverKolbBotPlugins", () => {
       path.join(packDir, "package.json"),
       JSON.stringify({
         name: "@kolb-bot/demo-plugin-dir",
-        kolb-bot: { extensions: ["./index.js"] },
+        "kolb-bot": { extensions: ["./index.js"] },
       }),
       "utf-8",
     );

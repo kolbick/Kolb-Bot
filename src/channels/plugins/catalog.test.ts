@@ -25,7 +25,7 @@ describe("channel plugin catalog", () => {
         entries: [
           {
             name: "@kolb-bot/demo-channel",
-            kolb-bot: {
+            "kolb-bot": {
               channel: {
                 id: "demo-channel",
                 label: "Demo Channel",

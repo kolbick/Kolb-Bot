@@ -40,7 +40,7 @@ export function readSessionMessages(
           role: "system",
           content: [{ type: "text", text: "Compaction" }],
           timestamp,
-          __kolb-bot: {
+          "__kolb-bot": {
             kind: "compaction",
             id: typeof parsed.id === "string" ? parsed.id : undefined,
           },

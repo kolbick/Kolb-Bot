@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("../../memory/index.js", () => {
+vi.mock("../../memory-core/index.js", () => {
   return {
     getMemorySearchManager: async () => {
       return {

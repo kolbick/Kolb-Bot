@@ -1,4 +1,4 @@
-import type { Kolb-BotConfig } from "kolb-bot/plugin-sdk";
+import type { KolbBotConfig } from "kolb-bot/plugin-sdk";
 import { resolveFeishuAccount } from "./accounts.js";
 import { createFeishuClient } from "./client.js";
 
@@ -16,7 +16,7 @@ export type TypingIndicatorState = {
  * Add a typing indicator (reaction) to a message
  */
 export async function addTypingIndicator(params: {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   messageId: string;
   accountId?: string;
 }): Promise<TypingIndicatorState> {
@@ -50,7 +50,7 @@ export async function addTypingIndicator(params: {
  * Remove a typing indicator (reaction) from a message
  */
 export async function removeTypingIndicator(params: {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   state: TypingIndicatorState;
   accountId?: string;
 }): Promise<void> {

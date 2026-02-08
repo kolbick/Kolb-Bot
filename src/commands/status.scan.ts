@@ -1,4 +1,4 @@
-import type { MemoryProviderStatus } from "../memory/types.js";
+import type { MemoryProviderStatus } from "../memory-core/types.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { withProgress } from "../cli/progress.js";
 import { loadConfig } from "../config/config.js";
@@ -8,7 +8,7 @@ import { probeGateway } from "../gateway/probe.js";
 import { collectChannelStatusIssues } from "../infra/channels-status-issues.js";
 import { resolveOsSummary } from "../infra/os-summary.js";
 import { getTailnetHostname } from "../infra/tailscale.js";
-import { getMemorySearchManager } from "../memory/index.js";
+import { getMemorySearchManager } from "../memory-core/index.js";
 import { runExec } from "../process/exec.js";
 import { buildChannelsTable } from "./status-all/channels.js";
 import { getAgentLocalStatuses } from "./status.agent-local.js";

@@ -1,4 +1,4 @@
-import type { ChannelPlugin, Kolb-BotConfig } from "kolb-bot/plugin-sdk";
+import type { ChannelPlugin, KolbBotConfig } from "kolb-bot/plugin-sdk";
 import { DEFAULT_ACCOUNT_ID, PAIRING_APPROVED_MESSAGE } from "kolb-bot/plugin-sdk";
 import type { ResolvedFeishuAccount, FeishuConfig } from "./types.js";
 import {
@@ -164,7 +164,7 @@ export const feishuPlugin: ChannelPlugin<ResolvedFeishuAccount> = {
 
       if (isDefault) {
         // Delete entire feishu config
-        const next = { ...cfg } as Kolb-BotConfig;
+        const next = { ...cfg } as KolbBotConfig;
         const nextChannels = { ...cfg.channels };
         delete (nextChannels as Record<string, unknown>).feishu;
         if (Object.keys(nextChannels).length > 0) {

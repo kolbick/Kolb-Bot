@@ -108,7 +108,7 @@ describe("getUsedPorts", () => {
 
   it("extracts ports from profile configs", () => {
     const profiles = {
-      kolb-bot: { cdpPort: 18792 },
+      "kolb-bot": { cdpPort: 18792 },
       work: { cdpPort: 18793 },
       personal: { cdpPort: 18795 },
     };
@@ -233,7 +233,7 @@ describe("getUsedColors", () => {
 
   it("extracts and uppercases colors from profile configs", () => {
     const profiles = {
-      kolb-bot: { color: "#ff4500" },
+      "kolb-bot": { color: "#ff4500" },
       work: { color: "#0066CC" },
     };
     const used = getUsedColors(profiles);

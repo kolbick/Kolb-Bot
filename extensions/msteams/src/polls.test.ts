@@ -39,7 +39,7 @@ describe("msteams polls", () => {
   it("extracts poll votes from activity values", () => {
     const vote = extractMSTeamsPollVote({
       value: {
-        kolb-botPollId: "poll-1",
+        kolbBotPollId: "poll-1",
         choices: "0,1",
       },
     });

@@ -1,7 +1,7 @@
 import type {
   ChannelOnboardingAdapter,
   ChannelOnboardingDmPolicy,
-  Kolb-BotConfig,
+  KolbBotConfig,
   DmPolicy,
   WizardPrompter,
 } from "kolb-bot/plugin-sdk";
@@ -12,7 +12,7 @@ import { probeFeishu } from "./probe.js";
 
 const channel = "feishu" as const;
 
-function setFeishuDmPolicy(cfg: Kolb-BotConfig, dmPolicy: DmPolicy): Kolb-BotConfig {
+function setFeishuDmPolicy(cfg: KolbBotConfig, dmPolicy: DmPolicy): KolbBotConfig {
   const allowFrom =
     dmPolicy === "open"
       ? addWildcardAllowFrom(cfg.channels?.feishu?.allowFrom)?.map((entry) => String(entry))
@@ -30,7 +30,7 @@ function setFeishuDmPolicy(cfg: Kolb-BotConfig, dmPolicy: DmPolicy): Kolb-BotCon
   };
 }
 
-function setFeishuAllowFrom(cfg: Kolb-BotConfig, allowFrom: string[]): Kolb-BotConfig {
+function setFeishuAllowFrom(cfg: KolbBotConfig, allowFrom: string[]): KolbBotConfig {
   return {
     ...cfg,
     channels: {
@@ -51,9 +51,9 @@ function parseAllowFromInput(raw: string): string[] {
 }
 
 async function promptFeishuAllowFrom(params: {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   prompter: WizardPrompter;
-}): Promise<Kolb-BotConfig> {
+}): Promise<KolbBotConfig> {
   const existing = params.cfg.channels?.feishu?.allowFrom ?? [];
   await params.prompter.note(
     [
@@ -102,9 +102,9 @@ async function noteFeishuCredentialHelp(prompter: WizardPrompter): Promise<void>
 }
 
 function setFeishuGroupPolicy(
-  cfg: Kolb-BotConfig,
+  cfg: KolbBotConfig,
   groupPolicy: "open" | "allowlist" | "disabled",
-): Kolb-BotConfig {
+): KolbBotConfig {
   return {
     ...cfg,
     channels: {
@@ -118,7 +118,7 @@ function setFeishuGroupPolicy(
   };
 }
 
-function setFeishuGroupAllowFrom(cfg: Kolb-BotConfig, groupAllowFrom: string[]): Kolb-BotConfig {
+function setFeishuGroupAllowFrom(cfg: KolbBotConfig, groupAllowFrom: string[]): KolbBotConfig {
   return {
     ...cfg,
     channels: {

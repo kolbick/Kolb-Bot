@@ -13,13 +13,13 @@ import {
   resolveControlUiLinks,
   waitForGatewayReachable,
 } from "../onboard-helpers.js";
-import { inferAuthChoiceFromFlags } from "./local/auth-choice-inference.js";
-import { applyNonInteractiveAuthChoice } from "./local/auth-choice.js";
-import { installGatewayDaemonNonInteractive } from "./local/daemon-install.js";
-import { applyNonInteractiveGatewayConfig } from "./local/gateway-config.js";
-import { logNonInteractiveOnboardingJson } from "./local/output.js";
-import { applyNonInteractiveSkillsConfig } from "./local/skills-config.js";
-import { resolveNonInteractiveWorkspaceDir } from "./local/workspace.js";
+import { inferAuthChoiceFromFlags } from "./noninteractive-local/auth-choice-inference.js";
+import { applyNonInteractiveAuthChoice } from "./noninteractive-local/auth-choice.js";
+import { installGatewayDaemonNonInteractive } from "./noninteractive-local/daemon-install.js";
+import { applyNonInteractiveGatewayConfig } from "./noninteractive-local/gateway-config.js";
+import { logNonInteractiveOnboardingJson } from "./noninteractive-local/output.js";
+import { applyNonInteractiveSkillsConfig } from "./noninteractive-local/skills-config.js";
+import { resolveNonInteractiveWorkspaceDir } from "./noninteractive-local/workspace.js";
 
 export async function runNonInteractiveOnboardingLocal(params: {
   opts: OnboardOptions;
