@@ -1,0 +1,36 @@
+{
+  "name": "@kolb-bot/zalo",
+  "version": "2026.2.6-3",
+  "description": "KolbBot Zalo channel plugin",
+  "type": "module",
+  "dependencies": {
+    "kolb-bot": "workspace:*",
+    "undici": "7.21.0"
+  },
+  "devDependencies": {
+    "kolb-bot": "workspace:*"
+  },
+  "kolb-bot": {
+    "extensions": [
+      "./index.ts"
+    ],
+    "channel": {
+      "id": "zalo",
+      "label": "Zalo",
+      "selectionLabel": "Zalo (Bot API)",
+      "docsPath": "/channels/zalo",
+      "docsLabel": "zalo",
+      "blurb": "Vietnam-focused messaging platform with Bot API.",
+      "aliases": [
+        "zl"
+      ],
+      "order": 80,
+      "quickstartAllowFrom": true
+    },
+    "install": {
+      "npmSpec": "@kolb-bot/zalo",
+      "localPath": "extensions/zalo",
+      "defaultChoice": "npm"
+    }
+  }
+}
