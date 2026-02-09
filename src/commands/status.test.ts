@@ -86,10 +86,10 @@ const mocks = vi.hoisted(() => ({
   }),
 }));
 
-vi.mock("../memory/manager.js", () => ({
-  MemoryIndexManager: {
-    get: vi.fn(async ({ agentId }: { agentId: string }) => ({
-      probeVectorAvailability: vi.fn(async () => true),
+vi.mock("../memory-core/index.js", () => ({
+  getMemorySearchManager: vi.fn(async ({ agentId }: { agentId: string }) => ({
+    manager: {
+      probeVectorAvailability: vi.fn(async () => ({ ok: true })),
       status: () => ({
         files: 2,
         chunks: 3,
@@ -99,6 +99,7 @@ vi.mock("../memory/manager.js", () => ({
         provider: "openai",
         model: "text-embedding-3-small",
         requestedProvider: "openai",
+        backend: "qmd",
         sources: ["memory"],
         sourceCounts: [{ source: "memory", files: 2, chunks: 3 }],
         cache: { enabled: true, entries: 10, maxEntries: 500 },
@@ -112,8 +113,8 @@ vi.mock("../memory/manager.js", () => ({
       }),
       close: vi.fn(async () => {}),
       __agentId: agentId,
-    })),
-  },
+    },
+  })),
 }));
 
 vi.mock("../config/sessions.js", () => ({

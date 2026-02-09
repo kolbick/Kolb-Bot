@@ -1,4 +1,4 @@
-import type { Kolb-BotConfig } from "kolb-bot/plugin-sdk";
+import type { KolbBotConfig } from "kolb-bot/plugin-sdk";
 import type { MentionTarget } from "./mention.js";
 import type { FeishuSendResult } from "./types.js";
 import { resolveFeishuAccount } from "./accounts.js";
@@ -22,7 +22,7 @@ export type FeishuMessageInfo = {
  * Useful for fetching quoted/replied message content.
  */
 export async function getMessageFeishu(params: {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   messageId: string;
   accountId?: string;
 }): Promise<FeishuMessageInfo | null> {
@@ -91,7 +91,7 @@ export async function getMessageFeishu(params: {
 }
 
 export type SendFeishuMessageParams = {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   to: string;
   text: string;
   replyToMessageId?: string;
@@ -192,7 +192,7 @@ export async function sendMessageFeishu(
 }
 
 export type SendFeishuCardParams = {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   to: string;
   card: Record<string, unknown>;
   replyToMessageId?: string;
@@ -254,7 +254,7 @@ export async function sendCardFeishu(params: SendFeishuCardParams): Promise<Feis
 }
 
 export async function updateCardFeishu(params: {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   messageId: string;
   card: Record<string, unknown>;
   accountId?: string;
@@ -301,7 +301,7 @@ export function buildMarkdownCard(text: string): Record<string, unknown> {
  * This renders markdown properly in Feishu (code blocks, tables, bold/italic, etc.)
  */
 export async function sendMarkdownCardFeishu(params: {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   to: string;
   text: string;
   replyToMessageId?: string;
@@ -324,7 +324,7 @@ export async function sendMarkdownCardFeishu(params: {
  * Note: Feishu only allows editing messages within 24 hours.
  */
 export async function editMessageFeishu(params: {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   messageId: string;
   text: string;
   accountId?: string;

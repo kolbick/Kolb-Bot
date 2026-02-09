@@ -2,7 +2,7 @@ import {
   createReplyPrefixContext,
   createTypingCallbacks,
   logTypingFailure,
-  type Kolb-BotConfig,
+  type KolbBotConfig,
   type RuntimeEnv,
   type ReplyPayload,
 } from "kolb-bot/plugin-sdk";
@@ -29,7 +29,7 @@ function shouldUseCard(text: string): boolean {
 }
 
 export type CreateFeishuReplyDispatcherParams = {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   agentId: string;
   runtime: RuntimeEnv;
   chatId: string;

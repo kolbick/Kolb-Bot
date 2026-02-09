@@ -179,7 +179,7 @@ describe("loadKolbBotPlugins", () => {
         name: "@kolb-bot/memory-core",
         version: "1.2.3",
         description: "Memory plugin package",
-        kolb-bot: { extensions: ["./index.ts"] },
+        "kolb-bot": { extensions: ["./index.ts"] },
       }),
       "utf-8",
     );

@@ -41,7 +41,7 @@ const buttonShadow = isAndroid ? "0 2px 10px rgba(6, 182, 212, 0.14)" : "0 10px 
 const statusShadow = isAndroid ? "0 2px 10px rgba(0, 0, 0, 0.18)" : "0 10px 24px rgba(0, 0, 0, 0.25)";
 const statusBlur = isAndroid ? "10px" : "14px";
 
-const kolb-botTheme = {
+const kolbBotTheme = {
   components: {
     AudioPlayer: emptyClasses(),
     Button: emptyClasses(),
@@ -161,7 +161,7 @@ class KolbBotA2UIHost extends LitElement {
   #processor = v0_8.Data.createSignalA2uiMessageProcessor();
   themeProvider = new ContextProvider(this, {
     context: themeContext,
-    initialValue: kolb-botTheme,
+    initialValue: kolbBotTheme,
   });
 
   surfaces = [];
@@ -280,7 +280,7 @@ class KolbBotA2UIHost extends LitElement {
       reset: () => this.reset(),
       getSurfaces: () => Array.from(this.#processor.getSurfaces().keys()),
     };
-    globalThis.kolb-botA2UI = api;
+    globalThis["kolb-botA2UI"] = api;
     this.addEventListener("a2uiaction", (evt) => this.#handleA2UIAction(evt));
     this.#statusListener = (evt) => this.#handleActionStatus(evt);
     for (const eventName of ["kolb-bot:a2ui-action-status"]) {
@@ -397,15 +397,15 @@ class KolbBotA2UIHost extends LitElement {
       ...(Object.keys(context).length ? { context } : {}),
     };
 
-    globalThis.__kolb-botLastA2UIAction = userAction;
+    globalThis["__kolb-botLastA2UIAction"] = userAction;
 
     const handler =
-      globalThis.webkit?.messageHandlers?.kolb-botCanvasA2UIAction ??
-      globalThis.kolb-botCanvasA2UIAction;
+      globalThis.webkit?.messageHandlers?.["kolb-botCanvasA2UIAction"] ??
+      globalThis["kolb-botCanvasA2UIAction"];
     if (handler?.postMessage) {
       try {
         // WebKit message handlers support structured objects; Android's JS interface expects strings.
-        if (handler === globalThis.kolb-botCanvasA2UIAction) {
+        if (handler === globalThis["kolb-botCanvasA2UIAction"]) {
           handler.postMessage(JSON.stringify({ userAction }));
         } else {
           handler.postMessage({ userAction });

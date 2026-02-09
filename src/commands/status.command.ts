@@ -16,7 +16,7 @@ import {
   resolveMemoryFtsState,
   resolveMemoryVectorState,
   type Tone,
-} from "../memory/status-format.js";
+} from "../memory-core/status-format.js";
 import { runSecurityAudit } from "../security/audit.js";
 import { renderTable } from "../terminal/table.js";
 import { theme } from "../terminal/theme.js";
