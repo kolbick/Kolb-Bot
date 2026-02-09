@@ -1011,7 +1011,7 @@ describe("security audit", () => {
       path.join(pluginDir, "package.json"),
       JSON.stringify({
         name: "evil-plugin",
-        kolb-bot: { extensions: [".hidden/index.js"] },
+        "kolb-bot": { extensions: [".hidden/index.js"] },
       }),
     );
     await fs.writeFile(
@@ -1058,7 +1058,7 @@ describe("security audit", () => {
       path.join(pluginDir, "package.json"),
       JSON.stringify({
         name: "evil-plugin",
-        kolb-bot: { extensions: [".hidden/index.js"] },
+        "kolb-bot": { extensions: [".hidden/index.js"] },
       }),
     );
     await fs.writeFile(
@@ -1118,7 +1118,7 @@ description: test skill
       path.join(pluginDir, "package.json"),
       JSON.stringify({
         name: "escape-plugin",
-        kolb-bot: { extensions: ["../outside.js"] },
+        "kolb-bot": { extensions: ["../outside.js"] },
       }),
     );
     await fs.writeFile(path.join(pluginDir, "index.js"), "export {};");
@@ -1158,7 +1158,7 @@ description: test skill
         path.join(pluginDir, "package.json"),
         JSON.stringify({
           name: "scanfail-plugin",
-          kolb-bot: { extensions: ["index.js"] },
+          "kolb-bot": { extensions: ["index.js"] },
         }),
       );
       await fs.writeFile(path.join(pluginDir, "index.js"), "export {};");

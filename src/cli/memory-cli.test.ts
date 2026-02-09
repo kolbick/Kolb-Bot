@@ -5,7 +5,7 @@ const getMemorySearchManager = vi.fn();
 const loadConfig = vi.fn(() => ({}));
 const resolveDefaultAgentId = vi.fn(() => "main");
 
-vi.mock("../memory/index.js", () => ({
+vi.mock("../memory-core/index.js", () => ({
   getMemorySearchManager,
 }));
 

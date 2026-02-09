@@ -134,11 +134,11 @@ export function renderApp(state: AppViewState) {
           </button>
           <div class="brand">
             <div class="brand-logo">
-              <img src=${basePath ? `${basePath}/favicon.svg` : "/favicon.svg"} alt="KolbBot" />
+              <img src=${basePath ? `${basePath}/kolb-bot-icon-mark.svg` : "/kolb-bot-icon-mark.svg"} alt="KolbBot" />
             </div>
             <div class="brand-text">
-              <div class="brand-title">KOLB_BOT</div>
-              <div class="brand-sub">Gateway Dashboard</div>
+              <div class="brand-title">KolbBot</div>
+              <div class="brand-sub">Control UI</div>
             </div>
           </div>
         </div>

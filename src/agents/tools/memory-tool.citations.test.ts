@@ -31,7 +31,7 @@ const stubManager = {
   close: vi.fn(),
 };
 
-vi.mock("../../memory/index.js", () => {
+vi.mock("../../memory-core/index.js", () => {
   return {
     getMemorySearchManager: async () => ({ manager: stubManager }),
   };

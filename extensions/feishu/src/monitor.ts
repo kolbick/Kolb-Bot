@@ -1,4 +1,4 @@
-import type { Kolb-BotConfig, RuntimeEnv, HistoryEntry } from "kolb-bot/plugin-sdk";
+import type { KolbBotConfig, RuntimeEnv, HistoryEntry } from "kolb-bot/plugin-sdk";
 import * as Lark from "@larksuiteoapi/node-sdk";
 import type { ResolvedFeishuAccount } from "./types.js";
 import { resolveFeishuAccount, listEnabledFeishuAccounts } from "./accounts.js";
@@ -7,7 +7,7 @@ import { createFeishuWSClient, createEventDispatcher } from "./client.js";
 import { probeFeishu } from "./probe.js";
 
 export type MonitorFeishuOpts = {
-  config?: Kolb-BotConfig;
+  config?: KolbBotConfig;
   runtime?: RuntimeEnv;
   abortSignal?: AbortSignal;
   accountId?: string;
@@ -30,7 +30,7 @@ async function fetchBotOpenId(account: ResolvedFeishuAccount): Promise<string | 
  * Monitor a single Feishu account.
  */
 async function monitorSingleAccount(params: {
-  cfg: Kolb-BotConfig;
+  cfg: KolbBotConfig;
   account: ResolvedFeishuAccount;
   runtime?: RuntimeEnv;
   abortSignal?: AbortSignal;

@@ -37,7 +37,7 @@ describe("installHooksFromArchive", () => {
       JSON.stringify({
         name: "@kolb-bot/zip-hooks",
         version: "0.0.1",
-        kolb-bot: { hooks: ["./hooks/zip-hook"] },
+        "kolb-bot": { hooks: ["./hooks/zip-hook"] },
       }),
     );
     zip.file(
@@ -82,7 +82,7 @@ describe("installHooksFromArchive", () => {
       JSON.stringify({
         name: "@kolb-bot/tar-hooks",
         version: "0.0.1",
-        kolb-bot: { hooks: ["./hooks/tar-hook"] },
+        "kolb-bot": { hooks: ["./hooks/tar-hook"] },
       }),
       "utf-8",
     );
@@ -131,7 +131,7 @@ describe("installHooksFromArchive", () => {
       JSON.stringify({
         name: "@evil/..",
         version: "0.0.1",
-        kolb-bot: { hooks: ["./hooks/evil-hook"] },
+        "kolb-bot": { hooks: ["./hooks/evil-hook"] },
       }),
       "utf-8",
     );
@@ -178,7 +178,7 @@ describe("installHooksFromArchive", () => {
       JSON.stringify({
         name: "@evil/.",
         version: "0.0.1",
-        kolb-bot: { hooks: ["./hooks/reserved-hook"] },
+        "kolb-bot": { hooks: ["./hooks/reserved-hook"] },
       }),
       "utf-8",
     );
