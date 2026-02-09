@@ -1,18 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" role="img" aria-label="Kolb-Bot">
   <rect width="48" height="48" rx="6" fill="#1a0033"/>
-  <g fill="#9B30FF">
-    <circle cx="24" cy="20" r="12"/>
-    <rect x="16" y="30" width="4" height="8" rx="1"/>
-    <rect x="22" y="30" width="4" height="10" rx="1"/>
-    <rect x="28" y="30" width="4" height="8" rx="1"/>
-  </g>
-  <g fill="#FFB300">
-    <circle cx="19" cy="18" r="3"/>
-    <circle cx="29" cy="18" r="3"/>
-  </g>
-  <g fill="#1a0033">
-    <circle cx="19" cy="18" r="1.5"/>
-    <circle cx="29" cy="18" r="1.5"/>
-  </g>
-  <path d="M21 24 L24 27 L27 24Z" fill="#7B1FA2"/>
+  <!-- Pirate hat -->
+  <path d="M8 18 Q12 8 24 6 Q36 8 40 18 Z" fill="#7B1FA2"/>
+  <path d="M10 18 Q12 12 24 10 Q36 12 38 18 Z" fill="#9B30FF"/>
+  <path d="M8 18 L40 18 L38 20 L10 20 Z" fill="#FFB300"/>
+  <!-- Hat brim -->
+  <path d="M6 20 Q24 16 42 20 Q24 22 6 20 Z" fill="#7B1FA2" stroke="#FFB300" stroke-width="0.5"/>
+  <!-- Skull -->
+  <rect x="12" y="20" width="24" height="18" rx="6" fill="#E0E0E0"/>
+  <rect x="14" y="22" width="20" height="14" rx="4" fill="#F5F5F5"/>
+  <!-- Eye patch (right eye) -->
+  <ellipse cx="19" cy="27" rx="4" ry="3.5" fill="#1a1a1a"/>
+  <line x1="19" y1="23" x2="24" y2="20" stroke="#1a1a1a" stroke-width="1"/>
+  <!-- Glowing eye (left eye) -->
+  <ellipse cx="31" cy="27" rx="4" ry="3.5" fill="#1a0033"/>
+  <circle cx="31" cy="27" r="2" fill="#FFB300"/>
+  <circle cx="31" cy="26.5" r="0.8" fill="#FFF"/>
+  <!-- Nose -->
+  <path d="M23 31 L25 33 L27 31 Z" fill="#BDBDBD"/>
+  <!-- Teeth -->
+  <rect x="18" y="35" width="3" height="3" rx="0.5" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="0.3"/>
+  <rect x="22" y="35" width="3" height="4" rx="0.5" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="0.3"/>
+  <rect x="26" y="35" width="3" height="3" rx="0.5" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="0.3"/>
+  <!-- Headphones -->
+  <circle cx="10" cy="27" r="3" fill="#FFB300"/>
+  <circle cx="38" cy="27" r="3" fill="#FFB300"/>
+  <!-- Jaw -->
+  <rect x="16" y="38" width="16" height="4" rx="2" fill="#BDBDBD"/>
 </svg>
