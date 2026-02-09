@@ -190,6 +190,8 @@ describe("resolveSlackMedia", () => {
   });
 
   it("prefers url_private_download over url_private", async () => {
+    // Reset modules so the dynamic import picks up the mocked store
+    vi.resetModules();
     // Mock the store module
     vi.doMock("../../media/store.js", () => ({
       saveMediaBuffer: vi.fn().mockResolvedValue({
@@ -197,6 +199,22 @@ describe("resolveSlackMedia", () => {
         contentType: "image/jpeg",
       }),
     }));
+    // Re-mock SSRF module after resetModules so the fresh import chain picks it up
+    vi.doMock("../../infra/net/ssrf.js", async () => {
+      const actual = await vi.importActual<typeof ssrf>("../../infra/net/ssrf.js");
+      return {
+        ...actual,
+        resolvePinnedHostname: vi.fn(async (hostname: string) => {
+          const normalized = hostname.trim().toLowerCase().replace(/\.$/, "");
+          const addresses = ["93.184.216.34"];
+          return {
+            hostname: normalized,
+            addresses,
+            lookup: actual.createPinnedLookup({ hostname: normalized, addresses }),
+          };
+        }),
+      };
+    });
 
     const { resolveSlackMedia } = await import("./media.js");
 
@@ -265,6 +283,8 @@ describe("resolveSlackMedia", () => {
   });
 
   it("falls through to next file when first file returns error", async () => {
+    // Reset modules so the dynamic import picks up the mocked store
+    vi.resetModules();
     // Mock the store module
     vi.doMock("../../media/store.js", () => ({
       saveMediaBuffer: vi.fn().mockResolvedValue({
@@ -272,6 +292,22 @@ describe("resolveSlackMedia", () => {
         contentType: "image/jpeg",
       }),
     }));
+    // Re-mock SSRF module after resetModules so the fresh import chain picks it up
+    vi.doMock("../../infra/net/ssrf.js", async () => {
+      const actual = await vi.importActual<typeof ssrf>("../../infra/net/ssrf.js");
+      return {
+        ...actual,
+        resolvePinnedHostname: vi.fn(async (hostname: string) => {
+          const normalized = hostname.trim().toLowerCase().replace(/\.$/, "");
+          const addresses = ["93.184.216.34"];
+          return {
+            hostname: normalized,
+            addresses,
+            lookup: actual.createPinnedLookup({ hostname: normalized, addresses }),
+          };
+        }),
+      };
+    });
 
     const { resolveSlackMedia } = await import("./media.js");
 

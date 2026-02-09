@@ -1,29 +1,36 @@
-<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="skull-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#BA55D3"/>
-      <stop offset="100%" stop-color="#7B1FA2"/>
-    </linearGradient>
-  </defs>
+<svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Kolb-Bot">
+  <!-- Pirate hat -->
+  <path d="M15 50 Q25 15 60 10 Q95 15 105 50 Z" fill="#7B1FA2"/>
+  <path d="M20 50 Q28 22 60 16 Q92 22 100 50 Z" fill="#9B30FF"/>
+  <path d="M15 50 L105 50 L100 55 L20 55 Z" fill="#FFB300"/>
+  <!-- Hat brim -->
+  <path d="M10 55 Q60 44 110 55 Q60 62 10 55 Z" fill="#7B1FA2" stroke="#FFB300" stroke-width="1"/>
+  <!-- Hat buckle -->
+  <rect x="50" y="42" width="20" height="12" rx="2" fill="#FFB300"/>
+  <rect x="54" y="45" width="12" height="6" rx="1" fill="#7B1FA2"/>
   <!-- Skull -->
-  <path d="M60 8 C30 8 15 30 15 55 C15 72 25 85 40 90 L40 105 L50 105 L50 95 L55 100 L65 100 L70 95 L70 105 L80 105 L80 90 C95 85 105 72 105 55 C105 30 90 8 60 8Z" fill="url(#skull-gradient)"/>
-  <!-- Left Eye -->
-  <ellipse cx="42" cy="48" rx="10" ry="11" fill="#1a0033"/>
-  <ellipse cx="43" cy="47" rx="4" ry="5" fill="#FFB300"/>
-  <!-- Right Eye -->
-  <ellipse cx="78" cy="48" rx="10" ry="11" fill="#1a0033"/>
-  <ellipse cx="79" cy="47" rx="4" ry="5" fill="#FFB300"/>
+  <ellipse cx="60" cy="72" rx="32" ry="26" fill="#E8E8E8"/>
+  <ellipse cx="60" cy="70" rx="28" ry="22" fill="#F5F5F5"/>
+  <!-- Eye patch (left eye) -->
+  <ellipse cx="45" cy="67" rx="10" ry="9" fill="#1a1a1a"/>
+  <line x1="45" y1="58" x2="60" y2="52" stroke="#1a1a1a" stroke-width="2.5"/>
+  <!-- Glowing eye (right eye) -->
+  <ellipse cx="75" cy="67" rx="10" ry="9" fill="#1a0033"/>
+  <circle cx="75" cy="66" r="5" fill="#FFB300"/>
+  <circle cx="76" cy="64" r="2" fill="#FFF"/>
   <!-- Nose -->
-  <path d="M55 65 L60 72 L65 65Z" fill="#4A0080"/>
+  <path d="M55 80 L60 86 L65 80 Z" fill="#BDBDBD"/>
   <!-- Teeth -->
-  <rect x="42" y="85" width="8" height="12" rx="2" fill="#E8D5F5"/>
-  <rect x="52" y="85" width="8" height="14" rx="2" fill="#E8D5F5"/>
-  <rect x="62" y="85" width="8" height="12" rx="2" fill="#E8D5F5"/>
-  <!-- Crossbones -->
-  <g stroke="#FFB300" stroke-width="6" stroke-linecap="round">
-    <line x1="15" y1="100" x2="45" y2="115"/>
-    <line x1="45" y1="100" x2="15" y2="115"/>
-    <line x1="75" y1="100" x2="105" y2="115"/>
-    <line x1="105" y1="100" x2="75" y2="115"/>
-  </g>
+  <rect x="40" y="92" width="8" height="8" rx="1.5" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="0.5"/>
+  <rect x="50" y="92" width="8" height="10" rx="1.5" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="0.5"/>
+  <rect x="60" y="92" width="8" height="10" rx="1.5" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="0.5"/>
+  <rect x="70" y="92" width="8" height="8" rx="1.5" fill="#F5F5F5" stroke="#BDBDBD" stroke-width="0.5"/>
+  <!-- Headphones -->
+  <circle cx="24" cy="70" r="8" fill="#FFB300"/>
+  <circle cx="24" cy="70" r="5" fill="#E6A200"/>
+  <circle cx="96" cy="70" r="8" fill="#FFB300"/>
+  <circle cx="96" cy="70" r="5" fill="#E6A200"/>
+  <!-- Jaw/chin -->
+  <rect x="38" y="100" width="44" height="10" rx="4" fill="#BDBDBD"/>
+  <rect x="42" y="102" width="36" height="6" rx="3" fill="#D0D0D0"/>
 </svg>

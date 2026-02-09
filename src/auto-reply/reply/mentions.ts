@@ -68,8 +68,22 @@ export function buildMentionRegexes(cfg: KolbBotConfig | undefined, agentId?: st
     .filter((value): value is RegExp => Boolean(value));
 }
 
+const LEGACY_NAME_MAP: ReadonlyArray<[RegExp, string]> = [
+  [/\bopenclaw\b/g, "kolb-bot"],
+  [/\bopen[-\s]?claw\b/g, "kolb-bot"],
+  [/\bclawd(?:bot)?\b/g, "kolb-bot"],
+];
+
 export function normalizeMentionText(text: string): string {
-  return (text ?? "").replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f]/g, "").toLowerCase();
+  let cleaned = (text ?? "")
+    .replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f]/g, "")
+    .toLowerCase()
+    // Normalize underscores to hyphens so KOLB_BOT matches kolb-bot patterns
+    .replace(/_/g, "-");
+  for (const [pattern, replacement] of LEGACY_NAME_MAP) {
+    cleaned = cleaned.replace(pattern, replacement);
+  }
+  return cleaned;
 }
 
 export function matchesMentionPatterns(text: string, mentionRegexes: RegExp[]): boolean {

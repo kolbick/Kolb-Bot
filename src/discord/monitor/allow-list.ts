@@ -87,12 +87,16 @@ export function normalizeDiscordAllowList(
 }
 
 export function normalizeDiscordSlug(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/^#/, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return (
+    value
+      .trim()
+      // Split camelCase boundaries (e.g. "KolbBot" → "Kolb-Bot")
+      .replace(/([a-z])([A-Z])/g, "$1-$2")
+      .toLowerCase()
+      .replace(/^#/, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+  );
 }
 
 export function allowListMatches(

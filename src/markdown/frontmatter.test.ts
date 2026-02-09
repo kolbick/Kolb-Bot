@@ -33,7 +33,7 @@ metadata:
     expect(result.metadata).toBeDefined();
 
     const parsed = JSON5.parse(result.metadata ?? "");
-    expect(parsed.kolb-bot?.emoji).toBe("disk");
+    expect(parsed["kolb-bot"]?.emoji).toBe("disk");
   });
 
   it("preserves inline JSON values", () => {
@@ -65,7 +65,7 @@ metadata:
     expect(result.retries).toBe("3");
     expect(JSON.parse(result.tags ?? "[]")).toEqual(["alpha", "beta"]);
     const parsed = JSON5.parse(result.metadata ?? "");
-    expect(parsed.kolb-bot?.events).toEqual(["command:new"]);
+    expect(parsed["kolb-bot"]?.events).toEqual(["command:new"]);
   });
 
   it("returns empty when frontmatter is missing", () => {
