@@ -6,7 +6,11 @@
 # It's designed for quick one-tap checking from phone home screen.
 
 # Server hostname (via Tailscale or SSH config)
-SERVER="${KOLB_BOT_SERVER:-${CLAWDBOT_SERVER:-l36}}"
+SERVER="${KOLB_BOT_SERVER:-}"
+if [ -z "$SERVER" ]; then
+    termux-toast "Set KOLB_BOT_SERVER to your server hostname first"
+    exit 1
+fi
 
 # Check auth status
 termux-toast "Checking KolbBot auth..."

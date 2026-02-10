@@ -5,7 +5,11 @@
 # One-tap: shows status toast
 # If expired: directly opens auth URL
 
-SERVER="${KOLB_BOT_SERVER:-${CLAWDBOT_SERVER:-l36}}"
+SERVER="${KOLB_BOT_SERVER:-}"
+if [ -z "$SERVER" ]; then
+    termux-toast "Set KOLB_BOT_SERVER to your server hostname first"
+    exit 1
+fi
 
 STATUS=$(ssh -o ConnectTimeout=5 "$SERVER" '$HOME/kolb-bot/scripts/claude-auth-status.sh simple' 2>&1)
 

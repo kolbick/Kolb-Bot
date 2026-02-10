@@ -1,12 +1,15 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # KolbBot OAuth Sync Widget
-# Syncs Claude Code tokens to KolbBot on l36 server
+# Syncs Claude Code tokens to KolbBot on a remote server
 # Place in ~/.shortcuts/ on phone for Termux:Widget
 
-termux-toast "Syncing KolbBot auth..."
+SERVER="${KOLB_BOT_SERVER:-}"
+if [ -z "$SERVER" ]; then
+    termux-toast "Set KOLB_BOT_SERVER to your server hostname first"
+    exit 1
+fi
 
-# Run sync on l36 server
-SERVER="${KOLB_BOT_SERVER:-${CLAWDBOT_SERVER:-l36}}"
+termux-toast "Syncing KolbBot auth..."
 RESULT=$(ssh "$SERVER" '/home/admin/kolb-bot/scripts/sync-claude-code-auth.sh' 2>&1)
 EXIT_CODE=$?
 
