@@ -1,4 +1,4 @@
-# ☠️ Kolb-Bot
+# Kolb-Bot
 
 <p align="center">
     <img src="assets/kolb-bot-logo.png" alt="Kolb-Bot" width="400">
@@ -18,726 +18,461 @@ This whole thing started because I got tired of juggling a dozen different AI to
 
 ---
 
-## What You Need to Download (and Why)
+## How Does It Work? (The Simple Version)
 
-Before you can run Kolb-Bot, you need three things on your computer. Here's what each one is and why you need it:
+```
+You send a message from your phone (WhatsApp, Discord, etc.)
+       |
+       v
+Kolb-Bot (running on your computer) receives it
+       |
+       v
+Kolb-Bot asks an AI service (like Google Gemini) for a response
+       |
+       v
+The AI's answer gets sent back to you as a reply
+```
 
-### 1. Git — for downloading the code
+That's it. Your computer acts as the middleman between you and the AI.
 
-**What is it?** Git is a tool developers use to download and manage code. You need it to grab the Kolb-Bot code from GitHub.
+**Important:** Kolb-Bot only works while your computer is turned on and connected to the internet. Close the lid on your laptop? Kolb-Bot goes to sleep too. (There are ways around this — see the "Advanced" section later.)
 
-**Check if you already have it:**
+---
+
+## Before We Start: What's a "Terminal"?
+
+Every computer has a built-in app where you can type commands instead of clicking buttons. It looks like a black window with text. You'll need to use it to set up Kolb-Bot.
+
+**How to open it:**
+
+- **Mac:** Press `Cmd + Space`, type "Terminal", hit Enter
+- **Windows:** See the Windows section below (you need an extra step first)
+- **Linux:** Press `Ctrl + Alt + T`
+
+Don't worry if you've never used it — this guide tells you exactly what to type, and you can just copy and paste each command.
+
+---
+
+## What You Need to Install First
+
+Before Kolb-Bot can run, your computer needs three programs. Think of them as tools that Kolb-Bot needs to work — like how a printer needs ink and paper.
+
+### 1. Git — Downloads the Kolb-Bot code
+
+Git is a program that downloads code from the internet. You'll use it once to grab Kolb-Bot.
+
+**Check if you already have it** (type this in your terminal):
+
 ```bash
 git --version
 ```
-If you see a version number, you're good. If not:
+
+If you see a version number (like `git version 2.39.0`), you already have it. Skip to the next section.
+
+If you got an error, install it:
 
 **Mac:**
+
 ```bash
-# This will prompt you to install Xcode Command Line Tools, which includes git
 xcode-select --install
 ```
 
+A window will pop up asking you to install. Click "Install" and wait for it to finish.
+
 **Linux (Ubuntu/Debian):**
+
 ```bash
 sudo apt update && sudo apt install -y git
 ```
 
-**Windows:** You need WSL2 (Windows Subsystem for Linux). Everything about Kolb-Bot runs in Linux, so set this up first:
-1. Open PowerShell as Administrator
-2. Run: `wsl --install`
-3. Restart your computer
-4. Open "Ubuntu" from your Start menu
-5. Now follow the Linux instructions above inside that Ubuntu window
+It may ask for your password — type it in (you won't see the characters as you type, that's normal).
 
-**All remaining commands in this guide should be run inside WSL2 on Windows.**
+**Windows:**
+Windows needs an extra step. Kolb-Bot runs inside a mini Linux environment called WSL:
+
+1. Click the Start button, search for "PowerShell"
+2. Right-click it and choose "Run as Administrator"
+3. Type: `wsl --install` and press Enter
+4. Restart your computer when it asks
+5. After restarting, open "Ubuntu" from your Start menu — this is your terminal for everything below
+6. Inside Ubuntu, type: `sudo apt update && sudo apt install -y git`
+
+**Everything from here on should be typed inside Ubuntu on Windows.**
 
 ---
 
-### 2. Node.js (version 22+) — the engine that runs Kolb-Bot
+### 2. Node.js (version 22 or newer) — Runs the Kolb-Bot code
 
-**What is it?** Node.js is what actually runs the Kolb-Bot code. Kolb-Bot is written in TypeScript/JavaScript, and Node.js is the program that executes it. Think of it like how you need Microsoft Word to open a .docx file — you need Node.js to run Kolb-Bot.
-
-**Why version 22?** Kolb-Bot uses modern JavaScript features that only work in Node.js 22 or newer.
+Node.js is the program that actually makes Kolb-Bot work. Kolb-Bot's code is written in a programming language called JavaScript, and Node.js is what reads and runs that code. (You don't need to know JavaScript — just think of Node.js as the engine.)
 
 **Check if you already have it:**
+
 ```bash
 node --version
 ```
-If you see `v22.x.x` or higher, skip ahead. If not:
+
+If you see `v22` or higher (like `v22.5.1`), you're good. Skip ahead.
+
+If not, install it:
 
 **Mac:**
-```bash
-# If you have Homebrew:
-brew install node@22
 
-# If you don't have Homebrew, install it first:
+```bash
+# First, install Homebrew (a tool that installs other tools — ironic, I know):
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# Then install Node.js:
 brew install node@22
 ```
 
-**Linux (Ubuntu/Debian) / Windows WSL2:**
+**Linux / Windows (inside Ubuntu):**
+
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs
 ```
 
 **Verify it worked:**
+
 ```bash
-node --version   # Should show v22.x.x or higher
-npm --version    # Should show a number (npm comes with Node.js)
+node --version
 ```
+
+You should see `v22.something`.
 
 ---
 
-### 3. pnpm — the package manager that installs Kolb-Bot's dependencies
+### 3. pnpm — Installs Kolb-Bot's building blocks
 
-**What is it?** When you download Kolb-Bot's code, it doesn't come with every single library it needs — that would make the download huge. Instead, it comes with a list of what it needs (like a grocery list), and pnpm reads that list and downloads everything. It's like npm (which came with Node.js) but faster and uses less disk space.
+Kolb-Bot is made up of thousands of small building blocks (called "packages") made by other developers. pnpm is the tool that downloads all of them for you. Think of it like an app store, but for code.
 
-**Install it:**
+**Install it** (this works on all systems):
+
 ```bash
 npm install -g pnpm
 ```
 
 **Verify:**
+
 ```bash
-pnpm --version   # Should show a version number
+pnpm --version
 ```
+
+You should see a version number. If so, you're ready.
 
 ---
 
-## Step 1: Download and Build Kolb-Bot
+## Setting Up Kolb-Bot
 
-Now that you have the tools, let's get the actual code and build it.
+Now the fun part. This is a one-time setup — once it's done, you won't need to do it again.
+
+### Step 1: Download and Build
+
+Copy and paste these commands one at a time into your terminal:
 
 ```bash
-# Download the code from GitHub
+# Download Kolb-Bot's code from the internet
 git clone https://github.com/kolbick/Kolb-Bot.git
 
-# Go into the folder
+# Go into the Kolb-Bot folder
 cd Kolb-Bot
 
-# Install all the libraries Kolb-Bot needs (this will take a minute)
+# Download all the building blocks it needs (takes a few minutes)
 pnpm install
 
-# Build Kolb-Bot (compiles the TypeScript code into runnable JavaScript)
+# Build Kolb-Bot (turns the source code into something your computer can run)
 pnpm build
 ```
 
 **What just happened?**
-- `git clone` downloaded the entire Kolb-Bot project to your computer
-- `pnpm install` read the "grocery list" (`package.json`) and downloaded ~1,000 libraries Kolb-Bot depends on
-- `pnpm build` compiled the TypeScript source code into JavaScript that Node.js can run
 
-**Make the `kolb-bot` command available everywhere:**
+- `git clone` downloaded the Kolb-Bot project to a folder on your computer
+- `pnpm install` downloaded about 1,000 code packages that Kolb-Bot depends on
+- `pnpm build` assembled everything into a working program
+
+**One more thing — make `kolb-bot` available as a command:**
+
 ```bash
 npm link
 ```
 
-Now you can type `kolb-bot` from any folder on your system.
+Now you can type `kolb-bot` from anywhere on your computer.
 
 ---
 
-## Step 2: Set Up Google Gemini (Free)
+### Step 2: Connect It to a Free AI
 
-Kolb-Bot supports many AI providers, but **Google Gemini is the recommended default** because it has a generous free tier — you can make a ton of requests per day without paying a cent.
+Kolb-Bot needs an AI "brain" to generate responses. We'll use **Google Gemini** because it's free — you can send hundreds of messages per day without paying.
 
-You have two options:
-
-### Option A: Gemini CLI OAuth (Easiest — No API Key Needed)
-
-This uses the same free authentication as Google's official Gemini CLI. No API key to manage, just sign in with your Google account.
+**The easiest way (just sign into Google):**
 
 ```bash
 kolb-bot onboard --auth-choice google-gemini-cli
 ```
 
 This will:
-1. Open your browser
-2. Ask you to sign in with your Google account
-3. Grant Kolb-Bot permission to use Gemini
-4. That's it — you're authenticated
 
-**Your default model will be set to `gemini-3-pro-preview` — Google's most capable free model.**
+1. Open your web browser
+2. Ask you to sign into your Google account
+3. That's it — Kolb-Bot can now use Google's AI for free
 
-### Option B: Gemini API Key (Also Free)
+**Alternative: Use an API key instead.**
 
-If you prefer using an API key:
+An API key is like a password that lets Kolb-Bot talk to Google's AI. If you'd rather use a key instead of signing in:
 
 1. Go to https://aistudio.google.com/apikey
 2. Click "Create API Key"
-3. Copy the key
-4. Run the setup:
+3. Copy the key (it looks like a long random string of letters and numbers)
+4. Run:
 
 ```bash
 kolb-bot onboard --auth-choice gemini-api-key
 ```
 
-5. Paste your key when asked
+5. Paste your key when it asks
 
-**Both options are free.** Option A is simpler because you don't have to manage a key.
+Both options are free. The first one is easier because there's no key to keep track of.
 
 ---
 
-## Step 3: Run the Setup Wizard
+### Step 3: Run the Setup Wizard
 
-If you already ran `kolb-bot onboard` in Step 2, you may have already completed the full wizard. If not, run it now:
+If you already ran `kolb-bot onboard` above, you may have already gone through the full setup. If not:
 
 ```bash
 kolb-bot onboard
 ```
 
-The wizard walks you through everything. Here's what to expect:
+The wizard walks you through everything with prompts. Here's what it asks:
 
-### 3a. Security Notice
-Read and accept to continue.
+1. **Security notice** — Read it and accept
+2. **Setup mode** — Pick "QuickStart" (it uses good defaults so you don't have to make decisions)
+3. **Where to store data** — Just press Enter to accept the default
+4. **AI setup** — Already done if you completed Step 2
+5. **Gateway** — This is the part of Kolb-Bot that runs in the background and listens for messages. Just press Enter to accept the defaults.
+6. **Connect messaging apps** — This is where you connect WhatsApp, Discord, etc. (see below)
+7. **Start automatically** — Say yes. This means Kolb-Bot starts up whenever you turn on your computer.
 
-### 3b. Choose Setup Mode
-- **QuickStart** — Pick this one. It uses sensible defaults and gets you running fast.
-- **Advanced** — Only if you want to configure every detail manually.
+---
 
-### 3c. Workspace Directory
-Where Kolb-Bot stores its data. The default is fine:
-```
-~/.kolb-bot/workspace
-```
-Just press Enter.
+### Step 4: Connect Your Messaging Apps
 
-### 3d. AI Model Setup
-If you already did Step 2, this is done. If not, choose **Google Gemini** and follow the prompts.
-
-### 3e. Gateway Configuration
-The "gateway" is the background engine that keeps Kolb-Bot running and connected to your messaging apps. Think of it like a mail server — it's always listening for messages.
-- **Port** — Default `18789`. Press Enter.
-- **Auth** — It generates a security token automatically.
-
-### 3f. Connect Your Messaging Apps
-
-This is the fun part. Pick whichever apps you use:
+You can connect as many or as few apps as you want. Here are the most popular ones:
 
 **WhatsApp:**
-- A QR code appears in your terminal
-- Open WhatsApp on your phone → Settings → Linked Devices → Link a Device
-- Scan the QR code
-- Done — Kolb-Bot is on your WhatsApp
+
+- The setup wizard shows a QR code in your terminal
+- On your phone: open WhatsApp > Settings > Linked Devices > Link a Device
+- Point your phone's camera at the QR code on your screen
+- Done! Kolb-Bot is now on your WhatsApp
 
 **Discord:**
+
 - Go to https://discord.com/developers/applications
-- Create a New Application → Go to "Bot" → Add Bot
-- Copy the token, paste it in the wizard
-- Invite the bot to your server using the URL the wizard gives you
+- Click "New Application" and give it a name
+- Click "Bot" on the left, then "Add Bot"
+- Copy the token and paste it when the wizard asks
+- The wizard gives you a link to invite the bot to your Discord server
 
 **Telegram:**
-- Open Telegram, message @BotFather
-- Send `/newbot`, follow the instructions
-- Copy the token, paste it in the wizard
 
-**Signal, Slack, iMessage, Teams, Google Chat, Matrix, and more** — the wizard guides you through each one.
+- Open Telegram on your phone
+- Search for @BotFather and start a chat
+- Send `/newbot` and follow the instructions to create a bot
+- Copy the token it gives you and paste it in the wizard
 
-### 3g. Install as Background Service
-Say **yes**. This means Kolb-Bot starts automatically when your computer boots.
-
----
-
-## Step 4: Start the Gateway
-
-If you installed the daemon service, it's already running. Check with:
-
-```bash
-kolb-bot gateway status
-```
-
-If you need to start it manually:
-
-```bash
-kolb-bot gateway start
-```
+**Other apps** (Signal, Slack, iMessage, Teams, Google Chat, etc.) — the wizard guides you through each one step by step.
 
 ---
 
-## Step 5: Talk to Your Bot
+### Step 5: Start Talking!
 
-### From your terminal:
+**From your computer:**
+
 ```bash
-# Ask it something
-kolb-bot agent --message "What's the weather like today?"
-
-# Open the full chat interface
 kolb-bot tui
 ```
 
-### From your phone:
-Just send a message to Kolb-Bot on WhatsApp, Discord, Telegram — whatever you connected. It responds like a normal chat.
+This opens a chat window right in your terminal. Type a message and hit Enter.
+
+**From your phone:**
+Just send a message to Kolb-Bot on whatever app you connected — WhatsApp, Discord, Telegram, etc. It responds just like texting a friend.
 
 ---
 
-## Commands Cheat Sheet
+## Everyday Commands
 
-| Command | What It Does |
-|---------|-------------|
-| `kolb-bot onboard` | Run the setup wizard |
-| `kolb-bot gateway start` | Start the gateway (background) |
-| `kolb-bot gateway stop` | Stop the gateway |
-| `kolb-bot gateway status` | Check if the gateway is running |
-| `kolb-bot gateway restart` | Restart the gateway |
-| `kolb-bot agent --message "..."` | Send a message to the AI |
-| `kolb-bot tui` | Open the terminal chat interface |
-| `kolb-bot models list` | See all available AI models |
-| `kolb-bot models set gemini` | Switch to Gemini (default) |
-| `kolb-bot models set opus` | Switch to Claude Opus |
-| `kolb-bot models set gpt` | Switch to GPT |
-| `kolb-bot doctor` | Diagnose problems |
-| `kolb-bot doctor --fix` | Auto-fix any issues |
-| `kolb-bot update` | Update to the latest version |
-| `kolb-bot --help` | Show all commands |
+Once Kolb-Bot is set up, here are the commands you'll actually use:
+
+| What You Want to Do                  | What to Type                                    |
+| ------------------------------------ | ----------------------------------------------- |
+| Chat with Kolb-Bot in your terminal  | `kolb-bot tui`                                  |
+| Send a quick one-off question        | `kolb-bot agent --message "your question here"` |
+| Check if everything's working        | `kolb-bot gateway status`                       |
+| Start Kolb-Bot (if it's not running) | `kolb-bot gateway start`                        |
+| Stop Kolb-Bot                        | `kolb-bot gateway stop`                         |
+| Restart Kolb-Bot                     | `kolb-bot gateway restart`                      |
+| Fix problems automatically           | `kolb-bot doctor --fix`                         |
+| See what AI models you can use       | `kolb-bot models list`                          |
+| Switch to a different AI model       | `kolb-bot models set gemini`                    |
+| Update to the newest version         | `kolb-bot update`                               |
+| Re-run the setup wizard              | `kolb-bot onboard`                              |
+| See all available commands           | `kolb-bot --help`                               |
 
 ---
 
-## Switching AI Models
+## Switching Which AI Kolb-Bot Uses
 
-Kolb-Bot isn't locked to one AI provider. You can switch anytime:
+Kolb-Bot isn't locked to one AI. You can switch between different ones anytime:
 
 ```bash
 # See what's available
 kolb-bot models list
-
-# Switch models (these are shorthand aliases)
-kolb-bot models set gemini          # Google Gemini 3 Pro (free)
-kolb-bot models set gemini-flash    # Google Gemini 3 Flash (free, faster)
-kolb-bot models set opus            # Anthropic Claude Opus (paid)
-kolb-bot models set sonnet          # Anthropic Claude Sonnet (paid)
-kolb-bot models set gpt             # OpenAI GPT (paid)
-kolb-bot models set gpt-mini        # OpenAI GPT Mini (paid, cheaper)
 ```
 
-To add a new provider's API key:
-```bash
-kolb-bot models auth login --provider <provider> --set-default
-```
+| AI                                 | Command                            | Cost |
+| ---------------------------------- | ---------------------------------- | ---- |
+| Google Gemini 3 Pro                | `kolb-bot models set gemini`       | Free |
+| Google Gemini 3 Flash (faster)     | `kolb-bot models set gemini-flash` | Free |
+| Anthropic Claude Opus (very smart) | `kolb-bot models set opus`         | Paid |
+| Anthropic Claude Sonnet            | `kolb-bot models set sonnet`       | Paid |
+| OpenAI GPT                         | `kolb-bot models set gpt`          | Paid |
+| OpenAI GPT Mini (cheaper)          | `kolb-bot models set gpt-mini`     | Paid |
+
+For paid models, you'll need to sign up with that company and get an access key. The free Google Gemini models work great for most people.
 
 ---
 
 ## Something Not Working?
 
+Run this:
+
 ```bash
 kolb-bot doctor
 ```
 
-This checks everything — config, gateway, channels, auth tokens, Node.js version — and tells you exactly what's wrong. To auto-fix:
+It checks everything and tells you exactly what's wrong in plain English. To let it try to fix things automatically:
 
 ```bash
 kolb-bot doctor --fix
 ```
 
-### Common Issues
+### Common Problems
 
 **"Command not found: kolb-bot"**
-- Run `npm link` inside the Kolb-Bot folder again
-- Or make sure Node.js is installed and restart your terminal
+Go back to the Kolb-Bot folder and run `npm link` again. Then close your terminal and open a new one.
 
 **"Gateway not reachable"**
-- Start it: `kolb-bot gateway start`
-- Check status: `kolb-bot gateway status`
+Kolb-Bot isn't running. Start it: `kolb-bot gateway start`
+
+**WhatsApp stopped working**
+The connection expired. Run `kolb-bot onboard` and scan the QR code again.
 
 **"Auth token expired"**
-- Run `kolb-bot doctor --fix`
-- Or re-run `kolb-bot onboard` to set up credentials again
+Your AI access expired. Run `kolb-bot doctor --fix` or re-run `kolb-bot onboard`.
 
-**WhatsApp disconnected**
-- Run `kolb-bot onboard` and re-scan the QR code
-
-**Build errors during `pnpm build`**
-- Make sure Node.js is version 22+: `node --version`
-- Try deleting `node_modules` and reinstalling: `rm -rf node_modules && pnpm install`
+**The build failed**
+Make sure you have Node.js version 22 or higher: `node --version`. If it's older, update Node.js (see the install instructions above).
 
 ---
 
-## Where Kolb-Bot Keeps Its Stuff
+## Where Kolb-Bot Saves Its Files
 
-Everything lives in `~/.kolb-bot/` on your machine:
+Everything Kolb-Bot creates lives in a hidden folder called `.kolb-bot` in your home directory:
 
 ```
 ~/.kolb-bot/
-  kolb-bot.json          ← Main config file
-  workspace/             ← Bot's working directory
-  credentials/           ← Auth tokens (keep this safe!)
-  agents/                ← Agent configs and auth profiles
+    kolb-bot.json     <- Settings file
+    workspace/        <- Where the bot stores its working files
+    credentials/      <- Login info for AI services (keep this private!)
+    agents/           <- Bot personality and behavior settings
 ```
+
+The `~` means your home folder. On Mac that's `/Users/yourname/`, on Linux it's `/home/yourname/`.
 
 ---
 
-## Supported Channels
+## Supported Messaging Apps
 
-| Channel | Status |
-|---------|--------|
-| WhatsApp | Fully supported |
-| Discord | Fully supported |
-| Telegram | Fully supported |
-| Slack | Fully supported |
-| Signal | Fully supported |
-| iMessage | Fully supported (Mac only) |
-| Microsoft Teams | Fully supported |
-| Google Chat | Fully supported |
-| Matrix | Fully supported |
-| BlueBubbles | Fully supported |
-| Mattermost | Fully supported |
-| Zalo | Fully supported |
-| Line | Fully supported |
-| Feishu / Lark | Fully supported |
-| Nostr | Fully supported |
-| Twitch | Fully supported |
-| WebChat | Fully supported |
+| App             | Works? | Notes                                  |
+| --------------- | ------ | -------------------------------------- |
+| WhatsApp        | Yes    | Scan QR code to connect                |
+| Discord         | Yes    | Create a bot at discord.com/developers |
+| Telegram        | Yes    | Create a bot via @BotFather            |
+| Slack           | Yes    |                                        |
+| Signal          | Yes    |                                        |
+| iMessage        | Yes    | Mac only                               |
+| Microsoft Teams | Yes    |                                        |
+| Google Chat     | Yes    |                                        |
+| Matrix          | Yes    |                                        |
+| Line            | Yes    |                                        |
+| Twitch          | Yes    |                                        |
+| Nostr           | Yes    |                                        |
+| BlueBubbles     | Yes    |                                        |
+| Mattermost      | Yes    |                                        |
+| Zalo            | Yes    |                                        |
+| Feishu / Lark   | Yes    |                                        |
+| Web browser     | Yes    | Built-in chat page                     |
 
-## Supported AI Models
+## Supported AI Services
 
-| Provider | Models | Cost | How to Get Access |
-|----------|--------|------|-------------------|
-| **Google Gemini** | **Gemini 3 Pro, Flash** | **Free tier** | **https://aistudio.google.com/apikey** |
-| Anthropic | Claude Opus, Sonnet, Haiku | Paid | https://console.anthropic.com/ |
-| OpenAI | GPT-4, GPT-5, o1, o3 | Paid | https://platform.openai.com/ |
-| Ollama | Llama 3, Mistral, Phi, etc. | Free (local) | https://ollama.com/ |
-| xAI | Grok | Paid | https://x.ai/ |
-| OpenRouter | 100+ models | Varies | https://openrouter.ai/ |
-| AWS Bedrock | Claude, Titan, etc. | Paid | https://aws.amazon.com/bedrock/ |
-
----
-
-## Running Kolb-Bot on a VPS / VM / Remote Server
-
-### Why would you want to do this?
-
-When you run Kolb-Bot on your laptop, it only works when your laptop is on and connected to the internet. Close the lid? Kolb-Bot goes to sleep. Lose Wi-Fi? Your WhatsApp bot goes offline.
-
-A **VPS** (Virtual Private Server) is a small computer in the cloud that runs 24/7. It costs a few bucks a month (some providers have free tiers) and it means your bot **never goes offline** — it's always listening, always responding, even when your laptop is off.
-
-**A VM** (Virtual Machine) is similar but runs on your own hardware — it's like a computer inside your computer. You might use one to keep Kolb-Bot isolated from the rest of your system.
-
-**Here's when each option makes sense:**
-
-| Scenario | Best Option | Why |
-|----------|-------------|-----|
-| Just trying it out | Your laptop | Easiest, no setup needed |
-| Want it always online | VPS (cloud server) | Runs 24/7 without your laptop |
-| Want isolation/safety | VM or Docker on your machine | Keeps Kolb-Bot contained |
-| Want both always-on + safe | Docker on a VPS | Best of both worlds |
-| Already have a home server | Docker on your server | Free, always on, you own it |
+| AI Provider       | Models                      | Cost                         | Sign Up                                |
+| ----------------- | --------------------------- | ---------------------------- | -------------------------------------- |
+| **Google Gemini** | **Gemini 3 Pro, Flash**     | **Free**                     | **https://aistudio.google.com/apikey** |
+| Anthropic         | Claude Opus, Sonnet, Haiku  | Paid                         | https://console.anthropic.com/         |
+| OpenAI            | GPT-4, GPT-5, o1, o3        | Paid                         | https://platform.openai.com/           |
+| Ollama            | Llama 3, Mistral, Phi, etc. | Free (runs on your computer) | https://ollama.com/                    |
+| xAI               | Grok                        | Paid                         | https://x.ai/                          |
+| OpenRouter        | 100+ models                 | Varies                       | https://openrouter.ai/                 |
+| AWS Bedrock       | Claude, Titan, etc.         | Paid                         | https://aws.amazon.com/bedrock/        |
 
 ---
 
-### Option 1: Run on a VPS (Always Online)
+## Advanced: Keeping Kolb-Bot On 24/7
 
-A VPS is a small Linux server you rent in the cloud. Popular providers:
+By default, Kolb-Bot only works when your computer is on. If you want it to respond to messages even at 3am, you have a few options:
 
-| Provider | Free Tier? | Cheapest Paid | Notes |
-|----------|-----------|---------------|-------|
-| Oracle Cloud | Yes (forever free tier) | $0 | ARM instances are free forever |
-| Hetzner | No | ~$4/mo | Great performance for the price |
-| Railway | Limited free tier | ~$5/mo | Easy deploy, good for beginners |
-| Fly.io | Limited free tier | ~$3/mo | Good for lightweight workloads |
-| DigitalOcean | No | $4/mo | Beginner-friendly dashboard |
+### Option 1: Leave Your Computer On
 
-#### Step-by-step: Set up Kolb-Bot on a VPS
+The simplest approach. Just don't close the lid / don't shut down. Kolb-Bot runs as a background service, so you don't need to keep any windows open.
 
-**1. Get a VPS and SSH into it:**
-```bash
-# After creating your VPS, you'll get an IP address. Connect to it:
-ssh root@your-server-ip
-```
+### Option 2: Use a Cloud Server (VPS)
 
-**What is SSH?** It's a way to remotely control another computer from your terminal. Think of it like remote desktop, but text-only.
+A VPS is a small computer you rent in the cloud for a few dollars a month. It runs 24/7, so your bot never sleeps.
 
-**2. Install the prerequisites (same as local, but on the server):**
-```bash
-# Install Node.js 22
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs git
+| Provider     | Price        | Notes             |
+| ------------ | ------------ | ----------------- |
+| Oracle Cloud | Free forever | Best free option  |
+| Hetzner      | ~$4/month    | Great value       |
+| DigitalOcean | $4/month     | Beginner-friendly |
+| Fly.io       | ~$3/month    | Lightweight       |
 
-# Install pnpm
-npm install -g pnpm
-```
+The setup is the same as on your own computer — install Node.js, pnpm, clone Kolb-Bot, run the wizard. The only difference:
 
-**3. Clone and build Kolb-Bot:**
-```bash
-git clone https://github.com/kolbick/Kolb-Bot.git
-cd Kolb-Bot
-pnpm install
-pnpm build
-npm link
-```
+- You connect to the server remotely (using a tool called SSH — it's like remote desktop but text-only)
+- Use the API key option for Google Gemini (the browser sign-in won't work on a server with no screen)
 
-**4. Run the setup wizard:**
-```bash
-kolb-bot onboard --auth-choice gemini-api-key
-```
+### Option 3: Docker (Extra Safety)
 
-> **Why API key instead of OAuth on a VPS?** The OAuth option (`google-gemini-cli`) opens a browser window — which a headless server doesn't have. Use the API key option instead. Get your free key at https://aistudio.google.com/apikey
-
-**5. Install as a system service (so it survives reboots):**
-```bash
-kolb-bot gateway install
-```
-
-This creates a systemd service that starts Kolb-Bot automatically when the server boots.
-
-**6. Verify it's running:**
-```bash
-kolb-bot gateway status
-```
-
-**7. Access the Control UI from your laptop (securely via SSH tunnel):**
-
-You don't want to expose Kolb-Bot's control port to the public internet. Instead, use an SSH tunnel — this creates a secure, encrypted pipe between your laptop and the server:
-
-```bash
-# Run this on YOUR LAPTOP (not the server):
-ssh -N -L 18789:127.0.0.1:18789 root@your-server-ip
-```
-
-**What does this do?** It makes `localhost:18789` on your laptop secretly connect to port 18789 on your server through an encrypted tunnel. Now you can access the Control UI at `http://localhost:18789` on your laptop as if Kolb-Bot was running locally.
-
-Keep this terminal open while you want access. Close it when you're done.
+Docker puts Kolb-Bot in a sealed box on your computer. It can't see your personal files or mess anything up. Good if you're cautious. See the full Docker guide in the [docs](https://github.com/kolbick/Kolb-Bot/blob/main/docs).
 
 ---
 
-### Option 2: Run with Docker (Contained and Safe)
+## Security (Read This)
 
-**What is Docker?** Docker is like a shipping container for software. It packages Kolb-Bot and everything it needs into an isolated box that can't touch the rest of your computer unless you explicitly allow it. This is the best way to keep things safe and contained.
+Kolb-Bot runs on your computer and has access to the same things you do. A few things to know:
 
-**Why use Docker?**
-- Kolb-Bot can't access your personal files, passwords, or other apps
-- Easy to start, stop, and delete without leaving traces
-- Same setup works on your laptop, a VPS, or a home server
-- If something goes wrong, just delete the container and start fresh
+- **Only you should be able to message your bot.** The setup wizard helps you configure this. If you skip it, anyone who knows your bot's username could send it commands.
+- **Your AI keys are stored locally.** They're saved in `~/.kolb-bot/credentials/`. Don't share that folder with anyone.
+- **The gateway only listens locally by default.** Other people on the internet can't connect to it unless you change the settings.
 
-**Install Docker:**
-
-**Mac:**
-```bash
-brew install --cask docker
-# Then open Docker Desktop from your Applications
-```
-
-**Linux:**
-```bash
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-# Log out and back in for the group change to take effect
-```
-
-**Run Kolb-Bot with Docker Compose:**
-
-```bash
-git clone https://github.com/kolbick/Kolb-Bot.git
-cd Kolb-Bot
-
-# Create your config directory
-mkdir -p ~/.kolb-bot
-
-# Start it up
-docker compose up -d
-```
-
-**What just happened?**
-- `-d` means "detached" — it runs in the background
-- Docker downloaded the image, started a container, and Kolb-Bot is now running
-- Your config is stored in `~/.kolb-bot/` on your host machine (not inside the container)
-- The container only has access to that one folder
-
-**Run the setup wizard inside the container:**
-```bash
-docker compose exec kolb-bot-gateway kolb-bot onboard --auth-choice gemini-api-key
-```
-
-**Check status:**
-```bash
-docker compose exec kolb-bot-gateway kolb-bot gateway status
-```
-
-**View logs:**
-```bash
-docker compose logs -f kolb-bot-gateway
-```
-
-**Stop it:**
-```bash
-docker compose down
-```
-
-**Start it again:**
-```bash
-docker compose up -d
-```
-
----
-
-### Option 3: Docker on a VPS (Best of Both Worlds)
-
-This gives you always-on + isolated. The setup is just Option 1 + Option 2 combined:
-
-1. Get a VPS and SSH into it
-2. Install Docker on the VPS
-3. Clone the repo and run `docker compose up -d`
-4. Access via SSH tunnel from your laptop
-
-This is the recommended production setup.
-
----
-
-## Security: Full Access vs. Limited Access
-
-Kolb-Bot is powerful — it can run commands, read files, control your browser, and manage your messaging apps. That power is useful, but you should understand what you're giving it access to and how to limit it.
-
-### Understanding the Access Levels
-
-**Full access (default when running directly on your machine):**
-- Kolb-Bot can read/write any file your user account can access
-- It can run any command on your system
-- It can access your network
-- It has access to your messaging app credentials
-
-**Limited access (Docker or sandbox mode):**
-- Kolb-Bot can only see files you explicitly share with it
-- Commands run inside the container, not on your real system
-- Network access can be restricted
-- Your personal files are invisible to it
-
-### Pros and Cons
-
-#### Running Directly on Your Machine (Full Access)
-
-| Pros | Cons |
-|------|------|
-| Easiest setup | Bot can see all your files |
-| Can use iMessage (Mac only) | A bug or prompt injection could run harmful commands |
-| Can control your browser directly | Harder to contain if something goes wrong |
-| Access to all your local tools | Messaging credentials stored alongside your other files |
-| Best performance (no container overhead) | |
-
-**Best for:** Personal use on a trusted machine, when you want maximum capability.
-
-#### Running in Docker (Limited Access)
-
-| Pros | Cons |
-|------|------|
-| Bot is contained — can't touch your personal files | Slightly more complex setup |
-| Easy to wipe and restart from scratch | Some features need extra config (browser, iMessage) |
-| Same setup works everywhere | Small performance overhead |
-| Can restrict network access | Need to explicitly mount directories you want shared |
-| Production-ready isolation | |
-
-**Best for:** Security-conscious users, running on a shared machine, or production/server deployments.
-
-#### Running on a VPS (Hosted Elsewhere)
-
-| Pros | Cons |
-|------|------|
-| Always online 24/7 | Costs money (unless free tier) |
-| Your laptop can be off | Can't use iMessage or local browser |
-| Physically separated from your personal data | Need to manage a remote server |
-| If compromised, your personal machine is safe | API keys stored on the server |
-| Professional-grade uptime | SSH tunnel needed for control UI |
-
-**Best for:** Always-on bots, WhatsApp/Discord/Telegram bots that need to respond at 3am.
-
----
-
-### How to Lock Things Down (Sandbox Mode)
-
-Even without Docker, Kolb-Bot has a built-in sandbox system that restricts what agents can do. You configure this in `~/.kolb-bot/kolb-bot.json`:
-
-#### Restrict which tools agents can use:
-
-```json5
-{
-  "agents": {
-    "defaults": {
-      "toolPolicy": {
-        // Only allow these tools (deny everything else)
-        "allow": ["read", "write", "edit", "exec"],
-        // Or explicitly deny specific tools
-        "deny": ["browser", "canvas", "nodes"]
-      }
-    }
-  }
-}
-```
-
-#### Enable Docker sandboxing for agent commands:
-
-```json5
-{
-  "agents": {
-    "defaults": {
-      "sandbox": {
-        "mode": "all",
-        "docker": {
-          "image": "kolb-bot-sandbox:bookworm-slim",
-          "network": "none",
-          "readOnlyRoot": true,
-          "memory": "1g",
-          "cpus": 1
-        }
-      }
-    }
-  }
-}
-```
-
-**What does this do?** Every command the AI agent runs gets executed inside a throwaway Docker container instead of on your real machine. The container has no network access (`"none"`), limited memory, and a read-only filesystem. It's like giving the AI a scratch pad that gets thrown away after each use.
-
-#### Restrict who can message your bot:
-
-```json5
-{
-  "channels": {
-    "whatsapp": {
-      "allowFrom": ["+15555550123"],
-      "dmPolicy": "pairing"
-    },
-    "discord": {
-      "allowFrom": ["your-discord-user-id"]
-    }
-  }
-}
-```
-
-This ensures only YOU can talk to your bot — nobody else.
-
-#### Keep the gateway locked to localhost:
-
-```json5
-{
-  "gateway": {
-    "bind": "loopback",
-    "auth": {
-      "mode": "token",
-      "token": "a-very-long-random-string-here"
-    }
-  }
-}
-```
-
-**What does `loopback` mean?** It means the gateway only accepts connections from the same machine. Nobody on the internet or your local network can reach it. If you need remote access, use an SSH tunnel (explained above) instead of opening the port.
-
-#### Run a security audit:
+To run a security check:
 
 ```bash
 kolb-bot security audit --deep
 ```
 
-This checks your entire setup and flags anything risky — exposed ports, weak auth, overly permissive tool policies, etc. Run this after any configuration change.
-
----
-
-### Quick Security Checklist
-
-- [ ] Gateway bind is set to `loopback` (not `lan` or a public IP)
-- [ ] Gateway auth token is set and is long/random
-- [ ] Channel `allowFrom` lists only your phone number / user ID
-- [ ] If on a VPS, access is via SSH tunnel (not exposed to internet)
-- [ ] If using Docker, only `~/.kolb-bot/` is mounted (not your home dir)
-- [ ] Run `kolb-bot security audit` and address any warnings
-- [ ] API keys are stored in `~/.kolb-bot/` (not in the repo or public files)
+This scans your setup and tells you if anything looks risky.
 
 ---
 

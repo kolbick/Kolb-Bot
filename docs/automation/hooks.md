@@ -696,7 +696,7 @@ Monitor gateway logs to see hook execution:
 
 ```bash
 # macOS
-./scripts/clawlog.sh -f
+./scripts/kolb-log.sh -f
 
 # Other platforms
 tail -f ~/.kolb-bot/gateway.log
@@ -821,7 +821,7 @@ Look for missing:
 3. Check gateway logs for errors:
 
    ```bash
-   ./scripts/clawlog.sh | grep hook
+   ./scripts/kolb-log.sh | grep hook
    ```
 
 ### Handler Errors

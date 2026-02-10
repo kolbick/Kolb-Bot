@@ -702,7 +702,7 @@ kolb-bot hooks info my-hook
 
 ```bash
 # macOS
-./scripts/clawlog.sh -f
+./scripts/kolb-log.sh -f
 
 # Other platforms
 tail -f ~/.kolb-bot/gateway.log
@@ -825,7 +825,7 @@ kolb-bot hooks info my-hook
 
 3. 检查 Gateway 网关日志中的错误：
    ```bash
-   ./scripts/clawlog.sh | grep hook
+   ./scripts/kolb-log.sh | grep hook
    ```
 
 ### 处理程序错误

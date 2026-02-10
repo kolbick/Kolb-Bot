@@ -24,7 +24,7 @@ agent (with a session switcher for other sessions).
   dist/KolbBot.app/Contents/MacOS/KolbBot --webchat
   ```
 
-- Logs: `./scripts/clawlog.sh` (subsystem `bot.molt`, category `WebChatSwiftUI`).
+- Logs: `./scripts/kolb-log.sh` (subsystem `bot.molt`, category `WebChatSwiftUI`).
 
 ## How it’s wired
 
