@@ -15,7 +15,7 @@ export type ExtraGatewayService = {
   label: string;
   detail: string;
   scope: "user" | "system";
-  marker?: "kolb-bot" | "kolb-bot" | "moltbot";
+  marker?: "kolb-bot" | "moltbot";
   legacy?: boolean;
 };
 
@@ -23,7 +23,7 @@ export type FindExtraGatewayServicesOptions = {
   deep?: boolean;
 };
 
-const EXTRA_MARKERS = ["kolb-bot", "kolb-bot", "moltbot"] as const;
+const EXTRA_MARKERS = ["kolb-bot", "moltbot"] as const;
 const execFileAsync = promisify(execFile);
 
 export function renderGatewayServiceCleanupHints(

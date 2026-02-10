@@ -519,14 +519,14 @@ kolb-bot pairing list feishu
     list: [
       { id: "main" },
       {
-        id: "clawd-fan",
-        workspace: "/home/user/clawd-fan",
-        agentDir: "/home/user/.kolb-bot/agents/clawd-fan/agent",
+        id: "kolb-fan",
+        workspace: "/home/user/kolb-fan",
+        agentDir: "/home/user/.kolb-bot/agents/kolb-fan/agent",
       },
       {
-        id: "clawd-xi",
-        workspace: "/home/user/clawd-xi",
-        agentDir: "/home/user/.kolb-bot/agents/clawd-xi/agent",
+        id: "kolb-xi",
+        workspace: "/home/user/kolb-xi",
+        agentDir: "/home/user/.kolb-bot/agents/kolb-xi/agent",
       },
     ],
   },
@@ -540,16 +540,16 @@ kolb-bot pairing list feishu
       },
     },
     {
-      // 用户 B 的私聊 → clawd-fan agent
-      agentId: "clawd-fan",
+      // 用户 B 的私聊 → kolb-fan agent
+      agentId: "kolb-fan",
       match: {
         channel: "feishu",
         peer: { kind: "dm", id: "ou_0fe6b1c9..." },
       },
     },
     {
-      // 某个群组 → clawd-xi agent
-      agentId: "clawd-xi",
+      // 某个群组 → kolb-xi agent
+      agentId: "kolb-xi",
       match: {
         channel: "feishu",
         peer: { kind: "group", id: "oc_xxx..." },
