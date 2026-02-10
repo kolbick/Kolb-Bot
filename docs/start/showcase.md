@@ -9,7 +9,7 @@ summary: "Community-built projects and integrations powered by KolbBot"
 Real projects from the community. See what people are building with KolbBot.
 
 <Info>
-**Want to be featured?** Share your project in [#showcase on Discord](https://discord.gg/clawd) or [tag @kolb-bot on X](https://x.com/kolb-bot).
+**Want to be featured?** Share your project in [#showcase on Discord](https://discord.gg/kolb-bot) or [tag @kolb-bot on X](https://x.com/kolb-bot).
 </Info>
 
 ## 🎥 KolbBot in Action
@@ -405,7 +405,7 @@ Have something to share? We'd love to feature it!
 
 <Steps>
   <Step title="Share It">
-    Post in [#showcase on Discord](https://discord.gg/clawd) or [tweet @kolb-bot](https://x.com/kolb-bot)
+    Post in [#showcase on Discord](https://discord.gg/kolb-bot) or [tweet @kolb-bot](https://x.com/kolb-bot)
   </Step>
   <Step title="Include Details">
     Tell us what it does, link to the repo/demo, share a screenshot if you have one
