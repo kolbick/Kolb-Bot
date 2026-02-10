@@ -5,22 +5,16 @@
 </p>
 
 <p align="center">
-  <strong>Your Personal AI Pirate Assistant</strong>
+  <strong>Your Personal AI Pirate Assistant
 </p>
 
 ---
 
-## What Is This?
+Kolb-Bot is a personal AI assistant that lives on your computer and can talk to you through WhatsApp, Discord, Telegram, Slack, iMessage, Signal, and pretty much every other messaging app you can think of. You own it. It runs on your machine. Your data stays with you.
 
-Kolb-Bot is like having a personal assistant on your computer that you can text from your phone. You message it on WhatsApp, Discord, Telegram, or whatever messaging app you use — and it responds using AI (the same kind of technology behind ChatGPT, Google Gemini, etc.).
+This whole thing started because I got tired of juggling a dozen different AI tools and wanted one assistant that just works everywhere. Months of late nights, learning AI, messing with open-source projects, trying to learn code, and way too many terminal sessions later — here it is.
 
-**It runs on YOUR computer.** Not some company's server. That means:
-
-- Your conversations stay private — they're on your machine, not in the cloud
-- You pick which AI "brain" it uses (Google Gemini is free)
-- You control everything
-
-**It's free to use.** Kolb-Bot itself is free, and it's set up to use Google Gemini by default, which has a free plan that lets you send hundreds of messages per day without paying anything.
+**Best part: You can set it up to use Google Gemini, which has a generous free tier so you can use it without paying anything.**
 
 ---
 
