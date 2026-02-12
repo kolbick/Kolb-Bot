@@ -65,20 +65,20 @@ export function formatCliBannerLine(version: string, options: BannerOptions = {}
 }
 
 const KOLBBOT_ASCII = [
-  "              ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄              ",
-  "          ▄███░░░░░░░░░░░░░░░░░░░░░███▄          ",
-  "        ▄██░░░░▄▄▄▄▄░░░░░░░▄▄▄▄▄░░░░██▄        ",
-  "       ██░░░░██▀   ▀██░░░██▀   ▀██░░░░██       ",
-  "      ██░░░░██  ▄██  ██░██  ▄██  ██░░░░██      ",
-  "      ██░░░░██  ▀▀▀  ██░██  ▀▀▀  ██░░░░██      ",
-  "      ██░░░░▀██▄▄▄▄██▀░░░▀██▄▄▄▄██▀░░░░██      ",
-  "       ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██       ",
-  "        ▀██░░░░░▀▀▄▄▄▄▄▄▄▄▄▀▀░░░░░██▀        ",
-  "          ▀███░░░░░░░░░░░░░░░░░░░███▀          ",
-  "              ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀              ",
-  "        ╔═══════════════════════════╗            ",
-  "        ║    ☠️  K O L B - B O T  ☠️   ║            ",
-  "        ╚═══════════════════════════╝            ",
+  "                  ▄▄████████▄▄                  ",
+  "              ▄███░░░░░░░░░░░░███▄              ",
+  "           ▄██░░░░░░░░░░░░░░░░░░░██▄           ",
+  "         ▄██░░░░▄▄███▄░░░░░▄███▄▄░░██▄         ",
+  "        ██░░░░███☠ ☠███░░███☠ ☠███░░░░██        ",
+  "        ██░░░░▀██▄▄▄██▀░░▀██▄▄▄██▀░░░░██        ",
+  "        ██░░░░░░░░░░░▄██▄░░░░░░░░░░░░░██        ",
+  "         ██░░░░░░░░▄█▀▀▀█▄░░░░░░░░░░██         ",
+  "          ▀██░░░░░▀▄▄▄▄▄▄▄▀░░░░░░██▀          ",
+  "            ▀███░░░░░░░░░░░░░░░███▀            ",
+  "          ▄▄▄▄▀▀████████████████▀▀▄▄▄▄          ",
+  "       ═══╬═══════════╬╬═══════════╬═══       ",
+  "          ╬     ☠ K O L B - B O T ☠     ╬          ",
+  "       ═══╬═══════════╬╬═══════════╬═══       ",
   " ",
 ];
 
@@ -95,18 +95,33 @@ export function formatCliBannerArt(options: BannerOptions = {}): string {
     if (ch === "░") {
       return theme.accentDim(ch);
     }
-    if (ch === "▀") {
+    if (ch === "▄" || ch === "▀") {
       return theme.accent(ch);
+    }
+    if (ch === "☠") {
+      return theme.info(ch);
     }
     return theme.muted(ch);
   };
 
   const colored = KOLBBOT_ASCII.map((line) => {
     if (line.includes("K O L B - B O T")) {
-      return line;
+      return splitGraphemes(line)
+        .map((ch) => {
+          if (ch === "☠") return theme.info(ch);
+          if (ch === "╬") return theme.accent(ch);
+          if (/[A-Z-]/.test(ch)) return theme.info(ch);
+          return theme.muted(ch);
+        })
+        .join("");
     }
-    if (line.includes("═") || line.includes("╔") || line.includes("╚")) {
-      return theme.accent(line);
+    if (line.includes("═") || line.includes("╬")) {
+      return splitGraphemes(line)
+        .map((ch) => {
+          if (ch === "╬") return theme.info(ch);
+          return theme.accent(ch);
+        })
+        .join("");
     }
     return splitGraphemes(line).map(colorChar).join("");
   });
