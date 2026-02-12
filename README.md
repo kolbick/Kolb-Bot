@@ -376,6 +376,150 @@ Make sure you have Node.js version 22 or higher: `node --version`. If it's older
 
 ---
 
+## CLI Reference
+
+Everything you can do with `kolb-bot` from the terminal. Run any command with `--help` for full details.
+
+### Models
+
+```bash
+kolb-bot models list                       # See all available AI models
+kolb-bot models set <model>                # Switch to a different model
+kolb-bot models set-image <model>          # Set the image generation model
+kolb-bot models status                     # Show your current model config
+kolb-bot models scan                       # Scan for free models on OpenRouter
+kolb-bot models aliases add <alias> <model>  # Create a shortcut name for a model
+kolb-bot models aliases list               # List your aliases
+kolb-bot models fallbacks add <model>      # Add a backup model if the main one fails
+kolb-bot models auth add                   # Set up authentication for a provider
+kolb-bot models auth login                 # Log into a model provider
+kolb-bot models auth paste-token           # Paste an API key directly
+```
+
+### Skills
+
+Skills are add-on abilities that extend what Kolb-Bot can do. Many work through CLI tools installed on your machine.
+
+```bash
+kolb-bot skills list                       # See all available skills
+kolb-bot skills list --eligible            # Show only skills you can use right now
+kolb-bot skills info <skill-name>          # Get details about a specific skill
+kolb-bot skills check                      # Verify skill dependencies are installed
+```
+
+**Popular skills:**
+
+| Skill | What It Does |
+| --- | --- |
+| `coding-agent` | Run Codex CLI, Claude Code, or other coding agents in the background |
+| `github` | Interact with GitHub issues, PRs, and CI runs |
+| `tmux` | Remote-control tmux sessions with keystrokes and pane scraping |
+| `discord` | Send messages, react, manage threads, create polls on Discord |
+| `slack` | React to messages, pin/unpin items in Slack |
+| `1password` | Read and inject secrets from 1Password |
+| `apple-notes` | Create, view, edit, and search Apple Notes |
+| `notion` | Create and manage Notion pages and databases |
+| `obsidian` | Work with Obsidian vaults |
+| `weather` | Get weather forecasts (no API key needed) |
+| `sag` | Text-to-speech via ElevenLabs |
+| `summarize` | Summarize URLs, podcasts, and local files |
+| `clawhub` | Search and install community skills from ClawHub |
+| `spotify-player` | Control Spotify playback from the terminal |
+| `camsnap` | Capture frames from RTSP/ONVIF cameras |
+| `nano-pdf` | Edit PDFs with natural-language instructions |
+| `himalaya` | Manage email via IMAP/SMTP |
+| `gog` | Google Workspace CLI (Gmail, Calendar, Drive, Sheets) |
+| `voice-call` | Start voice calls via the voice-call plugin |
+| `imsg` | Send and read iMessages from the terminal |
+
+### Gateway & Daemon
+
+```bash
+kolb-bot gateway start                     # Start the background gateway server
+kolb-bot gateway stop                      # Stop it
+kolb-bot gateway restart                   # Restart it
+kolb-bot gateway status                    # Check if it's running and healthy
+kolb-bot gateway dev                       # Start in dev mode (verbose logging)
+kolb-bot logs                              # View live gateway logs
+kolb-bot logs --tail 50                    # Show the last 50 log lines
+```
+
+### Agents & Sessions
+
+```bash
+kolb-bot agent --message "Hello"           # Send a one-off message
+kolb-bot agent --message "Hi" --local      # Run the agent locally (skip gateway)
+kolb-bot agents list                       # List configured agents
+kolb-bot sessions                          # Show active sessions
+kolb-bot tui                               # Open the interactive terminal chat
+kolb-bot tui --session <key>               # Open a specific session
+```
+
+### Memory
+
+```bash
+kolb-bot memory list                       # List memory files
+kolb-bot memory status                     # Show memory index status
+kolb-bot memory search "some topic"        # Search memory for a topic
+kolb-bot memory info <file>                # Show details about a memory file
+kolb-bot memory export                     # Export memory data
+```
+
+### Channels & Messaging
+
+```bash
+kolb-bot channels list                     # List connected messaging apps
+kolb-bot channels add                      # Connect a new messaging app
+kolb-bot pairing list                      # Show paired devices
+kolb-bot message send --to <target> "Hi"   # Send a message through a channel
+```
+
+### Hooks & Cron
+
+```bash
+kolb-bot hooks list                        # List available lifecycle hooks
+kolb-bot hooks enable <name>               # Enable a hook
+kolb-bot hooks disable <name>              # Disable a hook
+kolb-bot cron list                         # List scheduled jobs
+kolb-bot cron add                          # Add a new scheduled job (interactive)
+kolb-bot cron status                       # Show cron job status
+```
+
+### Browser Automation
+
+```bash
+kolb-bot browser manage launch             # Launch the built-in browser
+kolb-bot browser manage close              # Close it
+kolb-bot browser inspect screenshot        # Take a screenshot of the current page
+kolb-bot browser actions input click       # Click an element
+kolb-bot browser actions input type "text" # Type into the focused element
+kolb-bot browser state cookies list        # List cookies
+```
+
+### Plugins
+
+```bash
+kolb-bot plugins list                      # List installed plugins
+kolb-bot plugins install <name>            # Install a plugin
+kolb-bot plugins update                    # Update all plugins
+```
+
+### Security & Maintenance
+
+```bash
+kolb-bot doctor                            # Run health checks
+kolb-bot doctor --fix                      # Auto-fix problems
+kolb-bot security audit                    # Basic security scan
+kolb-bot security audit --deep             # Deep security scan
+kolb-bot update                            # Update Kolb-Bot to the latest version
+kolb-bot reset                             # Reset config/state (keeps CLI installed)
+kolb-bot config get <key>                  # Read a config value
+kolb-bot config set <key> <value>          # Set a config value
+kolb-bot completion                        # Generate shell tab-completion script
+```
+
+---
+
 ## Where Kolb-Bot Saves Its Files
 
 Everything Kolb-Bot creates lives in a hidden folder called `.kolb-bot` in your home directory:
