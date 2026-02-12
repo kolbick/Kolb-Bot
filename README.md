@@ -39,6 +39,91 @@ That's it. Your computer acts as the middleman between you and the AI.
 
 ---
 
+## Security: Lock It Down (Read This Early)
+
+Kolb-Bot runs on your machine with the same permissions you have. That means it can read files, run commands, and send messages. This is what makes it powerful — but it also means you need to lock it down properly.
+
+### The Threat Model
+
+When you give Kolb-Bot access to a messaging app, anyone who can message it can potentially tell it to do things. The default setup protects against this, but you should understand the layers:
+
+1. **Your AI can execute shell commands** — it reads/writes files, runs programs, and sends messages on your behalf
+2. **Message senders can try to trick the AI** — prompt injection, social engineering, probing your setup
+3. **The golden rule: access control comes before intelligence** — lock down who can talk to your bot before worrying about what it says
+
+### Default Protections (Already On)
+
+- **Pairing mode** for DMs — unknown senders get a one-time pairing code, not direct access
+- **Gateway binds to localhost** — nobody on the internet can reach it without you exposing it
+- **File permissions** — `~/.kolb-bot/` is restricted to your user account
+
+### Recommended Hardening
+
+Run the security audit to see where you stand:
+
+```bash
+kolb-bot security audit --deep
+```
+
+To auto-apply basic guardrails:
+
+```bash
+kolb-bot security audit --fix
+```
+
+**Lock down DMs to known contacts only:**
+
+```bash
+kolb-bot config set session.dmScope per-channel-peer
+```
+
+This prevents cross-user context leakage — each person gets their own isolated session.
+
+**Set a gateway token** (required if you expose the gateway on your network):
+
+```bash
+kolb-bot config set gateway.auth.token "$(openssl rand -hex 32)"
+```
+
+**Review exec approvals** — control what commands the bot can run on your machine:
+
+```bash
+kolb-bot approvals get                                    # See current policy
+kolb-bot approvals allowlist add "/usr/bin/git"           # Allow specific commands
+kolb-bot approvals allowlist add "~/Projects/**/bin/*"    # Allow with glob patterns
+```
+
+**Sandbox untrusted sessions** — isolate tool execution in Docker containers:
+
+```bash
+kolb-bot config set agents.defaults.sandbox.mode all
+```
+
+See the [Isolated Environment](#installing-in-an-isolated-environment-docker) section below for full Docker setup.
+
+### File Permission Check
+
+Make sure your config directory is locked down:
+
+```bash
+chmod 700 ~/.kolb-bot
+chmod 600 ~/.kolb-bot/kolb-bot.json
+```
+
+The `kolb-bot doctor` command checks this automatically.
+
+### For Multi-User Setups
+
+If multiple people will message your bot (family, team, etc.), consider per-agent access profiles:
+
+- **Personal agent** — full access, no sandbox
+- **Shared/family agent** — sandboxed, read-only tools
+- **Public-facing agent** — sandboxed, no filesystem/shell tools at all
+
+Configure this in `~/.kolb-bot/kolb-bot.json` under `agents.list[]` — each agent can have its own sandbox policy, tool restrictions, and sender allowlists.
+
+---
+
 ## Before We Start: What's a "Terminal"?
 
 Every computer has a built-in app where you can type commands instead of clicking buttons. It looks like a black window with text. You'll need to use it to set up Kolb-Bot.
@@ -198,6 +283,62 @@ npm link
 
 Now you can type `kolb-bot` from anywhere on your computer.
 
+### Which Install Method? (npm vs brew vs git vs pnpm)
+
+During setup, Kolb-Bot may ask you to pick a preferred install command. Here's what each one means:
+
+| Method | What It Does | Best For |
+| --- | --- | --- |
+| **npm** (recommended) | Installs a pre-built version from the npm registry. No source code on your machine. | Most people. Fastest, simplest, easiest to update. |
+| **brew** (Mac only) | Installs via Homebrew (`brew install kolb-bot`). Homebrew manages updates alongside your other Mac packages. | Mac users who already use Homebrew for everything. |
+| **git** | Clones the full source code and builds it locally with pnpm. | Developers, tinkerers, and anyone who wants to read or patch the code. |
+| **pnpm** (from source) | Runs directly from an existing source checkout via `pnpm kolb-bot ...`. | Contributors actively working on Kolb-Bot itself. |
+
+**If you're not sure, pick npm.** It installs in seconds and updates with one command (`kolb-bot update`).
+
+**What is Homebrew?** Homebrew (`brew`) is a popular package manager for Mac. If you don't have it, you can install it with:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+The Kolb-Bot installer script will also install Homebrew for you on Mac if it's missing (it needs it to set up Node.js and Git).
+
+**One-liner install (npm method):**
+
+```bash
+curl -fsSL https://kolb-bot.bot/install.sh | bash
+```
+
+This downloads and installs the latest release globally. No git clone, no build step. You can start using `kolb-bot` immediately after it finishes.
+
+**One-liner install (git method):**
+
+```bash
+curl -fsSL https://kolb-bot.bot/install.sh | bash -s -- --install-method git
+```
+
+This clones the repo to `~/kolb-bot`, installs dependencies, builds from source, and puts a wrapper script at `~/.local/bin/kolb-bot`.
+
+**Already did the manual setup above?** That's the git/pnpm method. You're all set — skip the one-liners.
+
+**Switching between methods later:**
+
+You can change your mind anytime without losing your config, sessions, or workspace data. Everything in `~/.kolb-bot/` stays intact:
+
+```bash
+# Switch from git to npm:
+npm install -g kolb-bot@latest
+kolb-bot doctor            # Detects the change and offers to update the service config
+kolb-bot gateway restart
+
+# Switch from npm to git:
+git clone https://github.com/kolbick/Kolb-Bot.git ~/kolb-bot
+cd ~/kolb-bot && pnpm install && pnpm build
+kolb-bot doctor
+kolb-bot gateway restart
+```
+
 ---
 
 ### Step 2: Connect It to a Free AI
@@ -343,6 +484,161 @@ For paid models, you'll need to sign up with that company and get an access key.
 
 ---
 
+## Installing AI CLIs (Optional Power Tools)
+
+Kolb-Bot can use external AI coding tools as skills. These are separate programs you install alongside Kolb-Bot — each one gives the bot extra capabilities. You don't need any of these to use Kolb-Bot, but they're great if you want to use it for coding tasks.
+
+### Gemini CLI (Free)
+
+Google's command-line tool for Gemini. Great for quick Q&A, summaries, and code generation.
+
+**Mac:**
+
+```bash
+brew install gemini-cli
+```
+
+**Linux / Windows (WSL):**
+
+```bash
+npm install -g @anthropic-ai/gemini-cli
+```
+
+**First-time setup** — sign in once:
+
+```bash
+gemini
+```
+
+It opens your browser to authenticate with your Google account. After that, Kolb-Bot's `gemini` skill can use it automatically.
+
+**Usage with Kolb-Bot:**
+
+```bash
+kolb-bot skills info gemini        # Check if it's detected
+```
+
+### Claude Code (Paid — Anthropic)
+
+Anthropic's interactive coding agent. Excellent for complex code tasks, refactoring, and multi-file edits.
+
+**Install:**
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+**First-time setup:**
+
+```bash
+claude
+```
+
+It opens your browser to authenticate with your Anthropic account (requires a paid plan).
+
+**Usage with Kolb-Bot:**
+
+The `coding-agent` skill automatically detects Claude Code. It runs in the background with PTY mode:
+
+```bash
+kolb-bot skills info coding-agent  # Check if it's detected
+```
+
+### Codex CLI (Paid — OpenAI)
+
+OpenAI's command-line coding agent. Supports full-auto mode where it executes without asking for approval.
+
+**Install:**
+
+```bash
+npm install -g @openai/codex
+```
+
+**First-time setup:**
+
+Set your OpenAI API key:
+
+```bash
+export OPENAI_API_KEY="your-key-here"
+```
+
+Or configure it in `~/.codex/config.toml`:
+
+```toml
+[auth]
+api_key = "your-key-here"
+```
+
+**Key modes:**
+
+```bash
+codex "Build a REST API"                  # Interactive (asks before running commands)
+codex exec --full-auto "Build a REST API" # Auto-approves everything
+```
+
+**Important:** Codex requires a git repository to run. If you need a scratch workspace:
+
+```bash
+SCRATCH=$(mktemp -d) && cd $SCRATCH && git init && codex exec "your task"
+```
+
+### Oracle (Paid — uses ChatGPT browser)
+
+A prompt-bundling tool that feeds large codebases to GPT-5.2 Pro via the ChatGPT browser. Good for long-think tasks that need lots of context.
+
+**Install:**
+
+```bash
+npm install -g @steipete/oracle
+```
+
+**Usage:**
+
+```bash
+oracle --dry-run summary -p "Explain this codebase" --file "src/**"    # Preview what gets sent
+oracle --engine browser --model gpt-5.2-pro -p "Refactor auth" --file "src/**"  # Full run
+```
+
+### OpenCode
+
+A curated coding CLI with multi-provider support.
+
+**Install:**
+
+```bash
+npm install -g opencode-ai
+```
+
+**Usage:**
+
+```bash
+opencode run "Summarize the codebase"
+```
+
+### Pi Coding Agent (Built In)
+
+Pi is already embedded in Kolb-Bot — no separate install needed. It powers the core agent loop and is the default coding engine. You can also use it standalone:
+
+```bash
+# Already available if you ran npm link during setup
+pi -p "Your coding task"
+```
+
+### Quick Reference
+
+| CLI | Install Command | Auth | Cost |
+| --- | --- | --- | --- |
+| **Gemini CLI** | `brew install gemini-cli` | Google sign-in | Free |
+| **Claude Code** | `npm install -g @anthropic-ai/claude-code` | Anthropic account | Paid |
+| **Codex CLI** | `npm install -g @openai/codex` | OpenAI API key | Paid |
+| **Oracle** | `npm install -g @steipete/oracle` | ChatGPT browser | Paid |
+| **OpenCode** | `npm install -g opencode-ai` | API key | Paid |
+| **Pi** | Built into Kolb-Bot | Via `kolb-bot models auth` | Varies |
+
+After installing any of these, run `kolb-bot skills check` to verify Kolb-Bot can see them.
+
+---
+
 ## Something Not Working?
 
 Run this:
@@ -373,6 +669,150 @@ Your AI access expired. Run `kolb-bot doctor --fix` or re-run `kolb-bot onboard`
 
 **The build failed**
 Make sure you have Node.js version 22 or higher: `node --version`. If it's older, update Node.js (see the install instructions above).
+
+---
+
+## CLI Reference
+
+Everything you can do with `kolb-bot` from the terminal. Run any command with `--help` for full details.
+
+### Models
+
+```bash
+kolb-bot models list                       # See all available AI models
+kolb-bot models set <model>                # Switch to a different model
+kolb-bot models set-image <model>          # Set the image generation model
+kolb-bot models status                     # Show your current model config
+kolb-bot models scan                       # Scan for free models on OpenRouter
+kolb-bot models aliases add <alias> <model>  # Create a shortcut name for a model
+kolb-bot models aliases list               # List your aliases
+kolb-bot models fallbacks add <model>      # Add a backup model if the main one fails
+kolb-bot models auth add                   # Set up authentication for a provider
+kolb-bot models auth login                 # Log into a model provider
+kolb-bot models auth paste-token           # Paste an API key directly
+```
+
+### Skills
+
+Skills are add-on abilities that extend what Kolb-Bot can do. Many work through CLI tools installed on your machine.
+
+```bash
+kolb-bot skills list                       # See all available skills
+kolb-bot skills list --eligible            # Show only skills you can use right now
+kolb-bot skills info <skill-name>          # Get details about a specific skill
+kolb-bot skills check                      # Verify skill dependencies are installed
+```
+
+**Popular skills:**
+
+| Skill | What It Does |
+| --- | --- |
+| `coding-agent` | Run Codex CLI, Claude Code, or other coding agents in the background |
+| `github` | Interact with GitHub issues, PRs, and CI runs |
+| `tmux` | Remote-control tmux sessions with keystrokes and pane scraping |
+| `discord` | Send messages, react, manage threads, create polls on Discord |
+| `slack` | React to messages, pin/unpin items in Slack |
+| `1password` | Read and inject secrets from 1Password |
+| `apple-notes` | Create, view, edit, and search Apple Notes |
+| `notion` | Create and manage Notion pages and databases |
+| `obsidian` | Work with Obsidian vaults |
+| `weather` | Get weather forecasts (no API key needed) |
+| `sag` | Text-to-speech via ElevenLabs |
+| `summarize` | Summarize URLs, podcasts, and local files |
+| `clawhub` | Search and install community skills from ClawHub |
+| `spotify-player` | Control Spotify playback from the terminal |
+| `camsnap` | Capture frames from RTSP/ONVIF cameras |
+| `nano-pdf` | Edit PDFs with natural-language instructions |
+| `himalaya` | Manage email via IMAP/SMTP |
+| `gog` | Google Workspace CLI (Gmail, Calendar, Drive, Sheets) |
+| `voice-call` | Start voice calls via the voice-call plugin |
+| `imsg` | Send and read iMessages from the terminal |
+
+### Gateway & Daemon
+
+```bash
+kolb-bot gateway start                     # Start the background gateway server
+kolb-bot gateway stop                      # Stop it
+kolb-bot gateway restart                   # Restart it
+kolb-bot gateway status                    # Check if it's running and healthy
+kolb-bot gateway dev                       # Start in dev mode (verbose logging)
+kolb-bot logs                              # View live gateway logs
+kolb-bot logs --tail 50                    # Show the last 50 log lines
+```
+
+### Agents & Sessions
+
+```bash
+kolb-bot agent --message "Hello"           # Send a one-off message
+kolb-bot agent --message "Hi" --local      # Run the agent locally (skip gateway)
+kolb-bot agents list                       # List configured agents
+kolb-bot sessions                          # Show active sessions
+kolb-bot tui                               # Open the interactive terminal chat
+kolb-bot tui --session <key>               # Open a specific session
+```
+
+### Memory
+
+```bash
+kolb-bot memory list                       # List memory files
+kolb-bot memory status                     # Show memory index status
+kolb-bot memory search "some topic"        # Search memory for a topic
+kolb-bot memory info <file>                # Show details about a memory file
+kolb-bot memory export                     # Export memory data
+```
+
+### Channels & Messaging
+
+```bash
+kolb-bot channels list                     # List connected messaging apps
+kolb-bot channels add                      # Connect a new messaging app
+kolb-bot pairing list                      # Show paired devices
+kolb-bot message send --to <target> "Hi"   # Send a message through a channel
+```
+
+### Hooks & Cron
+
+```bash
+kolb-bot hooks list                        # List available lifecycle hooks
+kolb-bot hooks enable <name>               # Enable a hook
+kolb-bot hooks disable <name>              # Disable a hook
+kolb-bot cron list                         # List scheduled jobs
+kolb-bot cron add                          # Add a new scheduled job (interactive)
+kolb-bot cron status                       # Show cron job status
+```
+
+### Browser Automation
+
+```bash
+kolb-bot browser manage launch             # Launch the built-in browser
+kolb-bot browser manage close              # Close it
+kolb-bot browser inspect screenshot        # Take a screenshot of the current page
+kolb-bot browser actions input click       # Click an element
+kolb-bot browser actions input type "text" # Type into the focused element
+kolb-bot browser state cookies list        # List cookies
+```
+
+### Plugins
+
+```bash
+kolb-bot plugins list                      # List installed plugins
+kolb-bot plugins install <name>            # Install a plugin
+kolb-bot plugins update                    # Update all plugins
+```
+
+### Security & Maintenance
+
+```bash
+kolb-bot doctor                            # Run health checks
+kolb-bot doctor --fix                      # Auto-fix problems
+kolb-bot security audit                    # Basic security scan
+kolb-bot security audit --deep             # Deep security scan
+kolb-bot update                            # Update Kolb-Bot to the latest version
+kolb-bot reset                             # Reset config/state (keeps CLI installed)
+kolb-bot config get <key>                  # Read a config value
+kolb-bot config set <key> <value>          # Set a config value
+kolb-bot completion                        # Generate shell tab-completion script
+```
 
 ---
 
@@ -454,25 +894,164 @@ The setup is the same as on your own computer — install Node.js, pnpm, clone K
 
 ### Option 3: Docker (Extra Safety)
 
-Docker puts Kolb-Bot in a sealed box on your computer. It can't see your personal files or mess anything up. Good if you're cautious. See the full Docker guide in the [docs](https://github.com/kolbick/Kolb-Bot/blob/main/docs).
+Docker puts Kolb-Bot in a sealed box on your computer. It can't see your personal files or mess anything up. See the full section below.
 
 ---
 
-## Security (Read This)
+## Installing in an Isolated Environment (Docker)
 
-Kolb-Bot runs on your computer and has access to the same things you do. A few things to know:
+Running Kolb-Bot in Docker means it can't touch your personal files, your system, or anything outside its container. This is the recommended approach if you're running it on a shared machine, a VPS, or if you just want peace of mind.
 
-- **Only you should be able to message your bot.** The setup wizard helps you configure this. If you skip it, anyone who knows your bot's username could send it commands.
-- **Your AI keys are stored locally.** They're saved in `~/.kolb-bot/credentials/`. Don't share that folder with anyone.
-- **The gateway only listens locally by default.** Other people on the internet can't connect to it unless you change the settings.
+### Prerequisites
 
-To run a security check:
+Install Docker and Docker Compose:
+
+- **Mac:** Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- **Linux:** `sudo apt update && sudo apt install -y docker.io docker-compose-v2` (then `sudo usermod -aG docker $USER` and re-login)
+- **Windows (WSL):** Install Docker Desktop with WSL 2 backend enabled
+
+### Quick Start
+
+The repo includes a setup script that builds the image and configures everything:
 
 ```bash
-kolb-bot security audit --deep
+git clone https://github.com/kolbick/Kolb-Bot.git
+cd Kolb-Bot
+./docker-setup.sh
 ```
 
-This scans your setup and tells you if anything looks risky.
+This builds the Docker image, creates the config directory, and starts the gateway.
+
+### Manual Setup (Step by Step)
+
+**1. Build the image:**
+
+```bash
+docker build -t kolb-bot:local .
+```
+
+Need extra system packages inside the container? Add them at build time:
+
+```bash
+docker build --build-arg KOLB_BOT_DOCKER_APT_PACKAGES="ffmpeg imagemagick" -t kolb-bot:local .
+```
+
+**2. Create your config directory:**
+
+```bash
+mkdir -p ~/.kolb-bot
+```
+
+**3. Set environment variables** (create a `.env` file in the Kolb-Bot directory):
+
+```bash
+KOLB_BOT_CONFIG_DIR=~/.kolb-bot
+KOLB_BOT_WORKSPACE_DIR=~/.kolb-bot/workspace
+KOLB_BOT_GATEWAY_TOKEN=your-secret-token-here
+```
+
+**4. Start with Docker Compose:**
+
+```bash
+docker compose up -d kolb-bot-gateway
+```
+
+**5. Run the setup wizard** (inside the container):
+
+```bash
+docker compose run --rm kolb-bot-cli onboard
+```
+
+**6. Run CLI commands:**
+
+```bash
+docker compose run --rm kolb-bot-cli models list
+docker compose run --rm kolb-bot-cli doctor
+docker compose run --rm kolb-bot-cli tui
+```
+
+### What the Container Looks Like
+
+```
+Host machine                     Docker container
+~/.kolb-bot/  <-- bind mount --> /home/node/.kolb-bot/   (config + credentials)
+                                 /app/                    (Kolb-Bot code, read-only)
+                                 runs as 'node' user      (uid 1000, non-root)
+                                 ports: 18789, 18790      (gateway + bridge)
+```
+
+- The container runs as a **non-root user** (`node`, uid 1000)
+- Only `~/.kolb-bot/` is shared with the host — your other files are invisible to the bot
+- The gateway binds to LAN by default in Docker (so you can reach it from the host), but requires a token
+
+### Agent Sandboxing (Docker-in-Docker Isolation)
+
+For even deeper isolation, Kolb-Bot can run each agent's tool execution in its own throwaway Docker container. This means even if the AI tries to run something dangerous, it's trapped in a minimal sandbox with no network, no capabilities, and resource limits.
+
+**Enable sandboxing for all sessions:**
+
+```bash
+kolb-bot config set agents.defaults.sandbox.mode all
+```
+
+**Default sandbox settings** (these are already pretty locked down):
+
+| Setting | Default | What It Does |
+| --- | --- | --- |
+| `network` | `none` | No internet access from sandbox |
+| `user` | `1000:1000` | Non-root |
+| `capDrop` | `ALL` | No Linux capabilities |
+| `readOnlyRoot` | `true` | Can't modify the filesystem |
+| `pidsLimit` | `256` | Limits processes |
+| `memory` | `1g` | RAM limit |
+| `cpus` | `1` | CPU limit |
+
+**Manage sandbox containers:**
+
+```bash
+kolb-bot sandbox explain                  # Show effective sandbox policy
+kolb-bot sandbox list                     # List running sandbox containers
+kolb-bot sandbox recreate --all           # Rebuild containers after config changes
+```
+
+**Workspace access modes** — control what the sandbox can see:
+
+| Mode | What the Sandbox Sees |
+| --- | --- |
+| `none` (default) | Only its own scratch directory |
+| `ro` | Agent workspace mounted read-only at `/agent` |
+| `rw` | Agent workspace mounted read/write at `/workspace` |
+
+### Running on a VPS with Docker
+
+For a fully hands-off setup on a cloud server:
+
+```bash
+# SSH into your server
+ssh user@your-server
+
+# Install Docker
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER && newgrp docker
+
+# Clone and build
+git clone https://github.com/kolbick/Kolb-Bot.git
+cd Kolb-Bot
+docker build -t kolb-bot:local .
+
+# Create config and set a strong gateway token
+mkdir -p ~/.kolb-bot
+export KOLB_BOT_GATEWAY_TOKEN=$(openssl rand -hex 32)
+echo "KOLB_BOT_GATEWAY_TOKEN=$KOLB_BOT_GATEWAY_TOKEN" >> .env
+echo "KOLB_BOT_CONFIG_DIR=$HOME/.kolb-bot" >> .env
+echo "KOLB_BOT_WORKSPACE_DIR=$HOME/.kolb-bot/workspace" >> .env
+
+# Run the setup wizard (use API key auth — no browser on a server)
+docker compose run --rm kolb-bot-cli onboard --auth-choice gemini-api-key
+
+# Start the gateway in the background
+docker compose up -d kolb-bot-gateway
+```
 
 ---
 
