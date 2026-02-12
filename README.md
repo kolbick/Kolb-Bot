@@ -283,6 +283,53 @@ npm link
 
 Now you can type `kolb-bot` from anywhere on your computer.
 
+### Which Install Method? (npm vs git vs pnpm)
+
+During setup, Kolb-Bot may ask you to pick an install method. Here's what each one means:
+
+| Method | What It Does | Best For |
+| --- | --- | --- |
+| **npm** (recommended) | Installs a pre-built version from the npm registry. No source code on your machine. | Most people. Fastest, simplest, easiest to update. |
+| **git** | Clones the full source code and builds it locally with pnpm. | Developers, tinkerers, and anyone who wants to read or patch the code. |
+| **pnpm** (from source) | Runs directly from an existing source checkout. | Contributors actively working on Kolb-Bot itself. |
+
+**If you're not sure, pick npm.** It installs in seconds and updates with one command (`kolb-bot update`).
+
+**One-liner install (npm method):**
+
+```bash
+curl -fsSL https://kolb-bot.bot/install.sh | bash
+```
+
+This downloads and installs the latest release globally. No git clone, no build step. You can start using `kolb-bot` immediately after it finishes.
+
+**One-liner install (git method):**
+
+```bash
+curl -fsSL https://kolb-bot.bot/install.sh | bash -s -- --install-method git
+```
+
+This clones the repo to `~/kolb-bot`, installs dependencies, builds from source, and puts a wrapper script at `~/.local/bin/kolb-bot`.
+
+**Already did the manual setup above?** That's the git/pnpm method. You're all set — skip the one-liners.
+
+**Switching between methods later:**
+
+You can change your mind anytime without losing your config, sessions, or workspace data. Everything in `~/.kolb-bot/` stays intact:
+
+```bash
+# Switch from git to npm:
+npm install -g kolb-bot@latest
+kolb-bot doctor            # Detects the change and offers to update the service config
+kolb-bot gateway restart
+
+# Switch from npm to git:
+git clone https://github.com/kolbick/Kolb-Bot.git ~/kolb-bot
+cd ~/kolb-bot && pnpm install && pnpm build
+kolb-bot doctor
+kolb-bot gateway restart
+```
+
 ---
 
 ### Step 2: Connect It to a Free AI
