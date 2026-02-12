@@ -283,17 +283,26 @@ npm link
 
 Now you can type `kolb-bot` from anywhere on your computer.
 
-### Which Install Method? (npm vs git vs pnpm)
+### Which Install Method? (npm vs brew vs git vs pnpm)
 
-During setup, Kolb-Bot may ask you to pick an install method. Here's what each one means:
+During setup, Kolb-Bot may ask you to pick a preferred install command. Here's what each one means:
 
 | Method | What It Does | Best For |
 | --- | --- | --- |
 | **npm** (recommended) | Installs a pre-built version from the npm registry. No source code on your machine. | Most people. Fastest, simplest, easiest to update. |
+| **brew** (Mac only) | Installs via Homebrew (`brew install kolb-bot`). Homebrew manages updates alongside your other Mac packages. | Mac users who already use Homebrew for everything. |
 | **git** | Clones the full source code and builds it locally with pnpm. | Developers, tinkerers, and anyone who wants to read or patch the code. |
-| **pnpm** (from source) | Runs directly from an existing source checkout. | Contributors actively working on Kolb-Bot itself. |
+| **pnpm** (from source) | Runs directly from an existing source checkout via `pnpm kolb-bot ...`. | Contributors actively working on Kolb-Bot itself. |
 
 **If you're not sure, pick npm.** It installs in seconds and updates with one command (`kolb-bot update`).
+
+**What is Homebrew?** Homebrew (`brew`) is a popular package manager for Mac. If you don't have it, you can install it with:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+The Kolb-Bot installer script will also install Homebrew for you on Mac if it's missing (it needs it to set up Node.js and Git).
 
 **One-liner install (npm method):**
 
