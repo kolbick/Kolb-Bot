@@ -13,40 +13,106 @@ import {
 } from "./argv.js";
 
 describe("argv helpers", () => {
-  it("detects help/version flags", () => {
-    expect(hasHelpOrVersion(["node", "kolb-bot", "--help"])).toBe(true);
-    expect(hasHelpOrVersion(["node", "kolb-bot", "-V"])).toBe(true);
-    expect(hasHelpOrVersion(["node", "kolb-bot", "status"])).toBe(false);
+  it.each([
+    {
+      name: "help flag",
+      argv: ["node", "kolb-bot", "--help"],
+      expected: true,
+    },
+    {
+      name: "version flag",
+      argv: ["node", "kolb-bot", "-V"],
+      expected: true,
+    },
+    {
+      name: "normal command",
+      argv: ["node", "kolb-bot", "status"],
+      expected: false,
+    },
+  ])("detects help/version flags: $name", ({ argv, expected }) => {
+    expect(hasHelpOrVersion(argv)).toBe(expected);
   });
 
-  it("extracts command path ignoring flags and terminator", () => {
-    expect(getCommandPath(["node", "kolb-bot", "status", "--json"], 2)).toEqual(["status"]);
-    expect(getCommandPath(["node", "kolb-bot", "agents", "list"], 2)).toEqual(["agents", "list"]);
-    expect(getCommandPath(["node", "kolb-bot", "status", "--", "ignored"], 2)).toEqual(["status"]);
+  it.each([
+    {
+      name: "single command with trailing flag",
+      argv: ["node", "kolb-bot", "status", "--json"],
+      expected: ["status"],
+    },
+    {
+      name: "two-part command",
+      argv: ["node", "kolb-bot", "agents", "list"],
+      expected: ["agents", "list"],
+    },
+    {
+      name: "terminator cuts parsing",
+      argv: ["node", "kolb-bot", "status", "--", "ignored"],
+      expected: ["status"],
+    },
+  ])("extracts command path: $name", ({ argv, expected }) => {
+    expect(getCommandPath(argv, 2)).toEqual(expected);
   });
 
-  it("returns primary command", () => {
-    expect(getPrimaryCommand(["node", "kolb-bot", "agents", "list"])).toBe("agents");
-    expect(getPrimaryCommand(["node", "kolb-bot"])).toBeNull();
+  it.each([
+    {
+      name: "returns first command token",
+      argv: ["node", "kolb-bot", "agents", "list"],
+      expected: "agents",
+    },
+    {
+      name: "returns null when no command exists",
+      argv: ["node", "kolb-bot"],
+      expected: null,
+    },
+  ])("returns primary command: $name", ({ argv, expected }) => {
+    expect(getPrimaryCommand(argv)).toBe(expected);
   });
 
-  it("parses boolean flags and ignores terminator", () => {
-    expect(hasFlag(["node", "kolb-bot", "status", "--json"], "--json")).toBe(true);
-    expect(hasFlag(["node", "kolb-bot", "--", "--json"], "--json")).toBe(false);
+  it.each([
+    {
+      name: "detects flag before terminator",
+      argv: ["node", "kolb-bot", "status", "--json"],
+      flag: "--json",
+      expected: true,
+    },
+    {
+      name: "ignores flag after terminator",
+      argv: ["node", "kolb-bot", "--", "--json"],
+      flag: "--json",
+      expected: false,
+    },
+  ])("parses boolean flags: $name", ({ argv, flag, expected }) => {
+    expect(hasFlag(argv, flag)).toBe(expected);
   });
 
-  it("extracts flag values with equals and missing values", () => {
-    expect(getFlagValue(["node", "kolb-bot", "status", "--timeout", "5000"], "--timeout")).toBe(
-      "5000",
-    );
-    expect(getFlagValue(["node", "kolb-bot", "status", "--timeout=2500"], "--timeout")).toBe(
-      "2500",
-    );
-    expect(getFlagValue(["node", "kolb-bot", "status", "--timeout"], "--timeout")).toBeNull();
-    expect(getFlagValue(["node", "kolb-bot", "status", "--timeout", "--json"], "--timeout")).toBe(
-      null,
-    );
-    expect(getFlagValue(["node", "kolb-bot", "--", "--timeout=99"], "--timeout")).toBeUndefined();
+  it.each([
+    {
+      name: "value in next token",
+      argv: ["node", "kolb-bot", "status", "--timeout", "5000"],
+      expected: "5000",
+    },
+    {
+      name: "value in equals form",
+      argv: ["node", "kolb-bot", "status", "--timeout=2500"],
+      expected: "2500",
+    },
+    {
+      name: "missing value",
+      argv: ["node", "kolb-bot", "status", "--timeout"],
+      expected: null,
+    },
+    {
+      name: "next token is another flag",
+      argv: ["node", "kolb-bot", "status", "--timeout", "--json"],
+      expected: null,
+    },
+    {
+      name: "flag appears after terminator",
+      argv: ["node", "kolb-bot", "--", "--timeout=99"],
+      expected: undefined,
+    },
+  ])("extracts flag values: $name", ({ argv, expected }) => {
+    expect(getFlagValue(argv, "--timeout")).toBe(expected);
   });
 
   it("parses verbose flags", () => {
@@ -57,79 +123,82 @@ describe("argv helpers", () => {
     );
   });
 
-  it("parses positive integer flag values", () => {
-    expect(getPositiveIntFlagValue(["node", "kolb-bot", "status"], "--timeout")).toBeUndefined();
-    expect(
-      getPositiveIntFlagValue(["node", "kolb-bot", "status", "--timeout"], "--timeout"),
-    ).toBeNull();
-    expect(
-      getPositiveIntFlagValue(["node", "kolb-bot", "status", "--timeout", "5000"], "--timeout"),
-    ).toBe(5000);
-    expect(
-      getPositiveIntFlagValue(["node", "kolb-bot", "status", "--timeout", "nope"], "--timeout"),
-    ).toBeUndefined();
+  it.each([
+    {
+      name: "missing flag",
+      argv: ["node", "kolb-bot", "status"],
+      expected: undefined,
+    },
+    {
+      name: "missing value",
+      argv: ["node", "kolb-bot", "status", "--timeout"],
+      expected: null,
+    },
+    {
+      name: "valid positive integer",
+      argv: ["node", "kolb-bot", "status", "--timeout", "5000"],
+      expected: 5000,
+    },
+    {
+      name: "invalid integer",
+      argv: ["node", "kolb-bot", "status", "--timeout", "nope"],
+      expected: undefined,
+    },
+  ])("parses positive integer flag values: $name", ({ argv, expected }) => {
+    expect(getPositiveIntFlagValue(argv, "--timeout")).toBe(expected);
   });
 
   it("builds parse argv from raw args", () => {
-    const nodeArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["node", "kolb-bot", "status"],
-    });
-    expect(nodeArgv).toEqual(["node", "kolb-bot", "status"]);
+    const cases = [
+      {
+        rawArgs: ["node", "kolb-bot", "status"],
+        expected: ["node", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["node-22", "kolb-bot", "status"],
+        expected: ["node-22", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["node-22.2.0.exe", "kolb-bot", "status"],
+        expected: ["node-22.2.0.exe", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["node-22.2", "kolb-bot", "status"],
+        expected: ["node-22.2", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["node-22.2.exe", "kolb-bot", "status"],
+        expected: ["node-22.2.exe", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["/usr/bin/node-22.2.0", "kolb-bot", "status"],
+        expected: ["/usr/bin/node-22.2.0", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["nodejs", "kolb-bot", "status"],
+        expected: ["nodejs", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["node-dev", "kolb-bot", "status"],
+        expected: ["node", "kolb-bot", "node-dev", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["kolb-bot", "status"],
+        expected: ["node", "kolb-bot", "status"],
+      },
+      {
+        rawArgs: ["bun", "src/entry.ts", "status"],
+        expected: ["bun", "src/entry.ts", "status"],
+      },
+    ] as const;
 
-    const versionedNodeArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["node-22", "kolb-bot", "status"],
-    });
-    expect(versionedNodeArgv).toEqual(["node-22", "kolb-bot", "status"]);
-
-    const versionedNodeWindowsArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["node-22.2.0.exe", "kolb-bot", "status"],
-    });
-    expect(versionedNodeWindowsArgv).toEqual(["node-22.2.0.exe", "kolb-bot", "status"]);
-
-    const versionedNodePatchlessArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["node-22.2", "kolb-bot", "status"],
-    });
-    expect(versionedNodePatchlessArgv).toEqual(["node-22.2", "kolb-bot", "status"]);
-
-    const versionedNodeWindowsPatchlessArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["node-22.2.exe", "kolb-bot", "status"],
-    });
-    expect(versionedNodeWindowsPatchlessArgv).toEqual(["node-22.2.exe", "kolb-bot", "status"]);
-
-    const versionedNodeWithPathArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["/usr/bin/node-22.2.0", "kolb-bot", "status"],
-    });
-    expect(versionedNodeWithPathArgv).toEqual(["/usr/bin/node-22.2.0", "kolb-bot", "status"]);
-
-    const nodejsArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["nodejs", "kolb-bot", "status"],
-    });
-    expect(nodejsArgv).toEqual(["nodejs", "kolb-bot", "status"]);
-
-    const nonVersionedNodeArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["node-dev", "kolb-bot", "status"],
-    });
-    expect(nonVersionedNodeArgv).toEqual(["node", "kolb-bot", "node-dev", "kolb-bot", "status"]);
-
-    const directArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["kolb-bot", "status"],
-    });
-    expect(directArgv).toEqual(["node", "kolb-bot", "status"]);
-
-    const bunArgv = buildParseArgv({
-      programName: "kolb-bot",
-      rawArgs: ["bun", "src/entry.ts", "status"],
-    });
-    expect(bunArgv).toEqual(["bun", "src/entry.ts", "status"]);
+    for (const testCase of cases) {
+      const parsed = buildParseArgv({
+        programName: "kolb-bot",
+        rawArgs: [...testCase.rawArgs],
+      });
+      expect(parsed).toEqual([...testCase.expected]);
+    }
   });
 
   it("builds parse argv from fallback args", () => {
@@ -141,17 +210,36 @@ describe("argv helpers", () => {
   });
 
   it("decides when to migrate state", () => {
-    expect(shouldMigrateState(["node", "kolb-bot", "status"])).toBe(false);
-    expect(shouldMigrateState(["node", "kolb-bot", "health"])).toBe(false);
-    expect(shouldMigrateState(["node", "kolb-bot", "sessions"])).toBe(false);
-    expect(shouldMigrateState(["node", "kolb-bot", "memory", "status"])).toBe(false);
-    expect(shouldMigrateState(["node", "kolb-bot", "agent", "--message", "hi"])).toBe(false);
-    expect(shouldMigrateState(["node", "kolb-bot", "agents", "list"])).toBe(true);
-    expect(shouldMigrateState(["node", "kolb-bot", "message", "send"])).toBe(true);
+    const nonMutatingArgv = [
+      ["node", "kolb-bot", "status"],
+      ["node", "kolb-bot", "health"],
+      ["node", "kolb-bot", "sessions"],
+      ["node", "kolb-bot", "config", "get", "update"],
+      ["node", "kolb-bot", "config", "unset", "update"],
+      ["node", "kolb-bot", "models", "list"],
+      ["node", "kolb-bot", "models", "status"],
+      ["node", "kolb-bot", "memory", "status"],
+      ["node", "kolb-bot", "agent", "--message", "hi"],
+    ] as const;
+    const mutatingArgv = [
+      ["node", "kolb-bot", "agents", "list"],
+      ["node", "kolb-bot", "message", "send"],
+    ] as const;
+
+    for (const argv of nonMutatingArgv) {
+      expect(shouldMigrateState([...argv])).toBe(false);
+    }
+    for (const argv of mutatingArgv) {
+      expect(shouldMigrateState([...argv])).toBe(true);
+    }
   });
 
-  it("reuses command path for migrate state decisions", () => {
-    expect(shouldMigrateStateFromPath(["status"])).toBe(false);
-    expect(shouldMigrateStateFromPath(["agents", "list"])).toBe(true);
+  it.each([
+    { path: ["status"], expected: false },
+    { path: ["config", "get"], expected: false },
+    { path: ["models", "status"], expected: false },
+    { path: ["agents", "list"], expected: true },
+  ])("reuses command path for migrate state decisions: $path", ({ path, expected }) => {
+    expect(shouldMigrateStateFromPath(path)).toBe(expected);
   });
 });

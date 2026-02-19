@@ -9,6 +9,7 @@ type EnvSnapshot = {
   userProfile: string | undefined;
   homeDrive: string | undefined;
   homePath: string | undefined;
+  kolbBotHome: string | undefined;
   stateDir: string | undefined;
 };
 
@@ -18,6 +19,7 @@ function snapshotEnv(): EnvSnapshot {
     userProfile: process.env.USERPROFILE,
     homeDrive: process.env.HOMEDRIVE,
     homePath: process.env.HOMEPATH,
+    kolbBotHome: process.env.KOLB_BOT_HOME,
     stateDir: process.env.KOLB_BOT_STATE_DIR,
   };
 }
@@ -34,6 +36,7 @@ function restoreEnv(snapshot: EnvSnapshot) {
   restoreKey("USERPROFILE", snapshot.userProfile);
   restoreKey("HOMEDRIVE", snapshot.homeDrive);
   restoreKey("HOMEPATH", snapshot.homePath);
+  restoreKey("KOLB_BOT_HOME", snapshot.kolbBotHome);
   restoreKey("KOLB_BOT_STATE_DIR", snapshot.stateDir);
 }
 
@@ -58,6 +61,8 @@ function restoreExtraEnv(snapshot: Record<string, string | undefined>) {
 function setTempHome(base: string) {
   process.env.HOME = base;
   process.env.USERPROFILE = base;
+  // Ensure tests using HOME isolation aren't affected by leaked KOLB_BOT_HOME.
+  delete process.env.KOLB_BOT_HOME;
   process.env.KOLB_BOT_STATE_DIR = path.join(base, ".kolb-bot");
 
   if (process.platform !== "win32") {
@@ -104,12 +109,19 @@ export async function withTempHome<T>(
     restoreExtraEnv(envSnapshot);
     restoreEnv(snapshot);
     try {
-      await fs.rm(base, {
-        recursive: true,
-        force: true,
-        maxRetries: 10,
-        retryDelay: 50,
-      });
+      if (process.platform === "win32") {
+        await fs.rm(base, {
+          recursive: true,
+          force: true,
+          maxRetries: 10,
+          retryDelay: 50,
+        });
+      } else {
+        await fs.rm(base, {
+          recursive: true,
+          force: true,
+        });
+      }
     } catch {
       // ignore cleanup failures in tests
     }

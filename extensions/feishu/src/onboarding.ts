@@ -1,18 +1,18 @@
 import type {
   ChannelOnboardingAdapter,
   ChannelOnboardingDmPolicy,
-  Kolb-BotConfig,
+  ClawdbotConfig,
   DmPolicy,
   WizardPrompter,
 } from "kolb-bot/plugin-sdk";
 import { addWildcardAllowFrom, DEFAULT_ACCOUNT_ID, formatDocsLink } from "kolb-bot/plugin-sdk";
-import type { FeishuConfig } from "./types.js";
 import { resolveFeishuCredentials } from "./accounts.js";
 import { probeFeishu } from "./probe.js";
+import type { FeishuConfig } from "./types.js";
 
 const channel = "feishu" as const;
 
-function setFeishuDmPolicy(cfg: Kolb-BotConfig, dmPolicy: DmPolicy): Kolb-BotConfig {
+function setFeishuDmPolicy(cfg: ClawdbotConfig, dmPolicy: DmPolicy): ClawdbotConfig {
   const allowFrom =
     dmPolicy === "open"
       ? addWildcardAllowFrom(cfg.channels?.feishu?.allowFrom)?.map((entry) => String(entry))
@@ -30,7 +30,7 @@ function setFeishuDmPolicy(cfg: Kolb-BotConfig, dmPolicy: DmPolicy): Kolb-BotCon
   };
 }
 
-function setFeishuAllowFrom(cfg: Kolb-BotConfig, allowFrom: string[]): Kolb-BotConfig {
+function setFeishuAllowFrom(cfg: ClawdbotConfig, allowFrom: string[]): ClawdbotConfig {
   return {
     ...cfg,
     channels: {
@@ -51,9 +51,9 @@ function parseAllowFromInput(raw: string): string[] {
 }
 
 async function promptFeishuAllowFrom(params: {
-  cfg: Kolb-BotConfig;
+  cfg: ClawdbotConfig;
   prompter: WizardPrompter;
-}): Promise<Kolb-BotConfig> {
+}): Promise<ClawdbotConfig> {
   const existing = params.cfg.channels?.feishu?.allowFrom ?? [];
   await params.prompter.note(
     [
@@ -80,7 +80,10 @@ async function promptFeishuAllowFrom(params: {
     }
 
     const unique = [
-      ...new Set([...existing.map((v) => String(v).trim()).filter(Boolean), ...parts]),
+      ...new Set([
+        ...existing.map((v: string | number) => String(v).trim()).filter(Boolean),
+        ...parts,
+      ]),
     ];
     return setFeishuAllowFrom(params.cfg, unique);
   }
@@ -102,9 +105,9 @@ async function noteFeishuCredentialHelp(prompter: WizardPrompter): Promise<void>
 }
 
 function setFeishuGroupPolicy(
-  cfg: Kolb-BotConfig,
+  cfg: ClawdbotConfig,
   groupPolicy: "open" | "allowlist" | "disabled",
-): Kolb-BotConfig {
+): ClawdbotConfig {
   return {
     ...cfg,
     channels: {
@@ -118,7 +121,7 @@ function setFeishuGroupPolicy(
   };
 }
 
-function setFeishuGroupAllowFrom(cfg: Kolb-BotConfig, groupAllowFrom: string[]): Kolb-BotConfig {
+function setFeishuGroupAllowFrom(cfg: ClawdbotConfig, groupAllowFrom: string[]): ClawdbotConfig {
   return {
     ...cfg,
     channels: {

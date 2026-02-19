@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resolveBrowserConfig, resolveProfile, shouldStartLocalBrowserServer } from "./config.js";
 
 describe("browser config", () => {
-  it("defaults to enabled with loopback defaults and pirate-purple color", () => {
+  it("defaults to enabled with loopback defaults and lobster-orange color", () => {
     const resolved = resolveBrowserConfig(undefined);
     expect(resolved.enabled).toBe(true);
     expect(resolved.controlPort).toBe(18791);
@@ -16,10 +16,10 @@ describe("browser config", () => {
     expect(profile?.cdpPort).toBe(18792);
     expect(profile?.cdpUrl).toBe("http://127.0.0.1:18792");
 
-    const kolbBot = resolveProfile(resolved, "kolb-bot");
-    expect(kolbBot?.driver).toBe("kolb-bot");
-    expect(kolbBot?.cdpPort).toBe(18800);
-    expect(kolbBot?.cdpUrl).toBe("http://127.0.0.1:18800");
+    const kolb-bot = resolveProfile(resolved, "kolb-bot");
+    expect(kolb-bot?.driver).toBe("kolb-bot");
+    expect(kolb-bot?.cdpPort).toBe(18800);
+    expect(kolb-bot?.cdpUrl).toBe("http://127.0.0.1:18800");
     expect(resolved.remoteCdpTimeoutMs).toBe(1500);
     expect(resolved.remoteCdpHandshakeTimeoutMs).toBe(3000);
   });
@@ -35,9 +35,9 @@ describe("browser config", () => {
       expect(chrome?.cdpPort).toBe(19004);
       expect(chrome?.cdpUrl).toBe("http://127.0.0.1:19004");
 
-      const kolbBot = resolveProfile(resolved, "kolb-bot");
-      expect(kolbBot?.cdpPort).toBe(19012);
-      expect(kolbBot?.cdpUrl).toBe("http://127.0.0.1:19012");
+      const kolb-bot = resolveProfile(resolved, "kolb-bot");
+      expect(kolb-bot?.cdpPort).toBe(19012);
+      expect(kolb-bot?.cdpUrl).toBe("http://127.0.0.1:19012");
     } finally {
       if (prev === undefined) {
         delete process.env.KOLB_BOT_GATEWAY_PORT;
@@ -58,9 +58,9 @@ describe("browser config", () => {
       expect(chrome?.cdpPort).toBe(19014);
       expect(chrome?.cdpUrl).toBe("http://127.0.0.1:19014");
 
-      const kolbBot = resolveProfile(resolved, "kolb-bot");
-      expect(kolbBot?.cdpPort).toBe(19022);
-      expect(kolbBot?.cdpUrl).toBe("http://127.0.0.1:19022");
+      const kolb-bot = resolveProfile(resolved, "kolb-bot");
+      expect(kolb-bot?.cdpPort).toBe(19022);
+      expect(kolb-bot?.cdpUrl).toBe("http://127.0.0.1:19022");
     } finally {
       if (prev === undefined) {
         delete process.env.KOLB_BOT_GATEWAY_PORT;
@@ -148,5 +148,58 @@ describe("browser config", () => {
     });
     expect(resolveProfile(resolved, "chrome")).toBe(null);
     expect(resolved.defaultProfile).toBe("kolb-bot");
+  });
+
+  it("defaults extraArgs to empty array when not provided", () => {
+    const resolved = resolveBrowserConfig(undefined);
+    expect(resolved.extraArgs).toEqual([]);
+  });
+
+  it("passes through valid extraArgs strings", () => {
+    const resolved = resolveBrowserConfig({
+      extraArgs: ["--no-sandbox", "--disable-gpu"],
+    });
+    expect(resolved.extraArgs).toEqual(["--no-sandbox", "--disable-gpu"]);
+  });
+
+  it("filters out empty strings and whitespace-only entries from extraArgs", () => {
+    const resolved = resolveBrowserConfig({
+      extraArgs: ["--flag", "", "  ", "--other"],
+    });
+    expect(resolved.extraArgs).toEqual(["--flag", "--other"]);
+  });
+
+  it("filters out non-string entries from extraArgs", () => {
+    const resolved = resolveBrowserConfig({
+      extraArgs: ["--flag", 42, null, undefined, true, "--other"] as unknown as string[],
+    });
+    expect(resolved.extraArgs).toEqual(["--flag", "--other"]);
+  });
+
+  it("defaults extraArgs to empty array when set to non-array", () => {
+    const resolved = resolveBrowserConfig({
+      extraArgs: "not-an-array" as unknown as string[],
+    });
+    expect(resolved.extraArgs).toEqual([]);
+  });
+
+  it("resolves browser SSRF policy when configured", () => {
+    const resolved = resolveBrowserConfig({
+      ssrfPolicy: {
+        allowPrivateNetwork: true,
+        allowedHostnames: [" localhost ", ""],
+        hostnameAllowlist: [" *.trusted.example ", " "],
+      },
+    });
+    expect(resolved.ssrfPolicy).toEqual({
+      allowPrivateNetwork: true,
+      allowedHostnames: ["localhost"],
+      hostnameAllowlist: ["*.trusted.example"],
+    });
+  });
+
+  it("keeps browser SSRF policy undefined when not configured", () => {
+    const resolved = resolveBrowserConfig({});
+    expect(resolved.ssrfPolicy).toBeUndefined();
   });
 });

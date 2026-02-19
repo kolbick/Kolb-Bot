@@ -1,31 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { KolbBotApp } from "./app.ts";
+import { describe, expect, it } from "vitest";
+import { mountApp, registerAppMountHooks } from "./test-helpers/app-mount.ts";
 
-// oxlint-disable-next-line typescript/unbound-method
-const originalConnect = KolbBotApp.prototype.connect;
-
-function mountApp(pathname: string) {
-  window.history.replaceState({}, "", pathname);
-  const app = document.createElement("kolb-bot-app") as KolbBotApp;
-  document.body.append(app);
-  return app;
-}
-
-beforeEach(() => {
-  KolbBotApp.prototype.connect = () => {
-    // no-op: avoid real gateway WS connections in browser tests
-  };
-  window.__KOLB_BOT_CONTROL_UI_BASE_PATH__ = undefined;
-  localStorage.clear();
-  document.body.innerHTML = "";
-});
-
-afterEach(() => {
-  KolbBotApp.prototype.connect = originalConnect;
-  window.__KOLB_BOT_CONTROL_UI_BASE_PATH__ = undefined;
-  localStorage.clear();
-  document.body.innerHTML = "";
-});
+registerAppMountHooks();
 
 describe("chat focus mode", () => {
   it("collapses header + sidebar on chat tab only", async () => {

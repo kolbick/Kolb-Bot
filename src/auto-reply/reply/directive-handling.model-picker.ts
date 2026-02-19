@@ -1,5 +1,5 @@
-import type { KolbBotConfig } from "../../config/config.js";
 import { type ModelRef, normalizeProviderId } from "../../agents/model-selection.js";
+import type { KolbBotConfig } from "../../config/config.js";
 
 export type ModelPickerCatalogEntry = {
   provider: string;

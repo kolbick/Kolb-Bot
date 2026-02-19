@@ -24,7 +24,7 @@ export const browserActionExamples = [
   "kolb-bot browser hover 44",
   "kolb-bot browser drag 10 11",
   "kolb-bot browser select 9 OptionA OptionB",
-  "kolb-bot browser upload /tmp/file.pdf",
+  "kolb-bot browser upload /tmp/kolb-bot/uploads/file.pdf",
   'kolb-bot browser fill --fields \'[{"ref":"1","value":"Ada"}]\'',
   "kolb-bot browser dialog --accept",
   'kolb-bot browser wait --text "Done"',

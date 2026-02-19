@@ -1,6 +1,6 @@
 import type { KolbBotConfig } from "kolb-bot/plugin-sdk";
-import type { ZaloFetch } from "./api.js";
 import { resolveZaloAccount } from "./accounts.js";
+import type { ZaloFetch } from "./api.js";
 import { sendMessage, sendPhoto } from "./api.js";
 import { resolveZaloProxyFetch } from "./proxy.js";
 import { resolveZaloToken } from "./token.js";

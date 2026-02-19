@@ -3,7 +3,6 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import WebSocket from "ws";
-import type { ResolvedBrowserConfig, ResolvedBrowserProfile } from "./config.js";
 import { ensurePortAvailable } from "../infra/ports.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { CONFIG_DIR } from "../utils.js";
@@ -18,6 +17,7 @@ import {
   ensureProfileCleanExit,
   isProfileDecorated,
 } from "./chrome.profile-decoration.js";
+import type { ResolvedBrowserConfig, ResolvedBrowserProfile } from "./config.js";
 import {
   DEFAULT_KOLB_BOT_BROWSER_COLOR,
   DEFAULT_KOLB_BOT_BROWSER_PROFILE_NAME,
@@ -80,7 +80,7 @@ type ChromeVersion = {
 
 async function fetchChromeVersion(cdpUrl: string, timeoutMs = 500): Promise<ChromeVersion | null> {
   const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  const t = setTimeout(ctrl.abort.bind(ctrl), timeoutMs);
   try {
     const versionUrl = appendCdpPath(cdpUrl, "/json/version");
     const res = await fetch(versionUrl, {
@@ -214,6 +214,14 @@ export async function launchKolbBotChrome(
       args.push("--disable-dev-shm-usage");
     }
 
+    // Stealth: hide navigator.webdriver from automation detection (#80)
+    args.push("--disable-blink-features=AutomationControlled");
+
+    // Append user-configured extra arguments (e.g., stealth flags, window size)
+    if (resolved.extraArgs.length > 0) {
+      args.push(...resolved.extraArgs);
+    }
+
     // Always open a blank tab to ensure a target exists.
     args.push("about:blank");
 
@@ -264,7 +272,7 @@ export async function launchKolbBotChrome(
         name: profile.name,
         color: profile.color,
       });
-      log.info(`☠️ kolb-bot browser profile decorated (${profile.color})`);
+      log.info(`🦞 kolb-bot browser profile decorated (${profile.color})`);
     } catch (err) {
       log.warn(`kolb-bot browser profile decoration failed: ${String(err)}`);
     }
@@ -299,7 +307,7 @@ export async function launchKolbBotChrome(
 
   const pid = proc.pid ?? -1;
   log.info(
-    `☠️ kolb-bot browser started (${exe.kind}) profile "${profile.name}" on 127.0.0.1:${profile.cdpPort} (pid ${pid})`,
+    `🦞 kolb-bot browser started (${exe.kind}) profile "${profile.name}" on 127.0.0.1:${profile.cdpPort} (pid ${pid})`,
   );
 
   return {

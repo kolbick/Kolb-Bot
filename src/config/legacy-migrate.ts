@@ -1,5 +1,5 @@
-import type { KolbBotConfig } from "./types.js";
 import { applyLegacyMigrations } from "./legacy.js";
+import type { KolbBotConfig } from "./types.js";
 import { validateConfigObjectWithPlugins } from "./validation.js";
 
 export function migrateLegacyConfig(raw: unknown): {

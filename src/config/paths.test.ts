@@ -1,9 +1,10 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
   resolveDefaultConfigCandidates,
+  resolveConfigPathCandidate,
   resolveConfigPath,
   resolveOAuthDir,
   resolveOAuthPath,
@@ -36,6 +37,18 @@ describe("oauth paths", () => {
 });
 
 describe("state + config path candidates", () => {
+  function expectKolbBotHomeDefaults(env: NodeJS.ProcessEnv): void {
+    const configuredHome = env.KOLB_BOT_HOME;
+    if (!configuredHome) {
+      throw new Error("KOLB_BOT_HOME must be set for this assertion helper");
+    }
+    const resolvedHome = path.resolve(configuredHome);
+    expect(resolveStateDir(env)).toBe(path.join(resolvedHome, ".kolb-bot"));
+
+    const candidates = resolveDefaultConfigCandidates(env);
+    expect(candidates[0]).toBe(path.join(resolvedHome, ".kolb-bot", "kolb-bot.json"));
+  }
+
   it("uses KOLB_BOT_STATE_DIR when set", () => {
     const env = {
       KOLB_BOT_STATE_DIR: "/new/state",
@@ -44,26 +57,42 @@ describe("state + config path candidates", () => {
     expect(resolveStateDir(env, () => "/home/test")).toBe(path.resolve("/new/state"));
   });
 
+  it("uses KOLB_BOT_HOME for default state/config locations", () => {
+    const env = {
+      KOLB_BOT_HOME: "/srv/kolb-bot-home",
+    } as NodeJS.ProcessEnv;
+    expectKolbBotHomeDefaults(env);
+  });
+
+  it("prefers KOLB_BOT_HOME over HOME for default state/config locations", () => {
+    const env = {
+      KOLB_BOT_HOME: "/srv/kolb-bot-home",
+      HOME: "/home/other",
+    } as NodeJS.ProcessEnv;
+    expectKolbBotHomeDefaults(env);
+  });
+
   it("orders default config candidates in a stable order", () => {
     const home = "/home/test";
+    const resolvedHome = path.resolve(home);
     const candidates = resolveDefaultConfigCandidates({} as NodeJS.ProcessEnv, () => home);
     const expected = [
-      path.join(home, ".kolb-bot", "kolb-bot.json"),
-      path.join(home, ".kolb-bot", "kolb-bot.json"),
-      path.join(home, ".kolb-bot", "moltbot.json"),
-      path.join(home, ".kolb-bot", "moldbot.json"),
-      path.join(home, ".kolb-bot", "kolb-bot.json"),
-      path.join(home, ".kolb-bot", "kolb-bot.json"),
-      path.join(home, ".kolb-bot", "moltbot.json"),
-      path.join(home, ".kolb-bot", "moldbot.json"),
-      path.join(home, ".moltbot", "kolb-bot.json"),
-      path.join(home, ".moltbot", "kolb-bot.json"),
-      path.join(home, ".moltbot", "moltbot.json"),
-      path.join(home, ".moltbot", "moldbot.json"),
-      path.join(home, ".moldbot", "kolb-bot.json"),
-      path.join(home, ".moldbot", "kolb-bot.json"),
-      path.join(home, ".moldbot", "moltbot.json"),
-      path.join(home, ".moldbot", "moldbot.json"),
+      path.join(resolvedHome, ".kolb-bot", "kolb-bot.json"),
+      path.join(resolvedHome, ".kolb-bot", "clawdbot.json"),
+      path.join(resolvedHome, ".kolb-bot", "moldbot.json"),
+      path.join(resolvedHome, ".kolb-bot", "moltbot.json"),
+      path.join(resolvedHome, ".clawdbot", "kolb-bot.json"),
+      path.join(resolvedHome, ".clawdbot", "clawdbot.json"),
+      path.join(resolvedHome, ".clawdbot", "moldbot.json"),
+      path.join(resolvedHome, ".clawdbot", "moltbot.json"),
+      path.join(resolvedHome, ".moldbot", "kolb-bot.json"),
+      path.join(resolvedHome, ".moldbot", "clawdbot.json"),
+      path.join(resolvedHome, ".moldbot", "moldbot.json"),
+      path.join(resolvedHome, ".moldbot", "moltbot.json"),
+      path.join(resolvedHome, ".moltbot", "kolb-bot.json"),
+      path.join(resolvedHome, ".moltbot", "clawdbot.json"),
+      path.join(resolvedHome, ".moltbot", "moldbot.json"),
+      path.join(resolvedHome, ".moltbot", "moltbot.json"),
     ];
     expect(candidates).toEqual(expected);
   });
@@ -82,74 +111,16 @@ describe("state + config path candidates", () => {
 
   it("CONFIG_PATH prefers existing config when present", async () => {
     const root = await fs.mkdtemp(path.join(os.tmpdir(), "kolb-bot-config-"));
-    const previousHome = process.env.HOME;
-    const previousUserProfile = process.env.USERPROFILE;
-    const previousHomeDrive = process.env.HOMEDRIVE;
-    const previousHomePath = process.env.HOMEPATH;
-    const previousKolbBotConfig = process.env.KOLB_BOT_CONFIG_PATH;
-    const previousKolbBotState = process.env.KOLB_BOT_STATE_DIR;
     try {
       const legacyDir = path.join(root, ".kolb-bot");
       await fs.mkdir(legacyDir, { recursive: true });
       const legacyPath = path.join(legacyDir, "kolb-bot.json");
       await fs.writeFile(legacyPath, "{}", "utf-8");
 
-      process.env.HOME = root;
-      if (process.platform === "win32") {
-        process.env.USERPROFILE = root;
-        const parsed = path.win32.parse(root);
-        process.env.HOMEDRIVE = parsed.root.replace(/\\$/, "");
-        process.env.HOMEPATH = root.slice(parsed.root.length - 1);
-      }
-      delete process.env.KOLB_BOT_CONFIG_PATH;
-      delete process.env.KOLB_BOT_STATE_DIR;
-
-      vi.resetModules();
-      const { CONFIG_PATH } = await import("./paths.js");
-      expect(CONFIG_PATH).toBe(legacyPath);
+      const resolved = resolveConfigPathCandidate({} as NodeJS.ProcessEnv, () => root);
+      expect(resolved).toBe(legacyPath);
     } finally {
-      if (previousHome === undefined) {
-        delete process.env.HOME;
-      } else {
-        process.env.HOME = previousHome;
-      }
-      if (previousUserProfile === undefined) {
-        delete process.env.USERPROFILE;
-      } else {
-        process.env.USERPROFILE = previousUserProfile;
-      }
-      if (previousHomeDrive === undefined) {
-        delete process.env.HOMEDRIVE;
-      } else {
-        process.env.HOMEDRIVE = previousHomeDrive;
-      }
-      if (previousHomePath === undefined) {
-        delete process.env.HOMEPATH;
-      } else {
-        process.env.HOMEPATH = previousHomePath;
-      }
-      if (previousKolbBotConfig === undefined) {
-        delete process.env.KOLB_BOT_CONFIG_PATH;
-      } else {
-        process.env.KOLB_BOT_CONFIG_PATH = previousKolbBotConfig;
-      }
-      if (previousKolbBotConfig === undefined) {
-        delete process.env.KOLB_BOT_CONFIG_PATH;
-      } else {
-        process.env.KOLB_BOT_CONFIG_PATH = previousKolbBotConfig;
-      }
-      if (previousKolbBotState === undefined) {
-        delete process.env.KOLB_BOT_STATE_DIR;
-      } else {
-        process.env.KOLB_BOT_STATE_DIR = previousKolbBotState;
-      }
-      if (previousKolbBotState === undefined) {
-        delete process.env.KOLB_BOT_STATE_DIR;
-      } else {
-        process.env.KOLB_BOT_STATE_DIR = previousKolbBotState;
-      }
       await fs.rm(root, { recursive: true, force: true });
-      vi.resetModules();
     }
   });
 

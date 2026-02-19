@@ -1,7 +1,7 @@
 ---
 name: command-logger
 description: "Log all command events to a centralized audit file"
-homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#command-logger
+homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/automation/hooks#command-logger
 metadata:
   {
     "kolb-bot":

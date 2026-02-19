@@ -1,11 +1,12 @@
-import type { Kolb-BotConfig } from "kolb-bot/plugin-sdk";
-import type { MentionTarget } from "./mention.js";
-import type { FeishuSendResult } from "./types.js";
+import type { ClawdbotConfig } from "kolb-bot/plugin-sdk";
 import { resolveFeishuAccount } from "./accounts.js";
 import { createFeishuClient } from "./client.js";
+import type { MentionTarget } from "./mention.js";
 import { buildMentionedMessage, buildMentionedCardContent } from "./mention.js";
 import { getFeishuRuntime } from "./runtime.js";
+import { assertFeishuMessageApiSuccess, toFeishuSendResult } from "./send-result.js";
 import { resolveReceiveIdType, normalizeFeishuTarget } from "./targets.js";
+import type { FeishuSendResult, ResolvedFeishuAccount } from "./types.js";
 
 export type FeishuMessageInfo = {
   messageId: string;
@@ -22,7 +23,7 @@ export type FeishuMessageInfo = {
  * Useful for fetching quoted/replied message content.
  */
 export async function getMessageFeishu(params: {
-  cfg: Kolb-BotConfig;
+  cfg: ClawdbotConfig;
   messageId: string;
   accountId?: string;
 }): Promise<FeishuMessageInfo | null> {
@@ -91,7 +92,7 @@ export async function getMessageFeishu(params: {
 }
 
 export type SendFeishuMessageParams = {
-  cfg: Kolb-BotConfig;
+  cfg: ClawdbotConfig;
   to: string;
   text: string;
   replyToMessageId?: string;
@@ -161,15 +162,8 @@ export async function sendMessageFeishu(
         msg_type: msgType,
       },
     });
-
-    if (response.code !== 0) {
-      throw new Error(`Feishu reply failed: ${response.msg || `code ${response.code}`}`);
-    }
-
-    return {
-      messageId: response.data?.message_id ?? "unknown",
-      chatId: receiveId,
-    };
+    assertFeishuMessageApiSuccess(response, "Feishu reply failed");
+    return toFeishuSendResult(response, receiveId);
   }
 
   const response = await client.im.message.create({
@@ -180,19 +174,12 @@ export async function sendMessageFeishu(
       msg_type: msgType,
     },
   });
-
-  if (response.code !== 0) {
-    throw new Error(`Feishu send failed: ${response.msg || `code ${response.code}`}`);
-  }
-
-  return {
-    messageId: response.data?.message_id ?? "unknown",
-    chatId: receiveId,
-  };
+  assertFeishuMessageApiSuccess(response, "Feishu send failed");
+  return toFeishuSendResult(response, receiveId);
 }
 
 export type SendFeishuCardParams = {
-  cfg: Kolb-BotConfig;
+  cfg: ClawdbotConfig;
   to: string;
   card: Record<string, unknown>;
   replyToMessageId?: string;
@@ -223,15 +210,8 @@ export async function sendCardFeishu(params: SendFeishuCardParams): Promise<Feis
         msg_type: "interactive",
       },
     });
-
-    if (response.code !== 0) {
-      throw new Error(`Feishu card reply failed: ${response.msg || `code ${response.code}`}`);
-    }
-
-    return {
-      messageId: response.data?.message_id ?? "unknown",
-      chatId: receiveId,
-    };
+    assertFeishuMessageApiSuccess(response, "Feishu card reply failed");
+    return toFeishuSendResult(response, receiveId);
   }
 
   const response = await client.im.message.create({
@@ -242,19 +222,12 @@ export async function sendCardFeishu(params: SendFeishuCardParams): Promise<Feis
       msg_type: "interactive",
     },
   });
-
-  if (response.code !== 0) {
-    throw new Error(`Feishu card send failed: ${response.msg || `code ${response.code}`}`);
-  }
-
-  return {
-    messageId: response.data?.message_id ?? "unknown",
-    chatId: receiveId,
-  };
+  assertFeishuMessageApiSuccess(response, "Feishu card send failed");
+  return toFeishuSendResult(response, receiveId);
 }
 
 export async function updateCardFeishu(params: {
-  cfg: Kolb-BotConfig;
+  cfg: ClawdbotConfig;
   messageId: string;
   card: Record<string, unknown>;
   accountId?: string;
@@ -281,18 +254,22 @@ export async function updateCardFeishu(params: {
 /**
  * Build a Feishu interactive card with markdown content.
  * Cards render markdown properly (code blocks, tables, links, etc.)
+ * Uses schema 2.0 format for proper markdown rendering.
  */
 export function buildMarkdownCard(text: string): Record<string, unknown> {
   return {
+    schema: "2.0",
     config: {
       wide_screen_mode: true,
     },
-    elements: [
-      {
-        tag: "markdown",
-        content: text,
-      },
-    ],
+    body: {
+      elements: [
+        {
+          tag: "markdown",
+          content: text,
+        },
+      ],
+    },
   };
 }
 
@@ -301,7 +278,7 @@ export function buildMarkdownCard(text: string): Record<string, unknown> {
  * This renders markdown properly in Feishu (code blocks, tables, bold/italic, etc.)
  */
 export async function sendMarkdownCardFeishu(params: {
-  cfg: Kolb-BotConfig;
+  cfg: ClawdbotConfig;
   to: string;
   text: string;
   replyToMessageId?: string;
@@ -324,7 +301,7 @@ export async function sendMarkdownCardFeishu(params: {
  * Note: Feishu only allows editing messages within 24 hours.
  */
 export async function editMessageFeishu(params: {
-  cfg: Kolb-BotConfig;
+  cfg: ClawdbotConfig;
   messageId: string;
   text: string;
   accountId?: string;

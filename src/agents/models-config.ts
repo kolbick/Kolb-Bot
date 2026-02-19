@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { type KolbBotConfig, loadConfig } from "../config/config.js";
+import { isRecord } from "../utils.js";
 import { resolveKolbBotAgentDir } from "./agent-paths.js";
 import {
   normalizeProviders,
@@ -13,10 +14,6 @@ import {
 type ModelsConfig = NonNullable<KolbBotConfig["models"]>;
 
 const DEFAULT_MODE: NonNullable<ModelsConfig["mode"]> = "merge";
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === "object" && !Array.isArray(value));
-}
 
 function mergeProviderModels(implicit: ProviderConfig, explicit: ProviderConfig): ProviderConfig {
   const implicitModels = Array.isArray(implicit.models) ? implicit.models : [];
@@ -89,7 +86,7 @@ export async function ensureKolbBotModelsJson(
   const agentDir = agentDirOverride?.trim() ? agentDirOverride.trim() : resolveKolbBotAgentDir();
 
   const explicitProviders = cfg.models?.providers ?? {};
-  const implicitProviders = await resolveImplicitProviders({ agentDir });
+  const implicitProviders = await resolveImplicitProviders({ agentDir, explicitProviders });
   const providers: Record<string, ProviderConfig> = mergeProviders({
     implicit: implicitProviders,
     explicit: explicitProviders,

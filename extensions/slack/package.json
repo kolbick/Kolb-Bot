@@ -1,6 +1,7 @@
 {
   "name": "@kolb-bot/slack",
-  "version": "2026.2.6-3",
+  "version": "2026.2.19",
+  "private": true,
   "description": "KolbBot Slack channel plugin",
   "type": "module",
   "devDependencies": {

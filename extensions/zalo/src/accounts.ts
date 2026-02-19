@@ -1,7 +1,9 @@
 import type { KolbBotConfig } from "kolb-bot/plugin-sdk";
-import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "kolb-bot/plugin-sdk";
-import type { ResolvedZaloAccount, ZaloAccountConfig, ZaloConfig } from "./types.js";
+import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "kolb-bot/plugin-sdk/account-id";
 import { resolveZaloToken } from "./token.js";
+import type { ResolvedZaloAccount, ZaloAccountConfig, ZaloConfig } from "./types.js";
+
+export type { ResolvedZaloAccount };
 
 function listConfiguredAccountIds(cfg: KolbBotConfig): string[] {
   const accounts = (cfg.channels?.zalo as ZaloConfig | undefined)?.accounts;

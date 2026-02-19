@@ -1,5 +1,5 @@
 import type { ChannelOnboardingAdapter, KolbBotConfig, WizardPrompter } from "kolb-bot/plugin-sdk";
-import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "kolb-bot/plugin-sdk";
+import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "kolb-bot/plugin-sdk/account-id";
 import {
   listMattermostAccountIds,
   resolveDefaultMattermostAccountId,

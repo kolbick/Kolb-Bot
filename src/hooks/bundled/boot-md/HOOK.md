@@ -1,7 +1,7 @@
 ---
 name: boot-md
 description: "Run BOOT.md on gateway startup"
-homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#boot-md
+homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/automation/hooks#boot-md
 metadata:
   {
     "kolb-bot":
@@ -16,4 +16,5 @@ metadata:
 
 # Boot Checklist Hook
 
-Runs `BOOT.md` every time the gateway starts, if the file exists in the workspace.
+Runs `BOOT.md` at gateway startup for each configured agent scope, if the file exists in that
+agent's resolved workspace.

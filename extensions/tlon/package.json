@@ -1,11 +1,11 @@
 {
   "name": "@kolb-bot/tlon",
-  "version": "2026.2.6-3",
+  "version": "2026.2.19",
+  "private": true,
   "description": "KolbBot Tlon/Urbit channel plugin",
   "type": "module",
   "dependencies": {
-    "@urbit/aura": "^3.0.0",
-    "@urbit/http-api": "^3.0.0"
+    "@urbit/aura": "^3.0.0"
   },
   "devDependencies": {
     "kolb-bot": "workspace:*"
