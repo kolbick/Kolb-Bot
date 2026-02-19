@@ -1,24 +1,11 @@
 import type { KolbBotConfig } from "../config/config.js";
+import { ensurePluginAllowlisted } from "../config/plugins-allowlist.js";
 
 export type PluginEnableResult = {
   config: KolbBotConfig;
   enabled: boolean;
   reason?: string;
 };
-
-function ensureAllowlisted(cfg: KolbBotConfig, pluginId: string): KolbBotConfig {
-  const allow = cfg.plugins?.allow;
-  if (!Array.isArray(allow) || allow.includes(pluginId)) {
-    return cfg;
-  }
-  return {
-    ...cfg,
-    plugins: {
-      ...cfg.plugins,
-      allow: [...allow, pluginId],
-    },
-  };
-}
 
 export function enablePluginInConfig(cfg: KolbBotConfig, pluginId: string): PluginEnableResult {
   if (cfg.plugins?.enabled === false) {
@@ -42,6 +29,6 @@ export function enablePluginInConfig(cfg: KolbBotConfig, pluginId: string): Plug
       entries,
     },
   };
-  next = ensureAllowlisted(next, pluginId);
+  next = ensurePluginAllowlisted(next, pluginId);
   return { config: next, enabled: true };
 }

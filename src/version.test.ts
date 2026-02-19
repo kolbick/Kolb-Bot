@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   readVersionFromBuildInfoForModuleUrl,
   readVersionFromPackageJsonForModuleUrl,
+  resolveRuntimeServiceVersion,
   resolveVersionFromModuleUrl,
 } from "./version.js";
 
@@ -82,5 +83,44 @@ describe("version resolution", () => {
       expect(readVersionFromBuildInfoForModuleUrl(moduleUrl)).toBeNull();
       expect(resolveVersionFromModuleUrl(moduleUrl)).toBeNull();
     });
+  });
+
+  it("prefers KOLB_BOT_VERSION over service and package versions", () => {
+    expect(
+      resolveRuntimeServiceVersion({
+        KOLB_BOT_VERSION: "9.9.9",
+        KOLB_BOT_SERVICE_VERSION: "2.2.2",
+        npm_package_version: "1.1.1",
+      }),
+    ).toBe("9.9.9");
+  });
+
+  it("uses service and package fallbacks and ignores blank env values", () => {
+    expect(
+      resolveRuntimeServiceVersion({
+        KOLB_BOT_VERSION: "   ",
+        KOLB_BOT_SERVICE_VERSION: "  2.0.0  ",
+        npm_package_version: "1.0.0",
+      }),
+    ).toBe("2.0.0");
+
+    expect(
+      resolveRuntimeServiceVersion({
+        KOLB_BOT_VERSION: " ",
+        KOLB_BOT_SERVICE_VERSION: "\t",
+        npm_package_version: " 1.0.0-package ",
+      }),
+    ).toBe("1.0.0-package");
+
+    expect(
+      resolveRuntimeServiceVersion(
+        {
+          KOLB_BOT_VERSION: "",
+          KOLB_BOT_SERVICE_VERSION: " ",
+          npm_package_version: "",
+        },
+        "fallback",
+      ),
+    ).toBe("fallback");
   });
 });

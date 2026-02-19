@@ -35,7 +35,7 @@ describe("usage-format", () => {
           },
         },
       },
-    } as KolbBotConfig;
+    } as unknown as KolbBotConfig;
 
     const cost = resolveModelCostConfig({
       provider: "test",

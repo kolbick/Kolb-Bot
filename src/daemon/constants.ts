@@ -75,6 +75,20 @@ export function formatGatewayServiceDescription(params?: {
   return `KolbBot Gateway (${parts.join(", ")})`;
 }
 
+export function resolveGatewayServiceDescription(params: {
+  env: Record<string, string | undefined>;
+  environment?: Record<string, string | undefined>;
+  description?: string;
+}): string {
+  return (
+    params.description ??
+    formatGatewayServiceDescription({
+      profile: params.env.KOLB_BOT_PROFILE,
+      version: params.environment?.KOLB_BOT_SERVICE_VERSION ?? params.env.KOLB_BOT_SERVICE_VERSION,
+    })
+  );
+}
+
 export function resolveNodeLaunchAgentLabel(): string {
   return NODE_LAUNCH_AGENT_LABEL;
 }

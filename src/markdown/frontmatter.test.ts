@@ -55,7 +55,7 @@ tags:
   - alpha
   - beta
 metadata:
-  kolb-bot:
+  "kolb-bot":
     events:
       - command:new
 ---

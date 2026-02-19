@@ -1,6 +1,7 @@
 {
   "name": "@kolb-bot/twitch",
-  "version": "2026.2.6-3",
+  "version": "2026.2.19",
+  "private": true,
   "description": "KolbBot Twitch channel plugin",
   "type": "module",
   "dependencies": {

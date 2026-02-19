@@ -1,11 +1,10 @@
 {
   "name": "@kolb-bot/nostr",
-  "version": "2026.2.6-3",
+  "version": "2026.2.19",
   "description": "KolbBot Nostr channel plugin for NIP-04 encrypted DMs",
   "type": "module",
   "dependencies": {
-    "nostr-tools": "^2.23.0",
-    "kolb-bot": "workspace:*",
+    "nostr-tools": "^2.23.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -1,0 +1,14 @@
+{
+  "name": "@kolb-bot/irc",
+  "version": "2026.2.19",
+  "description": "KolbBot IRC channel plugin",
+  "type": "module",
+  "devDependencies": {
+    "kolb-bot": "workspace:*"
+  },
+  "kolb-bot": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

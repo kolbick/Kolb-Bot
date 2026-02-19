@@ -58,8 +58,8 @@ metadata:
 
     // Verify the metadata is valid JSON
     const parsed = JSON.parse(result.metadata);
-    expect(parsed["kolb-bot"].emoji).toBe("💾");
-    expect(parsed["kolb-bot"].events).toEqual(["command:new"]);
+    expect(parsed.kolb-bot.emoji).toBe("💾");
+    expect(parsed.kolb-bot.events).toEqual(["command:new"]);
   });
 
   it("parses multi-line metadata with complex nested structure", () => {
@@ -83,10 +83,10 @@ metadata:
     expect(result.metadata).toBeDefined();
 
     const parsed = JSON.parse(result.metadata);
-    expect(parsed["kolb-bot"].emoji).toBe("📝");
-    expect(parsed["kolb-bot"].events).toEqual(["command"]);
-    expect(parsed["kolb-bot"].requires.config).toEqual(["workspace.dir"]);
-    expect(parsed["kolb-bot"].install[0].kind).toBe("bundled");
+    expect(parsed.kolb-bot.emoji).toBe("📝");
+    expect(parsed.kolb-bot.events).toEqual(["command"]);
+    expect(parsed.kolb-bot.requires.config).toEqual(["workspace.dir"]);
+    expect(parsed.kolb-bot.install[0].kind).toBe("bundled");
   });
 
   it("handles single-line metadata (inline JSON)", () => {
@@ -233,7 +233,7 @@ describe("resolveKolbBotMetadata", () => {
     const content = `---
 name: session-memory
 description: "Save session context to memory when /new command is issued"
-homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks#session-memory
+homepage: https://github.com/kolbick/Kolb-Bot/blob/main/docs/automation/hooks#session-memory
 metadata:
   {
     "kolb-bot":
@@ -253,28 +253,28 @@ metadata:
     expect(frontmatter.name).toBe("session-memory");
     expect(frontmatter.metadata).toBeDefined();
 
-    const kolbBot = resolveKolbBotMetadata(frontmatter);
-    expect(kolbBot).toBeDefined();
-    expect(kolbBot?.emoji).toBe("💾");
-    expect(kolbBot?.events).toEqual(["command:new"]);
-    expect(kolbBot?.requires?.config).toEqual(["workspace.dir"]);
-    expect(kolbBot?.install?.[0].kind).toBe("bundled");
+    const kolb-bot = resolveKolbBotMetadata(frontmatter);
+    expect(kolb-bot).toBeDefined();
+    expect(kolb-bot?.emoji).toBe("💾");
+    expect(kolb-bot?.events).toEqual(["command:new"]);
+    expect(kolb-bot?.requires?.config).toEqual(["workspace.dir"]);
+    expect(kolb-bot?.install?.[0].kind).toBe("bundled");
   });
 
   it("parses YAML metadata map", () => {
     const content = `---
 name: yaml-metadata
 metadata:
-  kolb-bot:
+  "kolb-bot":
     emoji: disk
     events:
       - command:new
 ---
 `;
     const frontmatter = parseFrontmatter(content);
-    const kolbBot = resolveKolbBotMetadata(frontmatter);
-    expect(kolbBot?.emoji).toBe("disk");
-    expect(kolbBot?.events).toEqual(["command:new"]);
+    const kolb-bot = resolveKolbBotMetadata(frontmatter);
+    expect(kolb-bot?.emoji).toBe("disk");
+    expect(kolb-bot?.events).toEqual(["command:new"]);
   });
 });
 

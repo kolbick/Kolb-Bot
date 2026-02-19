@@ -1,46 +1,104 @@
-import crypto from "node:crypto";
 import type { KolbBotConfig } from "../../../config/config.js";
+import type { RuntimeEnv } from "../../../runtime.js";
+import { randomToken } from "../../onboard-helpers.js";
 import type { OnboardOptions } from "../../onboard-types.js";
 
 export function applyNonInteractiveGatewayConfig(params: {
   nextConfig: KolbBotConfig;
   opts: OnboardOptions;
-  runtime: unknown;
+  runtime: RuntimeEnv;
   defaultPort: number;
-}):
-  | {
-      nextConfig: KolbBotConfig;
-      port: number;
-      bind: string;
-      authMode: string;
-      gatewayToken: string;
-      tailscaleMode: string;
-    }
-  | undefined {
-  const port = params.opts.gatewayPort ?? params.defaultPort;
-  const bind = params.opts.gatewayBind ?? "loopback";
-  const authMode = params.opts.gatewayAuth ?? "token";
-  const tailscaleMode = params.opts.tailscale ?? "off";
+}): {
+  nextConfig: KolbBotConfig;
+  port: number;
+  bind: string;
+  authMode: string;
+  tailscaleMode: string;
+  tailscaleResetOnExit: boolean;
+  gatewayToken?: string;
+} | null {
+  const { opts, runtime } = params;
 
-  let gatewayToken = params.opts.gatewayToken ?? "";
-
-  // Auto-generate a token when binding to LAN and no explicit token/password is set
-  if (bind === "lan" && authMode === "token" && !gatewayToken) {
-    gatewayToken = crypto.randomBytes(24).toString("hex");
+  const hasGatewayPort = opts.gatewayPort !== undefined;
+  if (hasGatewayPort && (!Number.isFinite(opts.gatewayPort) || (opts.gatewayPort ?? 0) <= 0)) {
+    runtime.error("Invalid --gateway-port");
+    runtime.exit(1);
+    return null;
   }
 
-  const nextConfig: KolbBotConfig = {
-    ...params.nextConfig,
+  const port = hasGatewayPort ? (opts.gatewayPort as number) : params.defaultPort;
+  let bind = opts.gatewayBind ?? "loopback";
+  const authModeRaw = opts.gatewayAuth ?? "token";
+  if (authModeRaw !== "token" && authModeRaw !== "password") {
+    runtime.error("Invalid --gateway-auth (use token|password).");
+    runtime.exit(1);
+    return null;
+  }
+  let authMode = authModeRaw;
+  const tailscaleMode = opts.tailscale ?? "off";
+  const tailscaleResetOnExit = Boolean(opts.tailscaleResetOnExit);
+
+  // Tighten config to safe combos:
+  // - If Tailscale is on, force loopback bind (the tunnel handles external access).
+  // - If using Tailscale Funnel, require password auth.
+  if (tailscaleMode !== "off" && bind !== "loopback") {
+    bind = "loopback";
+  }
+  if (tailscaleMode === "funnel" && authMode !== "password") {
+    authMode = "password";
+  }
+
+  let nextConfig = params.nextConfig;
+  let gatewayToken = opts.gatewayToken?.trim() || undefined;
+
+  if (authMode === "token") {
+    if (!gatewayToken) {
+      gatewayToken = randomToken();
+    }
+    nextConfig = {
+      ...nextConfig,
+      gateway: {
+        ...nextConfig.gateway,
+        auth: {
+          ...nextConfig.gateway?.auth,
+          mode: "token",
+          token: gatewayToken,
+        },
+      },
+    };
+  }
+
+  if (authMode === "password") {
+    const password = opts.gatewayPassword?.trim();
+    if (!password) {
+      runtime.error("Missing --gateway-password for password auth.");
+      runtime.exit(1);
+      return null;
+    }
+    nextConfig = {
+      ...nextConfig,
+      gateway: {
+        ...nextConfig.gateway,
+        auth: {
+          ...nextConfig.gateway?.auth,
+          mode: "password",
+          password,
+        },
+      },
+    };
+  }
+
+  nextConfig = {
+    ...nextConfig,
     gateway: {
-      ...params.nextConfig.gateway,
+      ...nextConfig.gateway,
       port,
       bind,
-      auth:
-        authMode === "token"
-          ? { mode: "token" as const, token: gatewayToken }
-          : authMode === "password"
-            ? { mode: "password" as const, password: params.opts.gatewayPassword ?? "" }
-            : params.nextConfig.gateway?.auth,
+      tailscale: {
+        ...nextConfig.gateway?.tailscale,
+        mode: tailscaleMode,
+        resetOnExit: tailscaleResetOnExit,
+      },
     },
   };
 
@@ -49,7 +107,8 @@ export function applyNonInteractiveGatewayConfig(params: {
     port,
     bind,
     authMode,
-    gatewayToken,
     tailscaleMode,
+    tailscaleResetOnExit,
+    gatewayToken,
   };
 }

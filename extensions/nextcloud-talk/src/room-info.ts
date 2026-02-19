@@ -1,5 +1,5 @@
-import type { RuntimeEnv } from "kolb-bot/plugin-sdk";
 import { readFileSync } from "node:fs";
+import type { RuntimeEnv } from "kolb-bot/plugin-sdk";
 import type { ResolvedNextcloudTalkAccount } from "./accounts.js";
 
 const ROOM_CACHE_TTL_MS = 5 * 60 * 1000;

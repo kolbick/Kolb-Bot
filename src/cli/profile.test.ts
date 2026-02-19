@@ -42,13 +42,11 @@ describe("parseCliProfileArgs", () => {
     expect(res.ok).toBe(false);
   });
 
-  it("rejects combining --dev with --profile (dev first)", () => {
-    const res = parseCliProfileArgs(["node", "kolb-bot", "--dev", "--profile", "work", "status"]);
-    expect(res.ok).toBe(false);
-  });
-
-  it("rejects combining --dev with --profile (profile first)", () => {
-    const res = parseCliProfileArgs(["node", "kolb-bot", "--profile", "work", "--dev", "status"]);
+  it.each([
+    ["--dev first", ["node", "kolb-bot", "--dev", "--profile", "work", "status"]],
+    ["--profile first", ["node", "kolb-bot", "--profile", "work", "--dev", "status"]],
+  ])("rejects combining --dev with --profile (%s)", (_name, argv) => {
+    const res = parseCliProfileArgs(argv);
     expect(res.ok).toBe(false);
   });
 });
@@ -61,7 +59,7 @@ describe("applyCliProfileEnv", () => {
       env,
       homedir: () => "/home/peter",
     });
-    const expectedStateDir = path.join("/home/peter", ".kolb-bot-dev");
+    const expectedStateDir = path.join(path.resolve("/home/peter"), ".kolb-bot-dev");
     expect(env.KOLB_BOT_PROFILE).toBe("dev");
     expect(env.KOLB_BOT_STATE_DIR).toBe(expectedStateDir);
     expect(env.KOLB_BOT_CONFIG_PATH).toBe(path.join(expectedStateDir, "kolb-bot.json"));
@@ -82,41 +80,66 @@ describe("applyCliProfileEnv", () => {
     expect(env.KOLB_BOT_GATEWAY_PORT).toBe("19099");
     expect(env.KOLB_BOT_CONFIG_PATH).toBe(path.join("/custom", "kolb-bot.json"));
   });
+
+  it("uses KOLB_BOT_HOME when deriving profile state dir", () => {
+    const env: Record<string, string | undefined> = {
+      KOLB_BOT_HOME: "/srv/kolb-bot-home",
+      HOME: "/home/other",
+    };
+    applyCliProfileEnv({
+      profile: "work",
+      env,
+      homedir: () => "/home/fallback",
+    });
+
+    const resolvedHome = path.resolve("/srv/kolb-bot-home");
+    expect(env.KOLB_BOT_STATE_DIR).toBe(path.join(resolvedHome, ".kolb-bot-work"));
+    expect(env.KOLB_BOT_CONFIG_PATH).toBe(
+      path.join(resolvedHome, ".kolb-bot-work", "kolb-bot.json"),
+    );
+  });
 });
 
 describe("formatCliCommand", () => {
-  it("returns command unchanged when no profile is set", () => {
-    expect(formatCliCommand("kolb-bot doctor --fix", {})).toBe("kolb-bot doctor --fix");
-  });
-
-  it("returns command unchanged when profile is default", () => {
-    expect(formatCliCommand("kolb-bot doctor --fix", { KOLB_BOT_PROFILE: "default" })).toBe(
-      "kolb-bot doctor --fix",
-    );
-  });
-
-  it("returns command unchanged when profile is Default (case-insensitive)", () => {
-    expect(formatCliCommand("kolb-bot doctor --fix", { KOLB_BOT_PROFILE: "Default" })).toBe(
-      "kolb-bot doctor --fix",
-    );
-  });
-
-  it("returns command unchanged when profile is invalid", () => {
-    expect(formatCliCommand("kolb-bot doctor --fix", { KOLB_BOT_PROFILE: "bad profile" })).toBe(
-      "kolb-bot doctor --fix",
-    );
-  });
-
-  it("returns command unchanged when --profile is already present", () => {
-    expect(
-      formatCliCommand("kolb-bot --profile work doctor --fix", { KOLB_BOT_PROFILE: "work" }),
-    ).toBe("kolb-bot --profile work doctor --fix");
-  });
-
-  it("returns command unchanged when --dev is already present", () => {
-    expect(formatCliCommand("kolb-bot --dev doctor", { KOLB_BOT_PROFILE: "dev" })).toBe(
-      "kolb-bot --dev doctor",
-    );
+  it.each([
+    {
+      name: "no profile is set",
+      cmd: "kolb-bot doctor --fix",
+      env: {},
+      expected: "kolb-bot doctor --fix",
+    },
+    {
+      name: "profile is default",
+      cmd: "kolb-bot doctor --fix",
+      env: { KOLB_BOT_PROFILE: "default" },
+      expected: "kolb-bot doctor --fix",
+    },
+    {
+      name: "profile is Default (case-insensitive)",
+      cmd: "kolb-bot doctor --fix",
+      env: { KOLB_BOT_PROFILE: "Default" },
+      expected: "kolb-bot doctor --fix",
+    },
+    {
+      name: "profile is invalid",
+      cmd: "kolb-bot doctor --fix",
+      env: { KOLB_BOT_PROFILE: "bad profile" },
+      expected: "kolb-bot doctor --fix",
+    },
+    {
+      name: "--profile is already present",
+      cmd: "kolb-bot --profile work doctor --fix",
+      env: { KOLB_BOT_PROFILE: "work" },
+      expected: "kolb-bot --profile work doctor --fix",
+    },
+    {
+      name: "--dev is already present",
+      cmd: "kolb-bot --dev doctor",
+      env: { KOLB_BOT_PROFILE: "dev" },
+      expected: "kolb-bot --dev doctor",
+    },
+  ])("returns command unchanged when $name", ({ cmd, env, expected }) => {
+    expect(formatCliCommand(cmd, env)).toBe(expected);
   });
 
   it("inserts --profile flag when profile is set", () => {

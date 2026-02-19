@@ -1,6 +1,6 @@
 {
   "name": "@kolb-bot/nextcloud-talk",
-  "version": "2026.2.6-3",
+  "version": "2026.2.19",
   "description": "KolbBot Nextcloud Talk channel plugin",
   "type": "module",
   "devDependencies": {

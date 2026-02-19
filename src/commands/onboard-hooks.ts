@@ -1,9 +1,9 @@
-import type { KolbBotConfig } from "../config/config.js";
-import type { RuntimeEnv } from "../runtime.js";
-import type { WizardPrompter } from "../wizard/prompts.js";
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../agents/agent-scope.js";
 import { formatCliCommand } from "../cli/command-format.js";
+import type { KolbBotConfig } from "../config/config.js";
 import { buildWorkspaceHookStatus } from "../hooks/hooks-status.js";
+import type { RuntimeEnv } from "../runtime.js";
+import type { WizardPrompter } from "../wizard/prompts.js";
 
 export async function setupInternalHooks(
   cfg: KolbBotConfig,
@@ -15,7 +15,7 @@ export async function setupInternalHooks(
       "Hooks let you automate actions when agent commands are issued.",
       "Example: Save session context to memory when you issue /new.",
       "",
-      "Learn more: https://github.com/kolbick/Kolb-Bot/blob/main/docs/hooks",
+      "Learn more: https://github.com/kolbick/Kolb-Bot/blob/main/docs/automation/hooks",
     ].join("\n"),
     "Hooks",
   );

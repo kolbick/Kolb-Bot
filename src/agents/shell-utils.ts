@@ -49,7 +49,7 @@ export function getShellConfig(): { shell: string; args: string[] } {
   return { shell, args: ["-c"] };
 }
 
-function resolveShellFromPath(name: string): string | undefined {
+export function resolveShellFromPath(name: string): string | undefined {
   const envPath = process.env.PATH ?? "";
   if (!envPath) {
     return undefined;
@@ -79,7 +79,7 @@ function normalizeShellName(value: string): string {
 }
 
 export function detectRuntimeShell(): string | undefined {
-  const overrideShell = process.env.KOLB_BOT_SHELL?.trim() || process.env.CLAWDBOT_SHELL?.trim();
+  const overrideShell = process.env.CLAWDBOT_SHELL?.trim();
   if (overrideShell) {
     const name = normalizeShellName(overrideShell);
     if (name) {

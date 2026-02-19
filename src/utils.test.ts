@@ -10,8 +10,11 @@ import {
   normalizeE164,
   normalizePath,
   resolveConfigDir,
+  resolveHomeDir,
   resolveJidToE164,
   resolveUserPath,
+  shortenHomeInString,
+  shortenHomePath,
   sleep,
   toWhatsappJid,
   withWhatsAppPrefix,
@@ -57,6 +60,10 @@ describe("sleep", () => {
 });
 
 describe("assertWebChannel", () => {
+  it("accepts valid channel", () => {
+    expect(() => assertWebChannel("web")).not.toThrow();
+  });
+
   it("throws for invalid channel", () => {
     expect(() => assertWebChannel("bad" as string)).toThrow();
   });
@@ -134,6 +141,43 @@ describe("resolveConfigDir", () => {
   });
 });
 
+describe("resolveHomeDir", () => {
+  it("prefers KOLB_BOT_HOME over HOME", () => {
+    vi.stubEnv("KOLB_BOT_HOME", "/srv/kolb-bot-home");
+    vi.stubEnv("HOME", "/home/other");
+
+    expect(resolveHomeDir()).toBe(path.resolve("/srv/kolb-bot-home"));
+
+    vi.unstubAllEnvs();
+  });
+});
+
+describe("shortenHomePath", () => {
+  it("uses $KOLB_BOT_HOME prefix when KOLB_BOT_HOME is set", () => {
+    vi.stubEnv("KOLB_BOT_HOME", "/srv/kolb-bot-home");
+    vi.stubEnv("HOME", "/home/other");
+
+    expect(shortenHomePath(`${path.resolve("/srv/kolb-bot-home")}/.kolb-bot/kolb-bot.json`)).toBe(
+      "$KOLB_BOT_HOME/.kolb-bot/kolb-bot.json",
+    );
+
+    vi.unstubAllEnvs();
+  });
+});
+
+describe("shortenHomeInString", () => {
+  it("uses $KOLB_BOT_HOME replacement when KOLB_BOT_HOME is set", () => {
+    vi.stubEnv("KOLB_BOT_HOME", "/srv/kolb-bot-home");
+    vi.stubEnv("HOME", "/home/other");
+
+    expect(
+      shortenHomeInString(`config: ${path.resolve("/srv/kolb-bot-home")}/.kolb-bot/kolb-bot.json`),
+    ).toBe("config: $KOLB_BOT_HOME/.kolb-bot/kolb-bot.json");
+
+    vi.unstubAllEnvs();
+  });
+});
+
 describe("resolveJidToE164", () => {
   it("resolves @lid via lidLookup when mapping file is missing", async () => {
     const lidLookup = {
@@ -163,6 +207,15 @@ describe("resolveUserPath", () => {
 
   it("resolves relative paths", () => {
     expect(resolveUserPath("tmp/dir")).toBe(path.resolve("tmp/dir"));
+  });
+
+  it("prefers KOLB_BOT_HOME for tilde expansion", () => {
+    vi.stubEnv("KOLB_BOT_HOME", "/srv/kolb-bot-home");
+    vi.stubEnv("HOME", "/home/other");
+
+    expect(resolveUserPath("~/kolb-bot")).toBe(path.resolve("/srv/kolb-bot-home", "kolb-bot"));
+
+    vi.unstubAllEnvs();
   });
 
   it("keeps blank paths blank", () => {

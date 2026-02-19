@@ -1,12 +1,9 @@
-import type { KolbBotConfig } from "../../config/config.js";
-import type { MsgContext } from "../templating.js";
 import { resolveAgentConfig } from "../../agents/agent-scope.js";
 import { getChannelDock } from "../../channels/dock.js";
 import { normalizeChannelId } from "../../channels/plugins/index.js";
-
-function escapeRegExp(text: string): string {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
+import type { KolbBotConfig } from "../../config/config.js";
+import { escapeRegExp } from "../../utils.js";
+import type { MsgContext } from "../templating.js";
 
 function deriveMentionPatterns(identity?: { name?: string; emoji?: string }) {
   const patterns: string[] = [];
@@ -68,22 +65,8 @@ export function buildMentionRegexes(cfg: KolbBotConfig | undefined, agentId?: st
     .filter((value): value is RegExp => Boolean(value));
 }
 
-const LEGACY_NAME_MAP: ReadonlyArray<[RegExp, string]> = [
-  [/\bopenclaw\b/g, "kolb-bot"],
-  [/\bopen[-\s]?claw\b/g, "kolb-bot"],
-  [/\bclawd(?:bot)?\b/g, "kolb-bot"],
-];
-
 export function normalizeMentionText(text: string): string {
-  let cleaned = (text ?? "")
-    .replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f]/g, "")
-    .toLowerCase()
-    // Normalize underscores to hyphens so KOLB_BOT matches kolb-bot patterns
-    .replace(/_/g, "-");
-  for (const [pattern, replacement] of LEGACY_NAME_MAP) {
-    cleaned = cleaned.replace(pattern, replacement);
-  }
-  return cleaned;
+  return (text ?? "").replace(/[\u200b-\u200f\u202a-\u202e\u2060-\u206f]/g, "").toLowerCase();
 }
 
 export function matchesMentionPatterns(text: string, mentionRegexes: RegExp[]): boolean {
@@ -107,18 +90,24 @@ export function matchesMentionWithExplicit(params: {
   text: string;
   mentionRegexes: RegExp[];
   explicit?: ExplicitMentionSignal;
+  transcript?: string;
 }): boolean {
   const cleaned = normalizeMentionText(params.text ?? "");
   const explicit = params.explicit?.isExplicitlyMentioned === true;
   const explicitAvailable = params.explicit?.canResolveExplicit === true;
   const hasAnyMention = params.explicit?.hasAnyMention === true;
+
+  // Check transcript if text is empty and transcript is provided
+  const transcriptCleaned = params.transcript ? normalizeMentionText(params.transcript) : "";
+  const textToCheck = cleaned || transcriptCleaned;
+
   if (hasAnyMention && explicitAvailable) {
-    return explicit || params.mentionRegexes.some((re) => re.test(cleaned));
+    return explicit || params.mentionRegexes.some((re) => re.test(textToCheck));
   }
-  if (!cleaned) {
+  if (!textToCheck) {
     return explicit;
   }
-  return explicit || params.mentionRegexes.some((re) => re.test(cleaned));
+  return explicit || params.mentionRegexes.some((re) => re.test(textToCheck));
 }
 
 export function stripStructuralPrefixes(text: string): string {

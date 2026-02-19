@@ -1,4 +1,4 @@
-import type { KolbBotPluginApi } from "kolb-bot/plugin-sdk";
+import type { AnyAgentTool, KolbBotPluginApi } from "kolb-bot/plugin-sdk";
 import { emptyPluginConfigSchema } from "kolb-bot/plugin-sdk";
 import { zalouserDock, zalouserPlugin } from "./src/channel.js";
 import { setZalouserRuntime } from "./src/runtime.js";
@@ -24,7 +24,7 @@ const plugin = {
         "friends (list/search friends), groups (list groups), me (profile info), status (auth check).",
       parameters: ZalouserToolSchema,
       execute: executeZalouserTool,
-    });
+    } as AnyAgentTool);
   },
 };
 

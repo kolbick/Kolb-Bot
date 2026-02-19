@@ -49,6 +49,16 @@ describe("config io paths", () => {
     });
   });
 
+  it("uses KOLB_BOT_HOME for default config path", async () => {
+    await withTempHome(async (home) => {
+      const io = createConfigIO({
+        env: { KOLB_BOT_HOME: path.join(home, "svc-home") } as NodeJS.ProcessEnv,
+        homedir: () => path.join(home, "ignored-home"),
+      });
+      expect(io.configPath).toBe(path.join(home, "svc-home", ".kolb-bot", "kolb-bot.json"));
+    });
+  });
+
   it("honors explicit KOLB_BOT_CONFIG_PATH override", async () => {
     await withTempHome(async (home) => {
       const customPath = await writeConfig(home, ".kolb-bot", 20002, "custom.json");
