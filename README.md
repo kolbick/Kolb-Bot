@@ -287,12 +287,12 @@ Now you can type `kolb-bot` from anywhere on your computer.
 
 During setup, Kolb-Bot may ask you to pick a preferred install command. Here's what each one means:
 
-| Method | What It Does | Best For |
-| --- | --- | --- |
-| **npm** (recommended) | Installs a pre-built version from the npm registry. No source code on your machine. | Most people. Fastest, simplest, easiest to update. |
-| **brew** (Mac only) | Installs via Homebrew (`brew install kolb-bot`). Homebrew manages updates alongside your other Mac packages. | Mac users who already use Homebrew for everything. |
-| **git** | Clones the full source code and builds it locally with pnpm. | Developers, tinkerers, and anyone who wants to read or patch the code. |
-| **pnpm** (from source) | Runs directly from an existing source checkout via `pnpm kolb-bot ...`. | Contributors actively working on Kolb-Bot itself. |
+| Method                 | What It Does                                                                                                 | Best For                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| **npm** (recommended)  | Installs a pre-built version from the npm registry. No source code on your machine.                          | Most people. Fastest, simplest, easiest to update.                     |
+| **brew** (Mac only)    | Installs via Homebrew (`brew install kolb-bot`). Homebrew manages updates alongside your other Mac packages. | Mac users who already use Homebrew for everything.                     |
+| **git**                | Clones the full source code and builds it locally with pnpm.                                                 | Developers, tinkerers, and anyone who wants to read or patch the code. |
+| **pnpm** (from source) | Runs directly from an existing source checkout via `pnpm kolb-bot ...`.                                      | Contributors actively working on Kolb-Bot itself.                      |
 
 **If you're not sure, pick npm.** It installs in seconds and updates with one command (`kolb-bot update`).
 
@@ -626,14 +626,14 @@ pi -p "Your coding task"
 
 ### Quick Reference
 
-| CLI | Install Command | Auth | Cost |
-| --- | --- | --- | --- |
-| **Gemini CLI** | `brew install gemini-cli` | Google sign-in | Free |
-| **Claude Code** | `npm install -g @anthropic-ai/claude-code` | Anthropic account | Paid |
-| **Codex CLI** | `npm install -g @openai/codex` | OpenAI API key | Paid |
-| **Oracle** | `npm install -g @steipete/oracle` | ChatGPT browser | Paid |
-| **OpenCode** | `npm install -g opencode-ai` | API key | Paid |
-| **Pi** | Built into Kolb-Bot | Via `kolb-bot models auth` | Varies |
+| CLI             | Install Command                            | Auth                       | Cost   |
+| --------------- | ------------------------------------------ | -------------------------- | ------ |
+| **Gemini CLI**  | `brew install gemini-cli`                  | Google sign-in             | Free   |
+| **Claude Code** | `npm install -g @anthropic-ai/claude-code` | Anthropic account          | Paid   |
+| **Codex CLI**   | `npm install -g @openai/codex`             | OpenAI API key             | Paid   |
+| **Oracle**      | `npm install -g @steipete/oracle`          | ChatGPT browser            | Paid   |
+| **OpenCode**    | `npm install -g opencode-ai`               | API key                    | Paid   |
+| **Pi**          | Built into Kolb-Bot                        | Via `kolb-bot models auth` | Varies |
 
 After installing any of these, run `kolb-bot skills check` to verify Kolb-Bot can see them.
 
@@ -705,28 +705,28 @@ kolb-bot skills check                      # Verify skill dependencies are insta
 
 **Popular skills:**
 
-| Skill | What It Does |
-| --- | --- |
-| `coding-agent` | Run Codex CLI, Claude Code, or other coding agents in the background |
-| `github` | Interact with GitHub issues, PRs, and CI runs |
-| `tmux` | Remote-control tmux sessions with keystrokes and pane scraping |
-| `discord` | Send messages, react, manage threads, create polls on Discord |
-| `slack` | React to messages, pin/unpin items in Slack |
-| `1password` | Read and inject secrets from 1Password |
-| `apple-notes` | Create, view, edit, and search Apple Notes |
-| `notion` | Create and manage Notion pages and databases |
-| `obsidian` | Work with Obsidian vaults |
-| `weather` | Get weather forecasts (no API key needed) |
-| `sag` | Text-to-speech via ElevenLabs |
-| `summarize` | Summarize URLs, podcasts, and local files |
-| `clawhub` | Search and install community skills from ClawHub |
-| `spotify-player` | Control Spotify playback from the terminal |
-| `camsnap` | Capture frames from RTSP/ONVIF cameras |
-| `nano-pdf` | Edit PDFs with natural-language instructions |
-| `himalaya` | Manage email via IMAP/SMTP |
-| `gog` | Google Workspace CLI (Gmail, Calendar, Drive, Sheets) |
-| `voice-call` | Start voice calls via the voice-call plugin |
-| `imsg` | Send and read iMessages from the terminal |
+| Skill            | What It Does                                                         |
+| ---------------- | -------------------------------------------------------------------- |
+| `coding-agent`   | Run Codex CLI, Claude Code, or other coding agents in the background |
+| `github`         | Interact with GitHub issues, PRs, and CI runs                        |
+| `tmux`           | Remote-control tmux sessions with keystrokes and pane scraping       |
+| `discord`        | Send messages, react, manage threads, create polls on Discord        |
+| `slack`          | React to messages, pin/unpin items in Slack                          |
+| `1password`      | Read and inject secrets from 1Password                               |
+| `apple-notes`    | Create, view, edit, and search Apple Notes                           |
+| `notion`         | Create and manage Notion pages and databases                         |
+| `obsidian`       | Work with Obsidian vaults                                            |
+| `weather`        | Get weather forecasts (no API key needed)                            |
+| `sag`            | Text-to-speech via ElevenLabs                                        |
+| `summarize`      | Summarize URLs, podcasts, and local files                            |
+| `clawhub`        | Search and install community skills from ClawHub                     |
+| `spotify-player` | Control Spotify playback from the terminal                           |
+| `camsnap`        | Capture frames from RTSP/ONVIF cameras                               |
+| `nano-pdf`       | Edit PDFs with natural-language instructions                         |
+| `himalaya`       | Manage email via IMAP/SMTP                                           |
+| `gog`            | Google Workspace CLI (Gmail, Calendar, Drive, Sheets)                |
+| `voice-call`     | Start voice calls via the voice-call plugin                          |
+| `imsg`           | Send and read iMessages from the terminal                            |
 
 ### Gateway & Daemon
 
@@ -900,6 +900,8 @@ Docker puts Kolb-Bot in a sealed box on your computer. It can't see your persona
 
 ## Installing in an Isolated Environment (Docker)
 
+> **Quick version:** See [DOCKER.md](DOCKER.md) for a standalone step-by-step guide.
+
 Running Kolb-Bot in Docker means it can't touch your personal files, your system, or anything outside its container. This is the recommended approach if you're running it on a shared machine, a VPS, or if you just want peace of mind.
 
 ### Prerequisites
@@ -996,15 +998,15 @@ kolb-bot config set agents.defaults.sandbox.mode all
 
 **Default sandbox settings** (these are already pretty locked down):
 
-| Setting | Default | What It Does |
-| --- | --- | --- |
-| `network` | `none` | No internet access from sandbox |
-| `user` | `1000:1000` | Non-root |
-| `capDrop` | `ALL` | No Linux capabilities |
-| `readOnlyRoot` | `true` | Can't modify the filesystem |
-| `pidsLimit` | `256` | Limits processes |
-| `memory` | `1g` | RAM limit |
-| `cpus` | `1` | CPU limit |
+| Setting        | Default     | What It Does                    |
+| -------------- | ----------- | ------------------------------- |
+| `network`      | `none`      | No internet access from sandbox |
+| `user`         | `1000:1000` | Non-root                        |
+| `capDrop`      | `ALL`       | No Linux capabilities           |
+| `readOnlyRoot` | `true`      | Can't modify the filesystem     |
+| `pidsLimit`    | `256`       | Limits processes                |
+| `memory`       | `1g`        | RAM limit                       |
+| `cpus`         | `1`         | CPU limit                       |
 
 **Manage sandbox containers:**
 
@@ -1016,11 +1018,11 @@ kolb-bot sandbox recreate --all           # Rebuild containers after config chan
 
 **Workspace access modes** — control what the sandbox can see:
 
-| Mode | What the Sandbox Sees |
-| --- | --- |
-| `none` (default) | Only its own scratch directory |
-| `ro` | Agent workspace mounted read-only at `/agent` |
-| `rw` | Agent workspace mounted read/write at `/workspace` |
+| Mode             | What the Sandbox Sees                              |
+| ---------------- | -------------------------------------------------- |
+| `none` (default) | Only its own scratch directory                     |
+| `ro`             | Agent workspace mounted read-only at `/agent`      |
+| `rw`             | Agent workspace mounted read/write at `/workspace` |
 
 ### Running on a VPS with Docker
 
