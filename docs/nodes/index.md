@@ -4,6 +4,7 @@ read_when:
   - Pairing iOS/Android nodes to a gateway
   - Using node canvas/camera for agent context
   - Adding new node commands or CLI helpers
+  - Setting up separate devices as nodes
 title: "Nodes"
 ---
 
@@ -13,11 +14,13 @@ A **node** is a companion device (macOS/iOS/Android/headless) that connects to t
 
 Legacy transport: [Bridge protocol](/gateway/bridge-protocol) (TCP JSONL; deprecated/removed for current nodes).
 
-macOS can also run in **node mode**: the menubar app connects to the Gateway’s WS server and exposes its local canvas/camera commands as a node (so `kolb-bot nodes …` works against this Mac).
+macOS can also run in **node mode**: the menubar app connects to the Gateway's WS server and exposes its local canvas/camera commands as a node (so `kolb-bot nodes …` works against this Mac).
+
+**Getting started?** See [Setting Up Separate Devices](/nodes/setup) for step-by-step instructions to pair and configure nodes on Linux, Windows, macOS, iOS, and Android.
 
 Notes:
 
-- Nodes are **peripherals**, not gateways. They don’t run the gateway service.
+- Nodes are **peripherals**, not gateways. They don't run the gateway service.
 - Telegram/WhatsApp/etc. messages land on the **gateway**, not on nodes.
 - Troubleshooting runbook: [/nodes/troubleshooting](/nodes/troubleshooting)
 
