@@ -155,6 +155,24 @@ const AUTH_CHOICE_GROUP_DEFS: {
     choices: ["cloudflare-ai-gateway-api-key"],
   },
   {
+    value: "volcano",
+    label: "Volcano Engine (Doubao)",
+    hint: "API key (ByteDance)",
+    choices: ["volcano-api-key"],
+  },
+  {
+    value: "byteplus",
+    label: "BytePlus",
+    hint: "API key (global Doubao)",
+    choices: ["byteplus-api-key"],
+  },
+  {
+    value: "mistral",
+    label: "Mistral",
+    hint: "API key (embeddings + voice)",
+    choices: ["mistral-api-key"],
+  },
+  {
     value: "custom",
     label: "Custom Provider",
     hint: "Any OpenAI or Anthropic compatible endpoint",
@@ -295,6 +313,21 @@ const BASE_AUTH_CHOICE_OPTIONS: ReadonlyArray<AuthChoiceOption> = [
     value: "minimax-api-lightning",
     label: "MiniMax M2.5 Lightning",
     hint: "Faster, higher output cost",
+  },
+  {
+    value: "volcano-api-key",
+    label: "Volcano Engine (Doubao) API key",
+    hint: "ByteDance Doubao models",
+  },
+  {
+    value: "byteplus-api-key",
+    label: "BytePlus API key",
+    hint: "Global Doubao inference",
+  },
+  {
+    value: "mistral-api-key",
+    label: "Mistral API key",
+    hint: "Mistral models with embeddings and voice",
   },
   { value: "custom-api-key", label: "Custom Provider" },
 ];

@@ -46,6 +46,9 @@ export type AuthChoice =
   | "qwen-portal"
   | "xai-api-key"
   | "qianfan-api-key"
+  | "volcano-api-key"
+  | "byteplus-api-key"
+  | "mistral-api-key"
   | "custom-api-key"
   | "skip";
 export type AuthChoiceGroupId =
@@ -71,6 +74,9 @@ export type AuthChoiceGroupId =
   | "huggingface"
   | "qianfan"
   | "xai"
+  | "volcano"
+  | "byteplus"
+  | "mistral"
   | "custom";
 export type GatewayAuthChoice = "token" | "password";
 export type ResetScope = "config" | "config+creds+sessions" | "full";

@@ -2,6 +2,71 @@
 
 Docs: https://github.com/kolbick/Kolb-Bot/blob/main/docs
 
+## 2026.2.23
+
+### Breaking Changes
+
+- Removed Google Antigravity provider; migrate to `google-gemini-cli` or alternatives.
+- Tool-failure replies now hide raw error details by default; use `/verbose on` for details.
+- CLI local onboarding defaults `session.dmScope` to `per-channel-peer`.
+- Legacy Gateway device-auth signature `v1` removed; clients must sign `v2` payloads.
+
+### Added
+
+- Models: add Google Gemini 3.1 support (`google/gemini-3.1-pro-preview`, `google/gemini-3.1-flash-preview`).
+- Providers: add Mistral provider support with memory embeddings and voice capabilities.
+- Providers: add Volcano Engine (Doubao) and BytePlus providers with onboarding auth flows.
+- Channels: add per-channel model overrides via `channels.modelByChannel`.
+- Channels: add native Synology Chat channel plugin with webhook ingress and DM routing.
+- Auto-updater: add optional built-in auto-updater (`update.auto.*`, default-off) with rollout delays.
+- Memory: expand FTS search language support (Spanish, Portuguese, Japanese, Korean, Arabic).
+- CLI: add `kolb-bot update --dry-run` to preview actions without mutating state.
+- Voice: add Google Live voice integration for real-time bidirectional audio.
+- Branding: refresh terminal wizard header and CLI banner with pirate-themed ASCII art.
+
+### Fixes
+
+- Security: detect obfuscated commands before exec allowlist decisions.
+- Security: redact sensitive data in OTEL log exports (CWE-532).
+- Security: escape user-controlled values in image galleries to prevent stored XSS.
+- Security: harden media stream WebSocket pre-auth with strict timeouts and connection limits.
+- Agents: fall back to `agents.defaults.model` when agent has no model config.
+- Agents: treat HTTP 502/503/504 as failover-eligible (timeout reason).
+- Discord: make `@discordjs/opus` optional for installation reliability.
+- Docker: precreate `$KOLB_BOT_CONFIG_DIR/identity` to avoid EACCES on restrictive mounts.
+- Slack: keep parent-session forking active beyond first turn.
+- Slack: respect `replyToMode` when auto-populating `thread_ts`.
+- Webchat: apply assistant `final` payloads directly for faster rendering.
+- Memory/QMD: diversify mixed-source search ranking; return explicit `unavailable` warnings.
+- Telegram: detect duplicate bot-token ownership at startup.
+- Browser extension relay: preserve debugger attachments, auto-reconnect with backoff.
+- Fix last remaining OpenClaw branding reference in google-antigravity-auth extension.
+
+## 2026.2.21
+
+### Added
+
+- Models: add Gemini 3.1 support (`google/gemini-3.1-pro-preview`).
+- Providers: add Volcano Engine (Doubao) and BytePlus providers with coding variants.
+- Channels: per-channel model overrides via `channels.modelByChannel`.
+- Discord: stream preview mode with partial/block options and chunking.
+- Discord: configurable lifecycle status reactions with emoji/timing overrides.
+- Discord: `/vc` for voice channel join/leave/status and auto-join.
+- Discord: thread-bound subagent sessions with per-thread focus controls.
+- iOS: chat UI improvements (metadata stripping, tool output formatting).
+- iOS: Watch bridge for mirrored notification actions.
+- iOS: background reconnection stabilization with wake lease windows.
+
+### Fixes
+
+- Agent bootstrap: skip malformed bootstrap files instead of crashing.
+- Security: cap embedded retry loop with profile-aware dynamic limits.
+- OAuth: harden Qwen and Chutes refresh by validating expiry.
+- Memory/QMD: respect per-agent `memorySearch.enabled=false` during startup.
+- Memory: diversify ranking when both session and memory present.
+- TUI: show pairing recovery guidance after gateway disconnect.
+- Copilot: drop persisted `thinking` blocks for Claude models.
+
 ## 2026.2.6-4
 
 ### Added

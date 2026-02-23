@@ -65,18 +65,18 @@ export function formatCliBannerLine(version: string, options: BannerOptions = {}
 }
 
 const KOLBBOT_ASCII = [
-  "         ░▓████████████████████████▓░         ",
-  "      ░███░░░░░░░░░░░░░░░░░░░░░░░░███░      ",
-  "    ░██░░░░░░░░░▄▄▄▄░░░░▄▄▄▄░░░░░░░░░██░    ",
-  "   ▓█░░░░░░░░░██▀▀▀██░██▀▀▀██░░░░░░░░░█▓   ",
-  "  ▓█░░░░░░░░░░██ ⚙ ██░██ 🤖██░░░░░░░░░░█▓  ",
-  "  █░░░░░░░░░░░▀██▄▄██░██▄▄██▀░░░░░░░░░░█  ",
-  "  █░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░█  ",
-  "  ▓█░░░░░░░░░░▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄░░░░░░░░█▓  ",
-  "   ▓█░░░░░░░██  K O L B - B O T  ██░░░░█▓   ",
-  "    ░██░░░░░▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀░░░░██░    ",
-  "      ░███░░░░░░░░░░░░░░░░░░░░░░███░      ",
-  "         ░▓████████████████████████▓░         ",
+  "              ▄▄▄████▄▄▄              ",
+  "           ▄██▀▀▀    ▀▀▀██▄           ",
+  "         ▄█▀  ▄▄▄▄▄▄▄▄  ▀█▄         ",
+  "        ██  ▄█▀▀▀▀▀▀▀▀█▄  ██        ",
+  "       ██  █▀ ⚙      ⚙ ▀█  ██       ",
+  "       █▌ █▌    ☠️    ▐█ ▐█       ",
+  "       ██  █▄ ▀██████▀ ▄█  ██       ",
+  "        ██  ▀█▄▄▄▄▄▄▄▄█▀  ██        ",
+  "         ▀█▄   ▀▀▀▀▀▀   ▄█▀         ",
+  "     ▄▄▄▄▄▀██▄▄      ▄▄██▀▄▄▄▄▄     ",
+  "    █ K O L B ▀██████████▀ B O T █    ",
+  "     ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀     ",
   " ",
 ];
 
@@ -95,10 +95,10 @@ export function formatCliBannerArt(options: BannerOptions = {}): string {
     if (ch === "░" || ch === "▓") {
       return theme.accentDim(ch);
     }
-    if (ch === "▄" || ch === "▀" || ch === "⚙") {
+    if (ch === "▄" || ch === "▀" || ch === "▐" || ch === "▌") {
       return theme.accent(ch);
     }
-    if (ch === "🤖") {
+    if (ch === "⚙" || ch === "☠️") {
       return theme.info(ch);
     }
     if (/[A-Z-]/.test(ch)) {
@@ -108,7 +108,7 @@ export function formatCliBannerArt(options: BannerOptions = {}): string {
   };
 
   const colored = KOLBBOT_ASCII.map((line) => {
-    if (line.includes("K O L B - B O T")) {
+    if (line.includes("K O L B") || line.includes("B O T")) {
       return splitGraphemes(line)
         .map((ch, idx) => {
           if (/[A-Z-]/.test(ch)) return rainbow[idx % rainbow.length](ch);

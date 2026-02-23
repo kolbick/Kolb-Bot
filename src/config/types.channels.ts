@@ -37,8 +37,16 @@ export type ExtensionChannelConfig = {
   [key: string]: unknown;
 };
 
+/**
+ * Per-channel model override map.
+ * Keys are channel IDs, values are model references (e.g. "anthropic/claude-opus-4-6").
+ */
+export type ModelByChannelConfig = Record<string, string>;
+
 export type ChannelsConfig = {
   defaults?: ChannelDefaultsConfig;
+  /** Per-channel model overrides keyed by channel ID. */
+  modelByChannel?: ModelByChannelConfig;
   whatsapp?: WhatsAppConfig;
   telegram?: TelegramConfig;
   discord?: DiscordConfig;
