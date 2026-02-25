@@ -56,6 +56,7 @@ import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
 import type { SkillMessage } from "./controllers/skills.ts";
+import { startVoiceSession, endVoiceSession, type VoiceCallbacks } from "./controllers/voice.ts";
 import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
 import { loadSettings, type UiSettings } from "./storage.ts";
@@ -336,6 +337,15 @@ export class KolbBotApp extends LitElement {
   @state() logsMaxBytes = 250_000;
   @state() logsAtBottom = true;
 
+  // Voice widget
+  @state() voiceExpanded = false;
+  @state() voiceStatus: "disconnected" | "connecting" | "connected" = "disconnected";
+  @state() voiceMessages: import("./controllers/voice.js").VoiceMessage[] = [];
+  @state() voiceSpeaking = false;
+  @state() voiceError: string | null = null;
+  @state() voiceAgentId = this.settings.voiceAgentId ?? "";
+  @state() voiceShowSettings = false;
+
   client: GatewayBrowserClient | null = null;
   private chatScrollFrame: number | null = null;
   private chatScrollTimeout: number | null = null;
@@ -575,6 +585,42 @@ export class KolbBotApp extends LitElement {
     const newRatio = Math.max(0.4, Math.min(0.7, ratio));
     this.splitRatio = newRatio;
     this.applySettings({ ...this.settings, splitRatio: newRatio });
+  }
+
+  handleVoiceToggleExpanded() {
+    this.voiceExpanded = !this.voiceExpanded;
+  }
+
+  async handleVoiceStart() {
+    if (!this.voiceAgentId) {
+      this.voiceShowSettings = true;
+      this.voiceExpanded = true;
+      return;
+    }
+    this.voiceExpanded = true;
+    this.voiceError = null;
+    const callbacks: VoiceCallbacks = {
+      onStatusChange: (status) => (this.voiceStatus = status),
+      onMessage: (msg) => (this.voiceMessages = [...this.voiceMessages, msg]),
+      onError: (err) => (this.voiceError = err),
+      onSpeakingChange: (speaking) => (this.voiceSpeaking = speaking),
+    };
+    await startVoiceSession(this.voiceAgentId, callbacks);
+  }
+
+  async handleVoiceStop() {
+    await endVoiceSession();
+    this.voiceStatus = "disconnected";
+    this.voiceSpeaking = false;
+  }
+
+  handleVoiceAgentIdChange(agentId: string) {
+    this.voiceAgentId = agentId;
+    this.applySettings({ ...this.settings, voiceAgentId: agentId });
+  }
+
+  handleVoiceToggleSettings() {
+    this.voiceShowSettings = !this.voiceShowSettings;
   }
 
   render() {

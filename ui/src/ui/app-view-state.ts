@@ -285,4 +285,18 @@ export type AppViewState = {
   handleOpenSidebar: (content: string) => void;
   handleCloseSidebar: () => void;
   handleSplitRatioChange: (ratio: number) => void;
+
+  // Voice widget
+  voiceExpanded: boolean;
+  voiceStatus: "disconnected" | "connecting" | "connected";
+  voiceMessages: import("./controllers/voice.js").VoiceMessage[];
+  voiceSpeaking: boolean;
+  voiceError: string | null;
+  voiceAgentId: string;
+  voiceShowSettings: boolean;
+  handleVoiceToggleExpanded: () => void;
+  handleVoiceStart: () => Promise<void>;
+  handleVoiceStop: () => Promise<void>;
+  handleVoiceAgentIdChange: (agentId: string) => void;
+  handleVoiceToggleSettings: () => void;
 };
