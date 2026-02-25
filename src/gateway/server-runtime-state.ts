@@ -30,6 +30,7 @@ import { listenGatewayHttpServer } from "./server/http-listen.js";
 import { createGatewayPluginRequestHandler } from "./server/plugins-http.js";
 import type { GatewayTlsRuntime } from "./server/tls.js";
 import type { GatewayWsClient } from "./server/ws-types.js";
+import { createRelayWss } from "./voice-relay.js";
 
 export async function createGatewayRuntimeState(params: {
   cfg: import("../config/config.js").KolbBotConfig;
@@ -160,10 +161,12 @@ export async function createGatewayRuntimeState(params: {
     noServer: true,
     maxPayload: MAX_PAYLOAD_BYTES,
   });
+  const relayWss = createRelayWss();
   for (const server of httpServers) {
     attachGatewayUpgradeHandler({
       httpServer: server,
       wss,
+      relayWss,
       canvasHost,
       clients,
       resolvedAuth: params.resolvedAuth,

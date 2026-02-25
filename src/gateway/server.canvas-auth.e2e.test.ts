@@ -136,6 +136,7 @@ async function withCanvasGatewayHarness(params: {
   attachGatewayUpgradeHandler({
     httpServer,
     wss,
+    relayWss: null,
     canvasHost,
     clients,
     resolvedAuth: params.resolvedAuth,

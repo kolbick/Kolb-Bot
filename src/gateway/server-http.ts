@@ -56,6 +56,7 @@ import { handleOpenResponsesHttpRequest } from "./openresponses-http.js";
 import { GATEWAY_CLIENT_MODES, normalizeGatewayClientMode } from "./protocol/client-info.js";
 import type { GatewayWsClient } from "./server/ws-types.js";
 import { handleToolsInvokeHttpRequest } from "./tools-invoke-http.js";
+import { handleRelayUpgrade } from "./voice-relay.js";
 
 type SubsystemLogger = ReturnType<typeof createSubsystemLogger>;
 type HookAuthFailure = { count: number; windowStartedAtMs: number };
@@ -625,13 +626,14 @@ export function createGatewayHttpServer(opts: {
 export function attachGatewayUpgradeHandler(opts: {
   httpServer: HttpServer;
   wss: WebSocketServer;
+  relayWss: WebSocketServer | null;
   canvasHost: CanvasHostHandler | null;
   clients: Set<GatewayWsClient>;
   resolvedAuth: ResolvedGatewayAuth;
   /** Optional rate limiter for auth brute-force protection. */
   rateLimiter?: AuthRateLimiter;
 }) {
-  const { httpServer, wss, canvasHost, clients, resolvedAuth, rateLimiter } = opts;
+  const { httpServer, wss, relayWss, canvasHost, clients, resolvedAuth, rateLimiter } = opts;
   httpServer.on("upgrade", (req, socket, head) => {
     void (async () => {
       const scopedCanvas = normalizeCanvasScopedUrl(req.url ?? "/");
@@ -666,6 +668,9 @@ export function attachGatewayUpgradeHandler(opts: {
         if (canvasHost.handleUpgrade(req, socket, head)) {
           return;
         }
+      }
+      if (relayWss && handleRelayUpgrade(relayWss, req, socket, head)) {
+        return;
       }
       wss.handleUpgrade(req, socket, head, (ws) => {
         wss.emit("connection", ws, req);
