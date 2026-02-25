@@ -1,0 +1,365 @@
+/* ===========================================
+   Voice Widget - Floating voice interaction UI
+   =========================================== */
+
+/* -------------------------------------------
+   FAB (Floating Action Button) - Collapsed state
+   ------------------------------------------- */
+
+.voice-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--accent);
+  color: var(--accent-foreground);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition:
+    transform var(--duration-normal) var(--ease-out),
+    background var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+}
+
+.voice-fab:hover {
+  background: var(--accent-hover);
+  transform: scale(1.06);
+  box-shadow: var(--shadow-xl);
+}
+
+.voice-fab:active {
+  transform: scale(0.96);
+}
+
+.voice-fab--active {
+  animation: voice-fab-pulse 2s var(--ease-in-out) infinite;
+}
+
+@keyframes voice-fab-pulse {
+  0%,
+  100% {
+    box-shadow:
+      var(--shadow-lg),
+      0 0 0 0 var(--accent-glow);
+  }
+  50% {
+    box-shadow:
+      var(--shadow-lg),
+      0 0 0 12px transparent;
+  }
+}
+
+/* -------------------------------------------
+   Panel - Expanded state
+   ------------------------------------------- */
+
+.voice-panel {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1001;
+  width: 360px;
+  height: 480px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: voice-panel-slide-in var(--duration-slow) var(--ease-out) forwards;
+}
+
+@keyframes voice-panel-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* -------------------------------------------
+   Panel Header
+   ------------------------------------------- */
+
+.voice-panel__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.voice-panel__title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+  flex: 1;
+  min-width: 0;
+}
+
+.voice-panel__status {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.voice-panel__status--connected {
+  background: var(--ok);
+  box-shadow: 0 0 6px var(--ok-muted);
+}
+
+.voice-panel__status--connecting {
+  background: var(--warn);
+  box-shadow: 0 0 6px var(--warn-muted);
+  animation: pulse-subtle 1.5s var(--ease-in-out) infinite;
+}
+
+.voice-panel__status--disconnected {
+  background: var(--muted-strong);
+}
+
+.voice-panel__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
+}
+
+.voice-panel__btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+/* -------------------------------------------
+   Talk Area - Central talk button
+   ------------------------------------------- */
+
+.voice-talk {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  flex-shrink: 0;
+}
+
+.voice-talk__btn {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border-strong);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background var(--duration-normal) var(--ease-out),
+    border-color var(--duration-normal) var(--ease-out),
+    color var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
+}
+
+.voice-talk__btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-subtle);
+}
+
+.voice-talk__btn:active {
+  transform: scale(0.95);
+}
+
+.voice-talk__btn--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-foreground);
+  animation: voice-talk-pulse 2s var(--ease-in-out) infinite;
+}
+
+.voice-talk__btn--active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--accent-foreground);
+  box-shadow: none;
+}
+
+@keyframes voice-talk-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--accent-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+}
+
+/* -------------------------------------------
+   Transcript - Scrollable message list
+   ------------------------------------------- */
+
+.voice-transcript {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 16px;
+}
+
+.voice-transcript::-webkit-scrollbar {
+  width: 4px;
+}
+
+.voice-transcript::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.voice-transcript::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-full);
+}
+
+.voice-transcript::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+.voice-transcript__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 16px;
+}
+
+/* -------------------------------------------
+   Message Bubbles
+   ------------------------------------------- */
+
+.voice-msg {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  word-wrap: break-word;
+  animation: rise var(--duration-normal) var(--ease-out) backwards;
+}
+
+.voice-msg--user {
+  align-self: flex-end;
+  background: var(--accent-subtle);
+  color: var(--text-strong);
+}
+
+.voice-msg--agent {
+  align-self: flex-start;
+  background: var(--bg-elevated);
+}
+
+.voice-msg__time {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+/* -------------------------------------------
+   Settings - Inline configuration
+   ------------------------------------------- */
+
+.voice-settings {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.voice-settings__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-strong);
+  margin-bottom: 6px;
+}
+
+.voice-settings__input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  font-family: var(--mono);
+  transition:
+    border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.voice-settings__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+.voice-settings__hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* -------------------------------------------
+   Warning Banner
+   ------------------------------------------- */
+
+.voice-warning {
+  padding: 10px 16px;
+  background: var(--danger-subtle);
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.4;
+  border-top: 1px solid var(--danger-muted);
+  flex-shrink: 0;
+}
+
+/* -------------------------------------------
+   Responsive - Full width on small screens
+   ------------------------------------------- */
+
+@media (max-width: 768px) {
+  .voice-panel {
+    left: 16px;
+    right: 16px;
+    width: auto;
+  }
+}
