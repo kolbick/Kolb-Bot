@@ -26,9 +26,11 @@ This file gives the next AI agent a quick, practical starting point.
 
 ### Open work / next priorities
 
-- Push this repo to GitHub (`origin` already points to `kolbick/Kolb-Bot`).
-- Push UI repo to a user-owned remote so cloud agents can work there too.
+- Repos are now pushed:
+  - Backend/runtime: `https://github.com/kolbick/Kolb-Bot` (public)
+  - UI: `https://github.com/kolbick/Kolb-Bot-UI` (private)
 - Keep secrets out of git (`.env` is ignored).
+- Keep both repos in sync when changing compose/UI integration points.
 
 ### Useful commands
 
@@ -44,3 +46,10 @@ User is a beginner and wants:
 1. easy remote access from headless Pi,
 2. cloud-agent-friendly remotes,
 3. clear docs for future agents.
+
+### Mission for next agent
+
+1. Improve onboarding so a non-technical user can operate Kolb-Bot fully from browser UI.
+2. Reduce maintenance friction on Raspberry Pi (build reliability, memory-aware scripts, clear diagnostics).
+3. Keep docs and runtime behavior aligned (`README.md`, `VIEWING.md`, `CLOUD_AGENTS.md`, `kolb-bot` command output).
+4. Continue shipping in small, testable increments with explicit verification steps.
