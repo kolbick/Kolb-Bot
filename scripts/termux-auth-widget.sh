@@ -28,7 +28,7 @@ case "$STATUS" in
         termux-toast "Auth OK (${HOURS}h left)"
         ;;
 
-    CLAUDE_EXPIRING|KOLB_BOT_EXPIRING|CLAWDBOT_EXPIRING)
+    CLAUDE_EXPIRING|KOLB_BOT_EXPIRING)
         termux-vibrate -d 100
 
         # Ask if user wants to re-auth now
@@ -55,7 +55,7 @@ case "$STATUS" in
         esac
         ;;
 
-    CLAUDE_EXPIRED|KOLB_BOT_EXPIRED|CLAWDBOT_EXPIRED)
+    CLAUDE_EXPIRED|KOLB_BOT_EXPIRED)
         termux-vibrate -d 300
 
         CHOICE=$(termux-dialog radio -t "Auth Expired!" -v "Re-auth now,Dismiss")

@@ -263,16 +263,20 @@
       "destination": "/start/kolb-bot"
     },
     {
-      "source": "/clawhub",
-      "destination": "/tools/clawhub"
+      "source": "/kolbhub-legacy",
+      "destination": "/tools/kolbhub"
     },
     {
       "source": "/clawdhub",
-      "destination": "/tools/clawhub"
+      "destination": "/tools/kolbhub"
     },
     {
       "source": "/tools/clawdhub",
-      "destination": "/tools/clawhub"
+      "destination": "/tools/kolbhub"
+    },
+    {
+      "source": "/kolbhub",
+      "destination": "/tools/kolbhub"
     },
     {
       "source": "/configuration",
@@ -968,7 +972,7 @@
                   "tools/slash-commands",
                   "tools/skills",
                   "tools/skills-config",
-                  "tools/clawhub",
+                  "tools/kolbhub",
                   "tools/plugin"
                 ]
               },
@@ -1477,7 +1481,7 @@
                   "zh-CN/tools/slash-commands",
                   "zh-CN/tools/skills",
                   "zh-CN/tools/skills-config",
-                  "zh-CN/tools/clawhub",
+                  "zh-CN/tools/kolbhub",
                   "zh-CN/tools/plugin"
                 ]
               },

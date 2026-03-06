@@ -1002,7 +1002,7 @@ Use managed overrides instead of editing the repo copy. Put your changes in `~/.
 
 ### Can I load skills from a custom folder
 
-Yes. Add extra directories via `skills.load.extraDirs` in `~/.kolb-bot/kolb-bot.json` (lowest precedence). Default precedence remains: `<workspace>/skills` → `~/.kolb-bot/skills` → bundled → `skills.load.extraDirs`. `clawhub` installs into `./skills` by default, which KolbBot treats as `<workspace>/skills`.
+Yes. Add extra directories via `skills.load.extraDirs` in `~/.kolb-bot/kolb-bot.json` (lowest precedence). Default precedence remains: `<workspace>/skills` → `~/.kolb-bot/skills` → bundled → `skills.load.extraDirs`. `kolbhub` installs into `./skills` by default, which KolbBot treats as `<workspace>/skills`.
 
 ### How can I use different models for different tasks
 
@@ -1049,17 +1049,17 @@ Docs: [Cron jobs](/automation/cron-jobs), [Cron vs Heartbeat](/automation/cron-v
 
 ### How do I install skills on Linux
 
-Use **ClawHub** (CLI) or drop skills into your workspace. The macOS Skills UI isn't available on Linux.
-Browse skills at [https://clawhub.com](https://clawhub.com).
+Use **KolbHub** (CLI) or drop skills into your workspace. The macOS Skills UI isn't available on Linux.
+Browse skills at [https://kolbhub.dev](https://kolbhub.dev).
 
-Install the ClawHub CLI (pick one package manager):
+Install the KolbHub CLI (pick one package manager):
 
 ```bash
-npm i -g clawhub
+npm i -g kolbhub
 ```
 
 ```bash
-pnpm add -g clawhub
+pnpm add -g kolbhub
 ```
 
 ### Can KolbBot run tasks on a schedule or continuously in the background
@@ -1129,11 +1129,11 @@ targeting those APIs.
 Install skills:
 
 ```bash
-clawhub install <skill-slug>
-clawhub update --all
+kolbhub install <skill-slug>
+kolbhub update --all
 ```
 
-ClawHub installs into `./skills` under your current directory (or falls back to your configured KolbBot workspace); KolbBot treats that as `<workspace>/skills` on the next session. For shared skills across agents, place them in `~/.kolb-bot/skills/<name>/SKILL.md`. Some skills expect binaries installed via Homebrew; on Linux that means Linuxbrew (see the Homebrew Linux FAQ entry above). See [Skills](/tools/skills) and [ClawHub](/tools/clawhub).
+KolbHub installs into `./skills` under your current directory (or falls back to your configured KolbBot workspace); KolbBot treats that as `<workspace>/skills` on the next session. For shared skills across agents, place them in `~/.kolb-bot/skills/<name>/SKILL.md`. Some skills expect binaries installed via Homebrew; on Linux that means Linuxbrew (see the Homebrew Linux FAQ entry above). See [Skills](/tools/skills) and [KolbHub](/tools/kolbhub).
 
 ### How do I install the Chrome extension for browser takeover
 

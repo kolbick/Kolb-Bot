@@ -9,7 +9,7 @@ import {
 } from "kolb-bot/plugin-sdk";
 
 // OAuth constants - set via environment variables GOOGLE_ANTIGRAVITY_CLIENT_ID
-// and GOOGLE_ANTIGRAVITY_CLIENT_SECRET. See upstream openclaw/openclaw for defaults.
+// and GOOGLE_ANTIGRAVITY_CLIENT_SECRET. See upstream kolbick/Kolb-Bot for defaults.
 const CLIENT_ID = process.env.GOOGLE_ANTIGRAVITY_CLIENT_ID ?? "";
 const CLIENT_SECRET = process.env.GOOGLE_ANTIGRAVITY_CLIENT_SECRET ?? "";
 const REDIRECT_URI = "http://localhost:51121/oauth-callback";

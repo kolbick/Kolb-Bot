@@ -45,10 +45,7 @@ const parseArgs = (): Args => {
 };
 
 const loadAuthProfiles = (agentId: string) => {
-  const stateRoot =
-    process.env.KOLB_BOT_STATE_DIR?.trim() ||
-    process.env.CLAWDBOT_STATE_DIR?.trim() ||
-    path.join(os.homedir(), ".kolb-bot");
+  const stateRoot = process.env.KOLB_BOT_STATE_DIR?.trim() || path.join(os.homedir(), ".kolb-bot");
   const authPath = path.join(stateRoot, "agents", agentId, "agent", "auth-profiles.json");
   if (!fs.existsSync(authPath)) {
     throw new Error(`Missing: ${authPath}`);

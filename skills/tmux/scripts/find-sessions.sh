@@ -20,7 +20,7 @@ socket_name=""
 socket_path=""
 query=""
 scan_all=false
-socket_dir="${KOLB_BOT_TMUX_SOCKET_DIR:-${CLAWDBOT_TMUX_SOCKET_DIR:-${TMPDIR:-/tmp}/kolb-bot-tmux-sockets}}"
+socket_dir="${KOLB_BOT_TMUX_SOCKET_DIR:-${TMPDIR:-/tmp}/kolb-bot-tmux-sockets}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

@@ -157,8 +157,7 @@ function rejectUpgrade(socket: Duplex, status: number, bodyText: string) {
 const serversByPort = new Map<number, ChromeExtensionRelayServer>();
 
 function resolveGatewayAuthToken(): string | null {
-  const envToken =
-    process.env.KOLB_BOT_GATEWAY_TOKEN?.trim() || process.env.CLAWDBOT_GATEWAY_TOKEN?.trim();
+  const envToken = process.env.KOLB_BOT_GATEWAY_TOKEN?.trim();
   if (envToken) {
     return envToken;
   }

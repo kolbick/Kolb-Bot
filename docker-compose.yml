@@ -1,46 +1,233 @@
 services:
-  kolb-bot-gateway:
-    image: ${KOLB_BOT_IMAGE:-kolb-bot:local}
+  # Kolb-Bot Gateway API (core agent runtime)
+  kolbbot-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kolbbot-api:local
     environment:
       HOME: /home/node
       TERM: xterm-256color
-      KOLB_BOT_GATEWAY_TOKEN: ${KOLB_BOT_GATEWAY_TOKEN}
-      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
-      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
-      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+      KOLB_BOT_GATEWAY_TOKEN: ${KOLB_BOT_GATEWAY_TOKEN:?Set KOLB_BOT_GATEWAY_TOKEN in .env}
+      KOLB_BOT_GATEWAY_BIND: "0.0.0.0"
+      KOLB_BOT_SAFE_MODE: ${KOLB_BOT_SAFE_MODE:-1}
+      # Point browser automation at the visible browser container
+      KOLB_BOT_BROWSER_CDP_URL: "http://kolbbot-browser:9222"
+      NODE_ENV: production
     volumes:
-      - ${KOLB_BOT_CONFIG_DIR}:/home/node/.kolb-bot
-      - ${KOLB_BOT_WORKSPACE_DIR}:/home/node/.kolb-bot/workspace
+      - kolbbot-data:/home/node/.kolb-bot
+      - kolbbot-workspace:/home/node/.kolb-bot/workspace
     ports:
       - "${KOLB_BOT_GATEWAY_PORT:-18789}:18789"
-      - "${KOLB_BOT_BRIDGE_PORT:-18790}:18790"
     init: true
     restart: unless-stopped
+    healthcheck:
+      test:
+        ["CMD", "node", "-e", "fetch('http://127.0.0.1:18789/health').then(r=>{if(!r.ok)throw 1})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
     command:
       [
         "node",
         "dist/index.js",
         "gateway",
         "--bind",
-        "${KOLB_BOT_GATEWAY_BIND:-lan}",
+        "lan",
         "--port",
         "18789",
+        "--allow-unconfigured",
       ]
+    networks:
+      - kolbbot-net
 
-  kolb-bot-cli:
-    image: ${KOLB_BOT_IMAGE:-kolb-bot:local}
+  # Kolb-Bot UI (forked from Open WebUI v0.8.8, fully rebranded)
+  openwebui:
+    build:
+      context: ../Kolb-Bot-UI
+      dockerfile: Dockerfile
+    image: kolbbot-ui:local
     environment:
-      HOME: /home/node
-      TERM: xterm-256color
-      KOLB_BOT_GATEWAY_TOKEN: ${KOLB_BOT_GATEWAY_TOKEN}
-      BROWSER: echo
-      CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY}
-      CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY}
-      CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE}
+      # Kolb-Bot branding
+      WEBUI_NAME: "Kolb-Bot"
+      WEBUI_URL: http://localhost:3000
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?Set WEBUI_SECRET_KEY in .env}
+
+      # Connect to Kolb-Bot bridge as OpenAI-compatible backend
+      OPENAI_API_BASE_URLS: "http://kolbbot-bridge:8000/v1"
+      OPENAI_API_KEYS: "${KOLB_BOT_GATEWAY_TOKEN}"
+
+      # Audio settings (local Whisper for STT)
+      AUDIO_STT_ENGINE: whisper
+      AUDIO_STT_MODEL: base
+      AUDIO_TTS_ENGINE: openai
+      AUDIO_TTS_OPENAI_API_BASE_URL: "http://kolbbot-voice:8100/v1"
+      AUDIO_TTS_OPENAI_API_KEY: "${KOLB_BOT_GATEWAY_TOKEN}"
+
+      # Security defaults
+      ENABLE_SIGNUP: "true"
+      ENABLE_COMMUNITY_SHARING: "false"
+      SAFE_MODE: "true"
+
+      CUSTOM_NAME: "Kolb-Bot"
     volumes:
-      - ${KOLB_BOT_CONFIG_DIR}:/home/node/.kolb-bot
-      - ${KOLB_BOT_WORKSPACE_DIR}:/home/node/.kolb-bot/workspace
-    stdin_open: true
-    tty: true
-    init: true
-    entrypoint: ["node", "dist/index.js"]
+      - openwebui-data:/app/backend/data
+    ports:
+      - "${OPENWEBUI_PORT:-3000}:8080"
+    depends_on:
+      kolbbot-bridge:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - kolbbot-net
+
+  # Bridge service: translates Kolb-Bot WS API → OpenAI-compatible HTTP API
+  # Also provides Workshop API, Pirate Ship telemetry, and voice coordination
+  kolbbot-bridge:
+    build:
+      context: ./services/bridge
+      dockerfile: Dockerfile
+    image: kolbbot-bridge:local
+    environment:
+      KOLB_BOT_GATEWAY_URL: "ws://kolbbot-api:18789"
+      KOLB_BOT_GATEWAY_TOKEN: ${KOLB_BOT_GATEWAY_TOKEN}
+      BRIDGE_PORT: "8000"
+      BRIDGE_SECRET: ${WEBUI_SECRET_KEY}
+      PROVIDERS_FILE: "/data/providers.json"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      BROWSER_USE_API_KEY: ${BROWSER_USE_API_KEY:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - bridge-data:/data
+      - /home/kolby/.local/share/claude:/opt/claude:ro
+      - /home/kolby/.claude.json:/root/.claude.json:ro
+      - /home/kolby/.claude:/root/.claude:ro
+      - /usr/lib/node_modules/@openai/codex:/usr/lib/node_modules/@openai/codex:ro
+      - /usr/lib/node_modules/@google/gemini-cli:/usr/lib/node_modules/@google/gemini-cli:ro
+    depends_on:
+      kolbbot-api:
+        condition: service_healthy
+    ports:
+      - "${BRIDGE_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - kolbbot-net
+
+  # Voice service: STT/TTS with barge-in support
+  kolbbot-voice:
+    build:
+      context: ./services/voice
+      dockerfile: Dockerfile
+    image: kolbbot-voice:local
+    environment:
+      VOICE_PORT: "8100"
+      KOLB_BOT_GATEWAY_URL: "ws://kolbbot-api:18789"
+      KOLB_BOT_GATEWAY_TOKEN: ${KOLB_BOT_GATEWAY_TOKEN}
+      BRIDGE_URL: "http://kolbbot-bridge:8000"
+      STT_ENGINE: ${STT_ENGINE:-whisper}
+      TTS_ENGINE: ${TTS_ENGINE:-edge-tts}
+      WHISPER_MODEL: ${WHISPER_MODEL:-base}
+    depends_on:
+      kolbbot-bridge:
+        condition: service_healthy
+    ports:
+      - "${VOICE_PORT:-8100}:8100"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+    networks:
+      - kolbbot-net
+
+  # Telemetry service: real-time agent event streaming for Pirate Ship dashboard
+  kolbbot-telemetry:
+    build:
+      context: ./services/telemetry
+      dockerfile: Dockerfile
+    image: kolbbot-telemetry:local
+    environment:
+      TELEMETRY_PORT: "8200"
+      KOLB_BOT_GATEWAY_URL: "ws://kolbbot-api:18789"
+      KOLB_BOT_GATEWAY_TOKEN: ${KOLB_BOT_GATEWAY_TOKEN}
+    depends_on:
+      kolbbot-api:
+        condition: service_healthy
+    ports:
+      - "${TELEMETRY_PORT:-8200}:8200"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8200/health')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - kolbbot-net
+
+  # Visible browser: Chromium + noVNC so you can watch Kolb-Bot browse from your tablet
+  kolbbot-browser:
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox-browser
+    image: kolbbot-browser:local
+    environment:
+      KOLB_BOT_BROWSER_CDP_PORT: "9222"
+      KOLB_BOT_BROWSER_VNC_PORT: "5900"
+      KOLB_BOT_BROWSER_NOVNC_PORT: "6080"
+      KOLB_BOT_BROWSER_ENABLE_NOVNC: "1"
+      KOLB_BOT_BROWSER_HEADLESS: "0"
+    ports:
+      - "${NOVNC_PORT:-6080}:6080"
+      - "${BROWSER_CDP_PORT:-9222}:9222"
+    shm_size: "512m"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://127.0.0.1:9222/json/version"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - kolbbot-net
+
+volumes:
+  kolbbot-data:
+  kolbbot-workspace:
+  openwebui-data:
+  bridge-data:
+
+networks:
+  kolbbot-net:
+    driver: bridge

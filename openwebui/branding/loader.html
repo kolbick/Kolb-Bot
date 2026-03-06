@@ -1,0 +1,10 @@
+<!-- Kolb-Bot custom branding loader. Inject via Open WebUI admin settings > Custom HTML Head -->
+<script src="/static/workshop.js" defer></script>
+<script src="/static/pirate-ship.js" defer></script>
+<style>
+  /* Kolb-Bot branding overrides */
+  [data-testid="app-name"]::after,
+  .app-name::after {
+    content: " - Your AI Pirate Crew" !important;
+  }
+</style>

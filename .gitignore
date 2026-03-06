@@ -19,14 +19,14 @@ ui/test-results/
 # Bun build artifacts
 *.bun-build
 apps/macos/.build/
-apps/shared/MoltbotKit/.build/
+apps/shared/KolbBotKit/.build/
 **/ModuleCache/
 bin/
 bin/kolb-bot-mac
 bin/docs-list
 apps/macos/.build-local/
 apps/macos/.swiftpm/
-apps/shared/MoltbotKit/.swiftpm/
+apps/shared/KolbBotKit/.swiftpm/
 Core/
 apps/ios/*.xcodeproj/
 apps/ios/*.xcworkspace/
@@ -76,3 +76,8 @@ apps/ios/*.mobileprovision
 .agent/*.json
 !.agent/workflows/
 /local/
+
+# Kolb-Bot runtime
+.env
+services/*/static/*.js
+__pycache__/

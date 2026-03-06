@@ -1,4 +1,4 @@
-import type { ClawdbotConfig, RuntimeEnv } from "kolb-bot/plugin-sdk";
+import type { KolbBotConfig, RuntimeEnv } from "kolb-bot/plugin-sdk";
 import {
   buildAgentMediaPayload,
   buildPendingHistoryContextFromMap,
@@ -330,7 +330,7 @@ function inferPlaceholder(messageType: string): string {
  * Similar to Discord's resolveMediaList().
  */
 async function resolveFeishuMediaList(params: {
-  cfg: ClawdbotConfig;
+  cfg: KolbBotConfig;
   messageId: string;
   messageType: string;
   content: string;
@@ -494,7 +494,7 @@ export function parseFeishuMessageEvent(
 }
 
 export async function handleFeishuMessage(params: {
-  cfg: ClawdbotConfig;
+  cfg: KolbBotConfig;
   event: FeishuMessageEvent;
   botOpenId?: string;
   runtime?: RuntimeEnv;

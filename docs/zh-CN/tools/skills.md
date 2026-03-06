@@ -45,20 +45,20 @@ Skills 从**三个**位置加载：
 
 插件可以通过在 `kolb-bot.plugin.json` 中列出 `skills` 目录（相对于插件根目录的路径）来发布自己的 Skills。插件 Skills 在插件启用时加载，并参与正常的 Skills 优先级规则。你可以通过插件配置条目上的 `metadata.kolb-bot.requires.config` 对它们进行门控。参见[插件](/tools/plugin)了解发现/配置，以及[工具](/tools)了解这些 Skills 所教授的工具接口。
 
-## ClawHub（安装 + 同步）
+## KolbHub（安装 + 同步）
 
-ClawHub 是 KolbBot 的公共 Skills 注册表。浏览 https://clawhub.com。使用它来发现、安装、更新和备份 Skills。完整指南：[ClawHub](/tools/clawhub)。
+KolbHub 是 KolbBot 的公共 Skills 注册表。浏览 https://kolbhub.dev。使用它来发现、安装、更新和备份 Skills。完整指南：[KolbHub](/tools/kolbhub)。
 
 常见流程：
 
 - 将 Skills 安装到你的工作区：
-  - `clawhub install <skill-slug>`
+  - `kolbhub install <skill-slug>`
 - 更新所有已安装的 Skills：
-  - `clawhub update --all`
+  - `kolbhub update --all`
 - 同步（扫描 + 发布更新）：
-  - `clawhub sync --all`
+  - `kolbhub sync --all`
 
-默认情况下，`clawhub` 安装到当前工作目录下的 `./skills`（或回退到配置的 KolbBot 工作区）。KolbBot 在下一个会话中将其识别为 `<workspace>/skills`。
+默认情况下，`kolbhub` 安装到当前工作目录下的 `./skills`（或回退到配置的 KolbBot 工作区）。KolbBot 在下一个会话中将其识别为 `<workspace>/skills`。
 
 ## 安全注意事项
 
@@ -274,6 +274,6 @@ KolbBot 作为安装的一部分（npm 包或 KolbBot.app）发布一组基线 S
 
 ## 寻找更多 Skills？
 
-浏览 https://clawhub.com。
+浏览 https://kolbhub.dev。
 
 ---

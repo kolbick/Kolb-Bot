@@ -147,9 +147,7 @@ function parsePositiveInteger(raw: string | undefined): number | null {
 }
 
 function resolveGatewayPort(cfg: KolbBotPluginApi["config"]): number {
-  const envPort =
-    parsePositiveInteger(process.env.KOLB_BOT_GATEWAY_PORT?.trim()) ??
-    parsePositiveInteger(process.env.CLAWDBOT_GATEWAY_PORT?.trim());
+  const envPort = parsePositiveInteger(process.env.KOLB_BOT_GATEWAY_PORT?.trim());
   if (envPort) {
     return envPort;
   }
@@ -286,17 +284,10 @@ function parsePossiblyNoisyJsonObject(raw: string): Record<string, unknown> {
 function resolveAuth(cfg: KolbBotPluginApi["config"]): ResolveAuthResult {
   const mode = cfg.gateway?.auth?.mode;
   const token =
-    pickFirstDefined([
-      process.env.KOLB_BOT_GATEWAY_TOKEN,
-      process.env.CLAWDBOT_GATEWAY_TOKEN,
-      cfg.gateway?.auth?.token,
-    ]) ?? undefined;
+    pickFirstDefined([process.env.KOLB_BOT_GATEWAY_TOKEN, cfg.gateway?.auth?.token]) ?? undefined;
   const password =
-    pickFirstDefined([
-      process.env.KOLB_BOT_GATEWAY_PASSWORD,
-      process.env.CLAWDBOT_GATEWAY_PASSWORD,
-      cfg.gateway?.auth?.password,
-    ]) ?? undefined;
+    pickFirstDefined([process.env.KOLB_BOT_GATEWAY_PASSWORD, cfg.gateway?.auth?.password]) ??
+    undefined;
 
   if (mode === "token" || mode === "password") {
     return resolveRequiredAuth(mode, { token, password });

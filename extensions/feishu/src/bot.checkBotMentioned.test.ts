@@ -87,7 +87,7 @@ describe("parseFeishuMessageEvent – mentionedBot", () => {
     const BOT_OPEN_ID = "ou_bot_123";
     const postContent = JSON.stringify({
       content: [
-        [{ tag: "at", user_id: BOT_OPEN_ID, user_name: "claw" }],
+        [{ tag: "at", user_id: BOT_OPEN_ID, user_name: "kolby" }],
         [{ tag: "text", text: "What does this document say" }],
       ],
     });

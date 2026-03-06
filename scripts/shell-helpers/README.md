@@ -1,6 +1,6 @@
-# ClawDock <!-- omit in toc -->
+# KolbDock <!-- omit in toc -->
 
-Stop typing `docker-compose` commands. Just type `clawdock-start`.
+Stop typing `docker-compose` commands. Just type `kolbdock-start`.
 
 Inspired by Simon Willison's [Running KolbBot in Docker](https://til.simonwillison.net/llms/kolb-bot-docker).
 
@@ -25,49 +25,49 @@ Inspired by Simon Willison's [Running KolbBot in Docker](https://til.simonwillis
 **Install:**
 
 ```bash
-mkdir -p ~/.clawdock && curl -sL https://raw.githubusercontent.com/kolb-bot/kolb-bot/main/scripts/shell-helpers/clawdock-helpers.sh -o ~/.clawdock/clawdock-helpers.sh
+mkdir -p ~/.kolbdock && curl -sL https://raw.githubusercontent.com/kolb-bot/kolb-bot/main/scripts/shell-helpers/kolbdock-helpers.sh -o ~/.kolbdock/kolbdock-helpers.sh
 ```
 
 ```bash
-echo 'source ~/.clawdock/clawdock-helpers.sh' >> ~/.zshrc && source ~/.zshrc
+echo 'source ~/.kolbdock/kolbdock-helpers.sh' >> ~/.zshrc && source ~/.zshrc
 ```
 
 **See what you get:**
 
 ```bash
-clawdock-help
+kolbdock-help
 ```
 
-On first command, ClawDock auto-detects your KolbBot directory:
+On first command, KolbDock auto-detects your KolbBot directory:
 
 - Checks common paths (`~/kolb-bot`, `~/workspace/kolb-bot`, etc.)
 - If found, asks you to confirm
-- Saves to `~/.clawdock/config`
+- Saves to `~/.kolbdock/config`
 
 **First time setup:**
 
 ```bash
-clawdock-start
+kolbdock-start
 ```
 
 ```bash
-clawdock-fix-token
+kolbdock-fix-token
 ```
 
 ```bash
-clawdock-dashboard
+kolbdock-dashboard
 ```
 
 If you see "pairing required":
 
 ```bash
-clawdock-devices
+kolbdock-devices
 ```
 
 And approve the request for the specific device:
 
 ```bash
-clawdock-approve <request-id>
+kolbdock-approve <request-id>
 ```
 
 ## Available Commands
@@ -76,51 +76,51 @@ clawdock-approve <request-id>
 
 | Command            | Description                     |
 | ------------------ | ------------------------------- |
-| `clawdock-start`   | Start the gateway               |
-| `clawdock-stop`    | Stop the gateway                |
-| `clawdock-restart` | Restart the gateway             |
-| `clawdock-status`  | Check container status          |
-| `clawdock-logs`    | View live logs (follows output) |
+| `kolbdock-start`   | Start the gateway               |
+| `kolbdock-stop`    | Stop the gateway                |
+| `kolbdock-restart` | Restart the gateway             |
+| `kolbdock-status`  | Check container status          |
+| `kolbdock-logs`    | View live logs (follows output) |
 
 ### Container Access
 
 | Command                   | Description                                    |
 | ------------------------- | ---------------------------------------------- |
-| `clawdock-shell`          | Interactive shell inside the gateway container |
-| `clawdock-cli <command>`  | Run KolbBot CLI commands                       |
-| `clawdock-exec <command>` | Execute arbitrary commands in the container    |
+| `kolbdock-shell`          | Interactive shell inside the gateway container |
+| `kolbdock-cli <command>`  | Run KolbBot CLI commands                       |
+| `kolbdock-exec <command>` | Execute arbitrary commands in the container    |
 
 ### Web UI & Devices
 
 | Command                 | Description                                |
 | ----------------------- | ------------------------------------------ |
-| `clawdock-dashboard`    | Open web UI in browser with authentication |
-| `clawdock-devices`      | List device pairing requests               |
-| `clawdock-approve <id>` | Approve a device pairing request           |
+| `kolbdock-dashboard`    | Open web UI in browser with authentication |
+| `kolbdock-devices`      | List device pairing requests               |
+| `kolbdock-approve <id>` | Approve a device pairing request           |
 
 ### Setup & Configuration
 
 | Command              | Description                                       |
 | -------------------- | ------------------------------------------------- |
-| `clawdock-fix-token` | Configure gateway authentication token (run once) |
+| `kolbdock-fix-token` | Configure gateway authentication token (run once) |
 
 ### Maintenance
 
 | Command            | Description                                      |
 | ------------------ | ------------------------------------------------ |
-| `clawdock-rebuild` | Rebuild the Docker image                         |
-| `clawdock-clean`   | Remove all containers and volumes (destructive!) |
+| `kolbdock-rebuild` | Rebuild the Docker image                         |
+| `kolbdock-clean`   | Remove all containers and volumes (destructive!) |
 
 ### Utilities
 
 | Command              | Description                               |
 | -------------------- | ----------------------------------------- |
-| `clawdock-health`    | Run gateway health check                  |
-| `clawdock-token`     | Display the gateway authentication token  |
-| `clawdock-cd`        | Jump to the KolbBot project directory     |
-| `clawdock-config`    | Open the KolbBot config directory         |
-| `clawdock-workspace` | Open the workspace directory              |
-| `clawdock-help`      | Show all available commands with examples |
+| `kolbdock-health`    | Run gateway health check                  |
+| `kolbdock-token`     | Display the gateway authentication token  |
+| `kolbdock-cd`        | Jump to the KolbBot project directory     |
+| `kolbdock-config`    | Open the KolbBot config directory         |
+| `kolbdock-workspace` | Open the workspace directory              |
+| `kolbdock-help`      | Show all available commands with examples |
 
 ## Common Workflows
 
@@ -129,19 +129,19 @@ clawdock-approve <request-id>
 **Restart the gateway:**
 
 ```bash
-clawdock-restart
+kolbdock-restart
 ```
 
 **Check container status:**
 
 ```bash
-clawdock-status
+kolbdock-status
 ```
 
 **View live logs:**
 
 ```bash
-clawdock-logs
+kolbdock-logs
 ```
 
 ### Set Up WhatsApp Bot
@@ -149,7 +149,7 @@ clawdock-logs
 **Shell into the container:**
 
 ```bash
-clawdock-shell
+kolbdock-shell
 ```
 
 **Inside the container, login to WhatsApp:**
@@ -171,13 +171,13 @@ kolb-bot status
 **Check for pending pairing requests:**
 
 ```bash
-clawdock-devices
+kolbdock-devices
 ```
 
 **Copy the Request ID from the "Pending" table, then approve:**
 
 ```bash
-clawdock-approve <request-id>
+kolbdock-approve <request-id>
 ```
 
 Then refresh your browser.
@@ -187,7 +187,7 @@ Then refresh your browser.
 If you see "gateway token mismatch" errors:
 
 ```bash
-clawdock-fix-token
+kolbdock-fix-token
 ```
 
 This will:
@@ -216,11 +216,11 @@ docker ps
 **Test with fresh config (mimics first-time install):**
 
 ```bash
-unset CLAWDOCK_DIR && rm -f ~/.clawdock/config && source scripts/shell-helpers/clawdock-helpers.sh
+unset KOLBDOCK_DIR && rm -f ~/.kolbdock/config && source scripts/shell-helpers/kolbdock-helpers.sh
 ```
 
 Then run any command to trigger auto-detect:
 
 ```bash
-clawdock-start
+kolbdock-start
 ```

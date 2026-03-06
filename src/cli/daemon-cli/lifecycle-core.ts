@@ -271,10 +271,7 @@ export async function runServiceRestart(params: {
       const command = await params.service.readCommand(process.env);
       const serviceToken = command?.environment?.KOLB_BOT_GATEWAY_TOKEN;
       const cfg = loadConfig();
-      const configToken =
-        cfg.gateway?.auth?.token ||
-        process.env.KOLB_BOT_GATEWAY_TOKEN ||
-        process.env.CLAWDBOT_GATEWAY_TOKEN;
+      const configToken = cfg.gateway?.auth?.token || process.env.KOLB_BOT_GATEWAY_TOKEN;
       const driftIssue = checkTokenDrift({ serviceToken, configToken });
       if (driftIssue) {
         const warning = driftIssue.detail

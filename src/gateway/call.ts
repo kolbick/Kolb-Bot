@@ -259,15 +259,12 @@ function resolveGatewayCredentials(context: ResolvedGatewayCallContext): {
     (!context.urlOverride
       ? context.isRemoteMode
         ? trimToUndefined(context.remote?.token)
-        : trimToUndefined(process.env.KOLB_BOT_GATEWAY_TOKEN) ||
-          trimToUndefined(process.env.CLAWDBOT_GATEWAY_TOKEN) ||
-          trimToUndefined(authToken)
+        : trimToUndefined(process.env.KOLB_BOT_GATEWAY_TOKEN) || trimToUndefined(authToken)
       : undefined);
   const password =
     context.explicitAuth.password ||
     (!context.urlOverride
       ? trimToUndefined(process.env.KOLB_BOT_GATEWAY_PASSWORD) ||
-        trimToUndefined(process.env.CLAWDBOT_GATEWAY_PASSWORD) ||
         (context.isRemoteMode
           ? trimToUndefined(context.remote?.password)
           : trimToUndefined(authPassword))

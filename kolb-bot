@@ -1,0 +1,758 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+get_host_ip() {
+  # Prefer Tailscale IP if available
+  if command -v tailscale &>/dev/null; then
+    local ts_ip
+    ts_ip=$(tailscale ip -4 2>/dev/null)
+    if [ -n "$ts_ip" ]; then
+      echo "$ts_ip"
+      return
+    fi
+  fi
+  hostname -I 2>/dev/null | awk '{print $1}'
+}
+
+banner() {
+  echo ""
+  echo -e "${CYAN}  Kolb-Bot${NC}"
+  echo -e "  ${BLUE}Your AI pirate crew, at your service${NC}"
+  echo ""
+}
+
+ensure_env() {
+  if [ ! -f "${SCRIPT_DIR}/.env" ]; then
+    echo -e "${YELLOW}No .env file found. Creating from template...${NC}"
+    if [ -f "${SCRIPT_DIR}/.env.example" ]; then
+      cp "${SCRIPT_DIR}/.env.example" "${SCRIPT_DIR}/.env"
+      GENERATED_TOKEN=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | od -An -tx1 | tr -d ' \n')
+      GENERATED_SECRET=$(openssl rand -hex 32 2>/dev/null || head -c 64 /dev/urandom | od -An -tx1 | tr -d ' \n')
+      sed -i "s/KOLB_BOT_GATEWAY_TOKEN=.*/KOLB_BOT_GATEWAY_TOKEN=${GENERATED_TOKEN}/" "${SCRIPT_DIR}/.env"
+      sed -i "s/WEBUI_SECRET_KEY=.*/WEBUI_SECRET_KEY=${GENERATED_SECRET}/" "${SCRIPT_DIR}/.env"
+      echo -e "${GREEN}Created .env with auto-generated secrets.${NC}"
+      echo -e "${YELLOW}Edit .env to add your API keys (OPENAI_API_KEY, ANTHROPIC_API_KEY, etc.)${NC}"
+    else
+      echo -e "${RED}Error: .env.example not found${NC}"
+      exit 1
+    fi
+  fi
+}
+
+cmd_up() {
+  banner
+  echo -e "${GREEN}Starting Kolb-Bot...${NC}"
+  ensure_env
+  docker compose -f "${COMPOSE_FILE}" up -d --build
+  local ip
+  ip=$(get_host_ip)
+  echo ""
+  echo -e "${GREEN}Kolb-Bot is running!${NC}"
+  echo ""
+  echo -e "  Open WebUI     ${CYAN}http://${ip}:3000${NC}"
+  echo -e "  Browser View   ${CYAN}http://${ip}:6080/vnc.html${NC}"
+  echo -e "  Bridge API     ${CYAN}http://${ip}:8000${NC}"
+  echo -e "  Voice          ${CYAN}http://${ip}:8100${NC}"
+  echo -e "  Telemetry      ${CYAN}ws://${ip}:8200${NC}"
+  echo -e "  Gateway        ${CYAN}ws://${ip}:18789${NC}"
+  echo ""
+  echo -e "  First time? Open the WebUI URL on your tablet to create an admin account."
+}
+
+cmd_down() {
+  echo -e "${YELLOW}Stopping Kolb-Bot...${NC}"
+  docker compose -f "${COMPOSE_FILE}" down
+  echo -e "${GREEN}All services stopped.${NC}"
+}
+
+cmd_restart() {
+  echo -e "${YELLOW}Restarting Kolb-Bot...${NC}"
+  docker compose -f "${COMPOSE_FILE}" restart
+  echo -e "${GREEN}Restarted.${NC}"
+}
+
+cmd_status() {
+  docker compose -f "${COMPOSE_FILE}" ps
+}
+
+cmd_logs() {
+  local service="${1:-}"
+  if [ -n "$service" ]; then
+    docker compose -f "${COMPOSE_FILE}" logs -f "$service"
+  else
+    docker compose -f "${COMPOSE_FILE}" logs -f
+  fi
+}
+
+cmd_health() {
+  banner
+  echo "Service health:"
+  echo ""
+  for svc in kolbbot-api kolbbot-bridge kolbbot-voice kolbbot-telemetry kolbbot-browser openwebui; do
+    local status
+    status=$(docker compose -f "${COMPOSE_FILE}" ps --format json "$svc" 2>/dev/null | python3 -c "import sys,json;d=json.load(sys.stdin);print(d.get('Health','unknown'))" 2>/dev/null || echo "not running")
+    if [ "$status" = "healthy" ]; then
+      echo -e "  ${GREEN}ok${NC}   $svc"
+    elif [ "$status" = "not running" ]; then
+      echo -e "  ${RED}down${NC} $svc"
+    else
+      echo -e "  ${YELLOW}wait${NC} $svc"
+    fi
+  done
+  echo ""
+}
+
+cmd_agent() {
+  local subcmd="${1:-help}"
+  shift || true
+
+  case "$subcmd" in
+    list)
+      curl -s "http://127.0.0.1:8000/v1/workshop/agents" | python3 -m json.tool
+      ;;
+    create)
+      local name="${1:?Usage: kolb-bot agent create <name> [role]}"
+      local role="${2:-general}"
+      curl -s -X POST "http://127.0.0.1:8000/v1/workshop/agents" \
+        -H "Content-Type: application/json" \
+        -d "{\"name\":\"${name}\",\"role\":\"${role}\",\"model\":\"kolb-bot\",\"safe_mode\":true}" \
+        | python3 -m json.tool
+      ;;
+    delete)
+      local id="${1:?Usage: kolb-bot agent delete <agent-id>}"
+      curl -s -X DELETE "http://127.0.0.1:8000/v1/workshop/agents/${id}" | python3 -m json.tool
+      ;;
+    export)
+      local id="${1:?Usage: kolb-bot agent export <agent-id> [file]}"
+      local file="${2:-agent-${id}.json}"
+      curl -s "http://127.0.0.1:8000/v1/workshop/agents/${id}/export" > "$file"
+      echo -e "${GREEN}Exported to ${file}${NC}"
+      ;;
+    import)
+      local file="${1:?Usage: kolb-bot agent import <file.json>}"
+      curl -s -X POST "http://127.0.0.1:8000/v1/workshop/agents/import" \
+        -H "Content-Type: application/json" \
+        -d "@${file}" | python3 -m json.tool
+      ;;
+    templates)
+      curl -s "http://127.0.0.1:8000/v1/workshop/templates" | python3 -m json.tool
+      ;;
+    *)
+      echo "Usage: kolb-bot agent <command>"
+      echo ""
+      echo "Commands:"
+      echo "  list              List all agents"
+      echo "  create <name>     Create a new agent"
+      echo "  delete <id>       Delete an agent"
+      echo "  export <id>       Export agent config as JSON"
+      echo "  import <file>     Import agent from JSON file"
+      echo "  templates         Show available agent templates"
+      ;;
+  esac
+}
+
+cmd_provider() {
+  local subcmd="${1:-help}"
+  shift || true
+
+  case "$subcmd" in
+    list)
+      curl -s "http://127.0.0.1:8000/v1/providers" | python3 -m json.tool
+      ;;
+    quick)
+      curl -s "http://127.0.0.1:8000/v1/providers/quick-add" | python3 -c "
+import sys, json
+data = json.load(sys.stdin)
+for p in data.get('providers', []):
+    needs = ', '.join(p.get('needs', []))
+    print(f\"  {p['id']:15s} {p['name']:25s} {p['type']:10s} needs: {needs}\")
+"
+      ;;
+    add)
+      local id="${1:?Usage: kolb-bot provider add <id> <type> <api_base_or_command> [api_key]}"
+      local ptype="${2:?Specify type: openai, anthropic, gemini, ollama, cli}"
+      local base_or_cmd="${3:?Specify API base URL or CLI command}"
+      local key="${4:-}"
+      if [ "$ptype" = "cli" ]; then
+        curl -s -X POST "http://127.0.0.1:8000/v1/providers" \
+          -H "Content-Type: application/json" \
+          -d "{\"id\":\"${id}\",\"name\":\"${id}\",\"type\":\"cli\",\"cli_command\":\"${base_or_cmd}\"}" \
+          | python3 -m json.tool
+      else
+        curl -s -X POST "http://127.0.0.1:8000/v1/providers" \
+          -H "Content-Type: application/json" \
+          -d "{\"id\":\"${id}\",\"name\":\"${id}\",\"type\":\"${ptype}\",\"api_base\":\"${base_or_cmd}\",\"api_key\":\"${key}\"}" \
+          | python3 -m json.tool
+      fi
+      ;;
+    remove)
+      local id="${1:?Usage: kolb-bot provider remove <id>}"
+      curl -s -X DELETE "http://127.0.0.1:8000/v1/providers/${id}" | python3 -m json.tool
+      ;;
+    test)
+      local id="${1:?Usage: kolb-bot provider test <id>}"
+      curl -s -X POST "http://127.0.0.1:8000/v1/providers/${id}/test" | python3 -m json.tool
+      ;;
+    models)
+      local id="${1:?Usage: kolb-bot provider models <id>}"
+      curl -s "http://127.0.0.1:8000/v1/providers/${id}/models" | python3 -m json.tool
+      ;;
+    *)
+      echo "Usage: kolb-bot provider <command>"
+      echo ""
+      echo "Commands:"
+      echo "  list              Show configured providers"
+      echo "  quick             Show quick-add options"
+      echo "  add <id> <type> <url_or_cmd> [key]"
+      echo "                    Add a provider"
+      echo "  remove <id>       Remove a provider"
+      echo "  test <id>         Test a provider connection"
+      echo "  models <id>       List models from a provider"
+      echo ""
+      echo "Types: openai, anthropic, gemini, ollama, cli"
+      echo ""
+      echo "Examples:"
+      echo "  kolb-bot provider add openai openai https://api.openai.com/v1 sk-..."
+      echo "  kolb-bot provider add codex cli codex"
+      echo "  kolb-bot provider add ollama ollama http://localhost:11434/v1"
+      ;;
+  esac
+}
+
+cmd_voice() {
+  local subcmd="${1:-status}"
+  case "$subcmd" in
+    status)
+      curl -s "http://127.0.0.1:8100/health" 2>/dev/null | python3 -m json.tool 2>/dev/null || echo "Voice service not reachable"
+      ;;
+    *)
+      echo "Usage: kolb-bot voice status"
+      ;;
+  esac
+}
+
+cmd_pirate() {
+  banner
+  echo "Pirate Ship Status"
+  echo ""
+  echo -e "${CYAN}Crew:${NC}"
+  curl -s "http://127.0.0.1:8200/v1/pirate-ship/crew" 2>/dev/null | python3 -m json.tool 2>/dev/null || echo "  (telemetry service not reachable)"
+  echo ""
+  echo -e "${CYAN}Cargo:${NC}"
+  curl -s "http://127.0.0.1:8200/v1/pirate-ship/cargo" 2>/dev/null | python3 -m json.tool 2>/dev/null || echo "  (telemetry service not reachable)"
+  echo ""
+}
+
+cmd_verify() {
+  bash "${SCRIPT_DIR}/scripts/verify-branding.sh"
+}
+
+cmd_urls() {
+  banner
+  local ip
+  ip=$(get_host_ip)
+  echo -e "${CYAN}Your Pi address:${NC}  $ip"
+  echo ""
+  echo -e "${CYAN}Kolb-Bot (open in a browser on your phone/laptop):${NC}"
+  echo -e "  WebUI (chat, crew, pirate ship)   ${GREEN}http://${ip}:3000${NC}"
+  echo -e "  Watch bot browse (noVNC)            ${GREEN}http://${ip}:6080/vnc.html${NC}"
+  echo ""
+  echo -e "${CYAN}APIs (for advanced use):${NC}"
+  echo -e "  Bridge API   http://${ip}:8000"
+  echo -e "  Voice        http://${ip}:8100"
+  echo -e "  Telemetry    ws://${ip}:8200"
+  echo -e "  Gateway     ws://${ip}:18789"
+  echo ""
+  echo -e "${YELLOW}To view project files in your browser:${NC}"
+  echo -e "  On this Pi run:  ${GREEN}./view-files.sh${NC}"
+  echo -e "  Then open:       ${GREEN}http://${ip}:8082${NC}"
+  echo ""
+  echo -e "  Full guide: ${CYAN}VIEWING.md${NC}"
+}
+
+cmd_help() {
+  banner
+  local ip
+  ip=$(get_host_ip)
+  echo "Usage: kolb-bot [command] [options]"
+  echo ""
+  echo "  Running with no arguments opens the interactive menu."
+  echo ""
+  echo -e "${CYAN}Lifecycle${NC}"
+  echo "  up                Start all services"
+  echo "  down              Stop all services"
+  echo "  restart           Restart all services"
+  echo "  status            Show container status"
+  echo "  logs [service]    Tail logs (all or one service)"
+  echo "  health            Health-check every service"
+  echo ""
+  echo -e "${CYAN}Agents${NC}"
+  echo "  agent list        List agents"
+  echo "  agent create      Create a new agent"
+  echo "  agent delete      Delete an agent"
+  echo "  agent export      Export agent as JSON"
+  echo "  agent import      Import agent from JSON"
+  echo "  agent templates   Show built-in templates"
+  echo ""
+  echo -e "${CYAN}Providers${NC}"
+  echo "  provider list     Show configured providers"
+  echo "  provider quick    Quick-add options (OpenAI, Claude, etc.)"
+  echo "  provider add      Add a provider (API or CLI)"
+  echo "  provider test     Test a provider connection"
+  echo "  provider models   List models from a provider"
+  echo ""
+  echo -e "${CYAN}Features${NC}"
+  echo "  voice status      Voice service health"
+  echo "  pirate            Pirate Ship status (CLI)"
+  echo "  verify            Branding verification"
+  echo "  urls              Show Pi address and all URLs (for viewing from another device)"
+  echo "  menu              Open interactive menu"
+  echo ""
+  echo -e "${CYAN}Endpoints${NC}"
+  echo "  Open WebUI        http://${ip}:3000"
+  echo "  Browser View      http://${ip}:6080/vnc.html"
+  echo "  Bridge API        http://${ip}:8000"
+  echo "  Voice             http://${ip}:8100"
+  echo "  Telemetry         ws://${ip}:8200"
+  echo "  Gateway           ws://${ip}:18789"
+}
+
+# ---------------------------------------------------------------------------
+#  Interactive menu (whiptail)
+# ---------------------------------------------------------------------------
+WT_TITLE="Kolb-Bot"
+WT_WIDTH=72
+WT_HEIGHT=20
+WT_LIST_HEIGHT=12
+
+show_result() {
+  local title="$1" body="$2"
+  whiptail --title "$title" --scrolltext --msgbox "$body" $WT_HEIGHT $WT_WIDTH
+}
+
+run_and_show() {
+  local title="$1"
+  shift
+  local output
+  output=$("$@" 2>&1) || true
+  show_result "$title" "$output"
+}
+
+pick_service() {
+  local svc
+  svc=$(whiptail --title "Choose Service" --menu "Which service?" $WT_HEIGHT $WT_WIDTH 7 \
+    "all"        "All services" \
+    "kolbbot-api"       "Gateway API" \
+    "kolbbot-bridge"    "Bridge API" \
+    "kolbbot-voice"     "Voice" \
+    "kolbbot-telemetry" "Telemetry" \
+    "kolbbot-browser"   "Browser sandbox" \
+    "openwebui"         "Open WebUI" \
+    3>&1 1>&2 2>&3) || return 1
+  if [ "$svc" = "all" ]; then
+    echo ""
+  else
+    echo "$svc"
+  fi
+}
+
+menu_agents() {
+  while true; do
+    local choice
+    choice=$(whiptail --title "Agent Management" --menu "What would you like to do?" $WT_HEIGHT $WT_WIDTH $WT_LIST_HEIGHT \
+      "list"      "List all agents" \
+      "create"    "Create a new agent" \
+      "delete"    "Delete an agent" \
+      "export"    "Export an agent to a file" \
+      "import"    "Import an agent from a file" \
+      "templates" "View available templates" \
+      "back"      "Back to main menu" \
+      3>&1 1>&2 2>&3) || return 0
+
+    case "$choice" in
+      list)
+        run_and_show "Agents" curl -s "http://127.0.0.1:8000/v1/workshop/agents"
+        ;;
+      create)
+        local name role
+        name=$(whiptail --title "Create Agent" --inputbox "Agent name:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$name" ] && continue
+        role=$(whiptail --title "Create Agent" --menu "Pick a role:" $WT_HEIGHT $WT_WIDTH 6 \
+          "general"    "General purpose assistant" \
+          "researcher" "Research and analysis" \
+          "coder"      "Software development" \
+          "writer"     "Writing and editing" \
+          "analyst"    "Data analysis" \
+          "custom"     "Enter a custom role" \
+          3>&1 1>&2 2>&3) || continue
+        if [ "$role" = "custom" ]; then
+          role=$(whiptail --title "Create Agent" --inputbox "Custom role:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+          [ -z "$role" ] && role="general"
+        fi
+        local result
+        result=$(curl -s -X POST "http://127.0.0.1:8000/v1/workshop/agents" \
+          -H "Content-Type: application/json" \
+          -d "{\"name\":\"${name}\",\"role\":\"${role}\",\"model\":\"kolb-bot\",\"safe_mode\":true}" 2>&1)
+        show_result "Agent Created" "$result"
+        ;;
+      delete)
+        local agents_json agent_id
+        agents_json=$(curl -s "http://127.0.0.1:8000/v1/workshop/agents" 2>/dev/null)
+        if [ -z "$agents_json" ] || [ "$agents_json" = "[]" ]; then
+          show_result "Delete Agent" "No agents found, or the bridge service is not running."
+          continue
+        fi
+        local menu_args
+        menu_args=$(echo "$agents_json" | python3 -c "
+import sys, json
+try:
+    agents = json.load(sys.stdin)
+    if isinstance(agents, dict):
+        agents = agents.get('agents', [])
+    for a in agents:
+        aid = a.get('id', 'unknown')
+        name = a.get('name', 'unnamed')
+        print(f'{aid}\n{name}')
+except: pass
+" 2>/dev/null)
+        if [ -z "$menu_args" ]; then
+          show_result "Delete Agent" "Could not parse agent list. Raw response:\n$agents_json"
+          continue
+        fi
+        agent_id=$(eval whiptail --title '"Delete Agent"' --menu '"Select the agent to delete:"' $WT_HEIGHT $WT_WIDTH $WT_LIST_HEIGHT $menu_args 3>&1 1>&2 2>&3) || continue
+        if whiptail --title "Confirm Delete" --yesno "Delete agent \"$agent_id\"?\n\nThis cannot be undone." 10 $WT_WIDTH; then
+          run_and_show "Delete Agent" curl -s -X DELETE "http://127.0.0.1:8000/v1/workshop/agents/${agent_id}"
+        fi
+        ;;
+      export)
+        local agent_id file
+        agent_id=$(whiptail --title "Export Agent" --inputbox "Agent ID to export:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$agent_id" ] && continue
+        file=$(whiptail --title "Export Agent" --inputbox "Save to file:" 10 $WT_WIDTH "agent-${agent_id}.json" 3>&1 1>&2 2>&3) || continue
+        [ -z "$file" ] && file="agent-${agent_id}.json"
+        curl -s "http://127.0.0.1:8000/v1/workshop/agents/${agent_id}/export" > "$file"
+        show_result "Export Agent" "Saved to $file"
+        ;;
+      import)
+        local file
+        file=$(whiptail --title "Import Agent" --inputbox "Path to JSON file:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$file" ] && continue
+        if [ ! -f "$file" ]; then
+          show_result "Import Agent" "File not found: $file"
+          continue
+        fi
+        run_and_show "Import Agent" curl -s -X POST "http://127.0.0.1:8000/v1/workshop/agents/import" \
+          -H "Content-Type: application/json" -d "@${file}"
+        ;;
+      templates)
+        run_and_show "Agent Templates" curl -s "http://127.0.0.1:8000/v1/workshop/templates"
+        ;;
+      back) return 0 ;;
+    esac
+  done
+}
+
+menu_providers() {
+  while true; do
+    local choice
+    choice=$(whiptail --title "Provider Management" --menu "What would you like to do?" $WT_HEIGHT $WT_WIDTH $WT_LIST_HEIGHT \
+      "list"    "List configured providers" \
+      "quick"   "Quick-add options" \
+      "add"     "Add a new provider" \
+      "remove"  "Remove a provider" \
+      "test"    "Test a provider connection" \
+      "models"  "List models from a provider" \
+      "back"    "Back to main menu" \
+      3>&1 1>&2 2>&3) || return 0
+
+    case "$choice" in
+      list)
+        run_and_show "Providers" curl -s "http://127.0.0.1:8000/v1/providers"
+        ;;
+      quick)
+        local output
+        output=$(curl -s "http://127.0.0.1:8000/v1/providers/quick-add" 2>/dev/null | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    for p in data.get('providers', []):
+        needs = ', '.join(p.get('needs', []))
+        print(f\"{p['id']:15s} {p['name']:25s} needs: {needs}\")
+except Exception as e:
+    print(f'Error: {e}')
+" 2>&1)
+        show_result "Quick-Add Options" "$output"
+        ;;
+      add)
+        local pid ptype
+        pid=$(whiptail --title "Add Provider" --inputbox "Provider ID (short name, e.g. 'openai', 'my-ollama'):" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$pid" ] && continue
+        ptype=$(whiptail --title "Add Provider" --menu "Provider type:" $WT_HEIGHT $WT_WIDTH 5 \
+          "openai"    "OpenAI (or compatible API)" \
+          "anthropic" "Anthropic Claude" \
+          "gemini"    "Google Gemini" \
+          "ollama"    "Ollama (local models)" \
+          "cli"       "CLI tool (e.g. codex)" \
+          3>&1 1>&2 2>&3) || continue
+        if [ "$ptype" = "cli" ]; then
+          local cli_cmd
+          cli_cmd=$(whiptail --title "Add Provider" --inputbox "CLI command to run:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+          [ -z "$cli_cmd" ] && continue
+          local result
+          result=$(curl -s -X POST "http://127.0.0.1:8000/v1/providers" \
+            -H "Content-Type: application/json" \
+            -d "{\"id\":\"${pid}\",\"name\":\"${pid}\",\"type\":\"cli\",\"cli_command\":\"${cli_cmd}\"}" 2>&1)
+          show_result "Provider Added" "$result"
+        elif [ "$ptype" = "ollama" ]; then
+          local api_base
+          api_base=$(whiptail --title "Add Provider" --inputbox "Ollama API URL:" 10 $WT_WIDTH "http://localhost:11434/v1" 3>&1 1>&2 2>&3) || continue
+          [ -z "$api_base" ] && continue
+          local result
+          result=$(curl -s -X POST "http://127.0.0.1:8000/v1/providers" \
+            -H "Content-Type: application/json" \
+            -d "{\"id\":\"${pid}\",\"name\":\"${pid}\",\"type\":\"ollama\",\"api_base\":\"${api_base}\"}" 2>&1)
+          show_result "Provider Added" "$result"
+        else
+          local api_base api_key
+          case "$ptype" in
+            openai)    api_base="https://api.openai.com/v1" ;;
+            anthropic) api_base="https://api.anthropic.com/v1" ;;
+            gemini)    api_base="https://generativelanguage.googleapis.com/v1" ;;
+          esac
+          api_base=$(whiptail --title "Add Provider" --inputbox "API base URL:" 10 $WT_WIDTH "$api_base" 3>&1 1>&2 2>&3) || continue
+          api_key=$(whiptail --title "Add Provider" --passwordbox "API key (paste it in, it's hidden):" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+          local result
+          result=$(curl -s -X POST "http://127.0.0.1:8000/v1/providers" \
+            -H "Content-Type: application/json" \
+            -d "{\"id\":\"${pid}\",\"name\":\"${pid}\",\"type\":\"${ptype}\",\"api_base\":\"${api_base}\",\"api_key\":\"${api_key}\"}" 2>&1)
+          show_result "Provider Added" "$result"
+        fi
+        ;;
+      remove)
+        local pid
+        pid=$(whiptail --title "Remove Provider" --inputbox "Provider ID to remove:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$pid" ] && continue
+        if whiptail --title "Confirm Remove" --yesno "Remove provider \"$pid\"?" 10 $WT_WIDTH; then
+          run_and_show "Remove Provider" curl -s -X DELETE "http://127.0.0.1:8000/v1/providers/${pid}"
+        fi
+        ;;
+      test)
+        local pid
+        pid=$(whiptail --title "Test Provider" --inputbox "Provider ID to test:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$pid" ] && continue
+        run_and_show "Test Provider" curl -s -X POST "http://127.0.0.1:8000/v1/providers/${pid}/test"
+        ;;
+      models)
+        local pid
+        pid=$(whiptail --title "Provider Models" --inputbox "Provider ID:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$pid" ] && continue
+        run_and_show "Models" curl -s "http://127.0.0.1:8000/v1/providers/${pid}/models"
+        ;;
+      back) return 0 ;;
+    esac
+  done
+}
+
+menu_logs() {
+  local svc
+  svc=$(pick_service) || return 0
+  clear
+  echo -e "${CYAN}Tailing logs (Ctrl+C to stop)...${NC}"
+  echo ""
+  if [ -n "$svc" ]; then
+    docker compose -f "${COMPOSE_FILE}" logs -f "$svc"
+  else
+    docker compose -f "${COMPOSE_FILE}" logs -f
+  fi
+}
+
+menu_env() {
+  local env_file="${SCRIPT_DIR}/.env"
+  if [ ! -f "$env_file" ]; then
+    if whiptail --title "Settings" --yesno "No .env file found. Create one from the template?" 10 $WT_WIDTH; then
+      ensure_env
+      show_result "Settings" "Created .env with auto-generated secrets.\nEdit it below to add API keys."
+    else
+      return 0
+    fi
+  fi
+
+  while true; do
+    local choice
+    choice=$(whiptail --title "Settings (.env)" --menu "What would you like to do?" $WT_HEIGHT $WT_WIDTH 6 \
+      "view"   "View current settings" \
+      "openai" "Set OpenAI API key" \
+      "claude" "Set Anthropic/Claude API key" \
+      "stt"    "Set speech-to-text engine" \
+      "tts"    "Set text-to-speech engine" \
+      "back"   "Back to main menu" \
+      3>&1 1>&2 2>&3) || return 0
+
+    case "$choice" in
+      view)
+        local sanitized
+        sanitized=$(sed -E 's/(API_KEY=|SECRET_KEY=|TOKEN=)(.{4}).*/\1\2****/g' "$env_file")
+        show_result "Current Settings" "$sanitized"
+        ;;
+      openai)
+        local key
+        key=$(whiptail --title "OpenAI API Key" --passwordbox "Paste your OpenAI API key:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$key" ] && continue
+        if grep -q "^OPENAI_API_KEY=" "$env_file"; then
+          sed -i "s|^OPENAI_API_KEY=.*|OPENAI_API_KEY=${key}|" "$env_file"
+        else
+          echo "OPENAI_API_KEY=${key}" >> "$env_file"
+        fi
+        show_result "Saved" "OpenAI API key updated. Restart Kolb-Bot for it to take effect."
+        ;;
+      claude)
+        local key
+        key=$(whiptail --title "Anthropic API Key" --passwordbox "Paste your Anthropic API key:" 10 $WT_WIDTH "" 3>&1 1>&2 2>&3) || continue
+        [ -z "$key" ] && continue
+        if grep -q "^ANTHROPIC_API_KEY=" "$env_file"; then
+          sed -i "s|^ANTHROPIC_API_KEY=.*|ANTHROPIC_API_KEY=${key}|" "$env_file"
+        else
+          echo "ANTHROPIC_API_KEY=${key}" >> "$env_file"
+        fi
+        show_result "Saved" "Anthropic API key updated. Restart Kolb-Bot for it to take effect."
+        ;;
+      stt)
+        local engine
+        engine=$(whiptail --title "Speech-to-Text" --menu "Choose STT engine:" $WT_HEIGHT $WT_WIDTH 3 \
+          "whisper" "Whisper (local, no API key)" \
+          "openai"  "OpenAI Whisper API (needs key)" \
+          3>&1 1>&2 2>&3) || continue
+        sed -i "s|^STT_ENGINE=.*|STT_ENGINE=${engine}|" "$env_file"
+        if [ "$engine" = "whisper" ]; then
+          local model
+          model=$(whiptail --title "Whisper Model" --menu "Model size (bigger = more accurate, slower):" $WT_HEIGHT $WT_WIDTH 5 \
+            "tiny"   "Fastest, least accurate" \
+            "base"   "Good balance (recommended)" \
+            "small"  "More accurate, slower" \
+            "medium" "High accuracy, much slower" \
+            "large"  "Best accuracy, very slow" \
+            3>&1 1>&2 2>&3) || model="base"
+          sed -i "s|^WHISPER_MODEL=.*|WHISPER_MODEL=${model}|" "$env_file"
+        fi
+        show_result "Saved" "STT engine set to ${engine}. Restart Kolb-Bot for it to take effect."
+        ;;
+      tts)
+        local engine
+        engine=$(whiptail --title "Text-to-Speech" --menu "Choose TTS engine:" $WT_HEIGHT $WT_WIDTH 3 \
+          "edge-tts" "Edge TTS (free, high quality)" \
+          "openai"   "OpenAI TTS (needs key)" \
+          3>&1 1>&2 2>&3) || continue
+        sed -i "s|^TTS_ENGINE=.*|TTS_ENGINE=${engine}|" "$env_file"
+        show_result "Saved" "TTS engine set to ${engine}. Restart Kolb-Bot for it to take effect."
+        ;;
+      back) return 0 ;;
+    esac
+  done
+}
+
+cmd_menu() {
+  if ! command -v whiptail &>/dev/null; then
+    echo -e "${RED}whiptail is not installed. Install it with: sudo apt install whiptail${NC}"
+    echo "Falling back to text help."
+    cmd_help
+    return
+  fi
+
+  local ip
+  ip=$(get_host_ip)
+
+  while true; do
+    local choice
+    choice=$(whiptail --title "Kolb-Bot" --menu "Your AI pirate crew, at your service.\n\nUI: http://${ip}:3000" $WT_HEIGHT $WT_WIDTH $WT_LIST_HEIGHT \
+      "up"        "Start Kolb-Bot" \
+      "down"      "Stop Kolb-Bot" \
+      "restart"   "Restart Kolb-Bot" \
+      "status"    "View service status" \
+      "health"    "Health check all services" \
+      "logs"      "View logs" \
+      "agents"    "Manage agents" \
+      "providers" "Manage AI providers" \
+      "settings"  "Edit settings (API keys, voice, etc.)" \
+      "pirate"    "Pirate Ship status" \
+      "quit"      "Exit" \
+      3>&1 1>&2 2>&3) || break
+
+    case "$choice" in
+      up)
+        clear
+        cmd_up
+        echo ""
+        read -rp "Press Enter to continue..."
+        ;;
+      down)
+        if whiptail --title "Stop Kolb-Bot" --yesno "Stop all services?" 10 $WT_WIDTH; then
+          clear
+          cmd_down
+          echo ""
+          read -rp "Press Enter to continue..."
+        fi
+        ;;
+      restart)
+        clear
+        cmd_restart
+        echo ""
+        read -rp "Press Enter to continue..."
+        ;;
+      status)
+        local output
+        output=$(docker compose -f "${COMPOSE_FILE}" ps 2>&1)
+        show_result "Service Status" "$output"
+        ;;
+      health)
+        clear
+        cmd_health
+        echo ""
+        read -rp "Press Enter to continue..."
+        ;;
+      logs)      menu_logs ;;
+      agents)    menu_agents ;;
+      providers) menu_providers ;;
+      settings)  menu_env ;;
+      pirate)
+        clear
+        cmd_pirate
+        echo ""
+        read -rp "Press Enter to continue..."
+        ;;
+      quit) break ;;
+    esac
+  done
+}
+
+# Main dispatch
+case "${1:-menu}" in
+  up)       cmd_up ;;
+  down)     cmd_down ;;
+  restart)  cmd_restart ;;
+  status)   cmd_status ;;
+  logs)     shift; cmd_logs "$@" ;;
+  health)   cmd_health ;;
+  agent)    shift; cmd_agent "$@" ;;
+  provider) shift; cmd_provider "$@" ;;
+  voice)    shift; cmd_voice "$@" ;;
+  pirate)   cmd_pirate ;;
+  verify)   cmd_verify ;;
+  urls)     cmd_urls ;;
+  menu)     cmd_menu ;;
+  help|--help|-h) cmd_help ;;
+  *)
+    echo -e "${RED}Unknown command: $1${NC}"
+    echo "Run 'kolb-bot help' for usage."
+    exit 1
+    ;;
+esac

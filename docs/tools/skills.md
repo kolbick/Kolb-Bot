@@ -47,22 +47,22 @@ You can gate them via `metadata.kolb-bot.requires.config` on the plugin’s conf
 entry. See [Plugins](/tools/plugin) for discovery/config and [Tools](/tools) for the
 tool surface those skills teach.
 
-## ClawHub (install + sync)
+## KolbHub (install + sync)
 
-ClawHub is the public skills registry for KolbBot. Browse at
-[https://clawhub.com](https://clawhub.com). Use it to discover, install, update, and back up skills.
-Full guide: [ClawHub](/tools/clawhub).
+KolbHub is the public skills registry for KolbBot. Browse at
+[https://kolbhub.dev](https://kolbhub.dev). Use it to discover, install, update, and back up skills.
+Full guide: [KolbHub](/tools/kolbhub).
 
 Common flows:
 
 - Install a skill into your workspace:
-  - `clawhub install <skill-slug>`
+  - `kolbhub install <skill-slug>`
 - Update all installed skills:
-  - `clawhub update --all`
+  - `kolbhub update --all`
 - Sync (scan + publish updates):
-  - `clawhub sync --all`
+  - `kolbhub sync --all`
 
-By default, `clawhub` installs into `./skills` under your current working
+By default, `kolbhub` installs into `./skills` under your current working
 directory (or falls back to the configured KolbBot workspace). KolbBot picks
 that up as `<workspace>/skills` on the next session.
 
@@ -295,6 +295,6 @@ See [Skills config](/tools/skills-config) for the full configuration schema.
 
 ## Looking for more skills?
 
-Browse [https://clawhub.com](https://clawhub.com).
+Browse [https://kolbhub.dev](https://kolbhub.dev).
 
 ---
