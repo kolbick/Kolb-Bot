@@ -87,7 +87,10 @@ describe('generated manifests and metadata', () => {
 		for (const locale of fs.readdirSync(localesDir)) {
 			const file = path.join(localesDir, locale, 'translation.json');
 			if (!fs.existsSync(file)) continue;
-			expectClean(fs.readFileSync(file, 'utf-8'), `locale ${locale}`);
+			// i18next interpolation variables (e.g. {{OPEN_WEBUI_VERSION}}) are
+			// internal identifiers matched by name from code; exclude them.
+			const content = fs.readFileSync(file, 'utf-8').replace(/{{[^}]*}}/g, '');
+			expectClean(content, `locale ${locale}`);
 		}
 	});
 });

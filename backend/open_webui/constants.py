@@ -1,5 +1,6 @@
-from open_webui.brand import PRODUCT_NAME
 from __future__ import annotations
+
+from open_webui.brand import PRODUCT_NAME
 
 from enum import Enum
 

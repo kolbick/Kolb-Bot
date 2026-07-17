@@ -27,6 +27,11 @@ scripts/audit-branding-allowlist.txt
 # pyproject and the pinned source references used for upstream sync.
 pyproject.toml
 
+# Repository README names the upstream project solely for provenance and
+# license disclosure (small-deployment branding exception). It is repo
+# documentation, not a surface shipped inside the application UI.
+README.md
+
 # Terminal service build documentation references the upstream Open Terminal
 # repository it builds from (MIT attribution requirement).
 services/kolb-terminal/

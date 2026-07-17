@@ -47,18 +47,28 @@ PATTERNS=(
     'changingtides'
 )
 
-SCAN_DIRS=(src static backend/open_webui/static docs docker-compose.yml Dockerfile .env.example deploy services .github)
+SCAN_DIRS=(src static backend/open_webui/static docs docker-compose.yml Dockerfile .env.example deploy services .github README.md CHANGELOG.md package.json pyproject.toml)
 [ -d build ] && SCAN_DIRS+=(build)
+
+# The About page's retained upstream copyright attribution is the single
+# sanctioned user-visible mention; it also appears (verbatim) in the compiled
+# bundle and its sourcemap, whose filenames are content-hashed and therefore
+# cannot be allowlisted by path. It is stripped from file content before
+# matching so any OTHER upstream reference in the same file still fails.
+strip_sanctioned() {
+    sed -E 's/Incorporates Open WebUI\. Copyright \(c\).{0,80}Open WebUI Inc\. All rights reserved\.//g' "$1"
+}
 
 echo "== text scan: ${SCAN_DIRS[*]}"
 for pat in "${PATTERNS[@]}"; do
-    while IFS= read -r hit; do
-        path="${hit%%:*}"
-        if ! is_allowed "$path"; then
-            echo "FAIL [$pat] $hit"
+    while IFS= read -r path; do
+        is_allowed "$path" && continue
+        if strip_sanctioned "$path" | grep -qin -e "$pat"; then
+            hit=$(strip_sanctioned "$path" | grep -in -m1 -e "$pat" | cut -c1-240)
+            echo "FAIL [$pat] $path:$hit"
             fail=1
         fi
-    done < <(grep -rin --binary-files=without-match -e "$pat" "${SCAN_DIRS[@]}" 2>/dev/null | cut -c1-300)
+    done < <(grep -ril --binary-files=without-match -e "$pat" "${SCAN_DIRS[@]}" 2>/dev/null)
 done
 
 # Backend user-visible display strings (module paths use open_webui with an

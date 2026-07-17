@@ -122,8 +122,8 @@
 		</div>
 
 		<!--
-			Required third-party attribution; do not remove. This product is derived
-			from Open WebUI and this notice is preserved under its license terms.
+			Required third-party attribution; do not remove. This notice is
+			preserved under the upstream license terms (see docs/LICENSE_NOTES.md).
 		-->
 		<div>
 			<pre
