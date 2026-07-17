@@ -1,0 +1,117 @@
+# Kolb-Bot production Compose stack.
+#
+# Usage:
+#   cp .env.example .env   # then fill in real secrets
+#   docker compose up -d --build
+#
+# The terminal service is opt-in: set COMPOSE_PROFILES=terminal in .env (or
+# pass --profile terminal) to enable it, and remove it from COMPOSE_PROFILES
+# to disable terminal access without rebuilding anything.
+#
+# Nothing in this stack is published to the internet directly: the app binds
+# to localhost only and is meant to be fronted by a reverse proxy that
+# terminates HTTPS for ${PRIMARY_DOMAIN}. See docs/DEPLOYMENT.md and
+# deploy/nginx/kolb-bot.conf.example.
+
+name: kolb-bot
+
+services:
+  kolb-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        BUILD_HASH: ${BUILD_HASH:-dev-build}
+    image: kolb-bot:local
+    container_name: ${APP_CONTAINER_NAME:-kolb-bot}
+    restart: unless-stopped
+    ports:
+      # Localhost-only: the reverse proxy is the sole public entry point.
+      - '127.0.0.1:${APP_HOST_PORT:-3101}:8080'
+    environment:
+      WEBUI_NAME: ${PRODUCT_NAME:-Kolb-Bot}
+      WEBUI_URL: https://${PRIMARY_DOMAIN:-kolb-bot.com}
+      ENABLE_SIGNUP: ${ENABLE_SIGNUP:-false}
+      DEFAULT_USER_ROLE: pending
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?set WEBUI_SECRET_KEY in .env}
+      WEBUI_SESSION_COOKIE_SAME_SITE: lax
+      WEBUI_SESSION_COOKIE_SECURE: 'true'
+      WEBUI_AUTH_COOKIE_SECURE: 'true'
+      CORS_ALLOW_ORIGIN: https://${PRIMARY_DOMAIN:-kolb-bot.com}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
+      REDIS_KEY_PREFIX: kolb-bot
+      OTEL_SERVICE_NAME: kolb-bot
+      # Telemetry and external reporting stay off unless explicitly enabled.
+      SCARF_NO_ANALYTICS: 'true'
+      DO_NOT_TRACK: 'true'
+      ANONYMIZED_TELEMETRY: 'false'
+      ENABLE_VERSION_UPDATE_CHECK: 'false'
+      ENABLE_COMMUNITY_SHARING: 'false'
+      # Providers
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
+      OPENAI_API_BASE_URL: ${OPENAI_API_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      # Kolb Terminal connection (used when the terminal profile is enabled).
+      # The API key stays server-side; the frontend only ever talks to the
+      # authenticated /api/v1/terminals proxy.
+      TERMINAL_SERVER_CONNECTIONS: >-
+        [{"id":"kolb-terminal","name":"${TERMINAL_DISPLAY_NAME:-Kolb Terminal}",
+          "url":"http://${TERMINAL_CONTAINER_NAME:-kolb-terminal}:${TERMINAL_INTERNAL_PORT:-8080}",
+          "key":"${TERMINAL_API_KEY:-}","auth_type":"bearer",
+          "enabled":${TERMINAL_ENABLED:-false}}]
+    volumes:
+      - kolb-bot-data:/app/backend/data
+    networks:
+      - kolb-bot-internal
+    extra_hosts:
+      # Lets the container reach a CPTR gateway or Ollama running on the host
+      # (Linux equivalent of Docker Desktop's host.docker.internal).
+      - host.docker.internal:host-gateway
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    # Healthcheck is baked into the image (curl /health).
+
+  kolb-terminal:
+    profiles: [terminal]
+    build:
+      context: ./services/kolb-terminal
+      args:
+        TERMINAL_SOURCE_REF: ${TERMINAL_SOURCE_REF:-main}
+    image: kolb-terminal:local
+    container_name: ${TERMINAL_CONTAINER_NAME:-kolb-terminal}
+    restart: unless-stopped
+    # No ports: reachable only via the internal network through the app's
+    # authenticated terminal proxy. Never publish this service directly.
+    environment:
+      TERMINAL_DISPLAY_NAME: ${TERMINAL_DISPLAY_NAME:-Kolb Terminal}
+      TERMINAL_API_KEY: ${TERMINAL_API_KEY:-}
+    volumes:
+      # Terminal home/workspace only. Do not mount the Docker socket or broad
+      # host paths here; see docs/OPEN_TERMINAL.md for the security notes.
+      - kolb-terminal-data:/data
+    networks:
+      - kolb-bot-internal
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: '3'
+    healthcheck:
+      test: ['CMD-SHELL', 'curl --silent --fail http://localhost:8080/health || exit 1']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  kolb-bot-internal:
+    name: kolb-bot-internal
+
+volumes:
+  kolb-bot-data:
+    name: ${APP_DATA_VOLUME:-kolb-bot-data}
+  kolb-terminal-data:
+    name: ${TERMINAL_DATA_VOLUME:-kolb-terminal-data}
