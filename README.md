@@ -8,7 +8,7 @@ Build **Kolb-Bot**, a completely branded, private, self-hosted AI workspace deri
 
 Kolb-Bot is the owner's personal AI interface. It must feel like a standalone product, not a renamed Open WebUI installation. The application will eventually be served at:
 
-- Primary domain: `https://kolb-bot.com`
+- Primary domain: `https://kolb-bot.com` via cloudfare
 - Product name: `Kolb-Bot`
 - Product short name: `Kolb-Bot`
 - Product slug: `kolb-bot`
@@ -16,9 +16,8 @@ Kolb-Bot is the owner's personal AI interface. It must feel like a standalone pr
 - Suggested Compose project name: `kolb-bot`
 - Suggested default host port: `3101`
 - Branded terminal name: `Kolb Terminal`
-- Branded computer-workspace connection name: `Kolb Computer`
+- Branded computer-workspace connection name: `Komputer`
 
-Do not add Tide-Bot branding, work-specific copy, clinical language, or Changing Tides branding to this repository.
 
 The experience should be clean, capable, direct, and personal without becoming cartoonish, gimmicky, or overly playful. Do not invent slogans, mascots, personal biographical copy, or marketing claims that are not supplied by the owner.
 
