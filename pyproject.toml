@@ -173,7 +173,7 @@ all = [
 ]
 
 [project.scripts]
-open-webui = "open_webui:app"
+kolb-bot = "open_webui:app"
 
 [build-system]
 requires = ["hatchling"]
