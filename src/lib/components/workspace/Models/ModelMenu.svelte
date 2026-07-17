@@ -23,7 +23,6 @@
 	export let model;
 
 	export let editHandler: Function;
-	export let shareHandler: Function;
 	export let cloneHandler: Function;
 	export let exportHandler: Function;
 	export let copyLinkHandler: Function;
@@ -186,18 +185,6 @@
 					<Download />
 
 					<div class="flex items-center">{$i18n.t('Export')}</div>
-				</button>
-			{/if}
-
-			{#if writeAccess && $config?.features.enable_community_sharing}
-				<button
-					class="select-none flex gap-2 items-center px-3 py-1.5 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl w-full"
-					on:click={() => {
-						shareHandler();
-					}}
-				>
-					<Share />
-					<div class="flex items-center">{$i18n.t('Share')}</div>
 				</button>
 			{/if}
 

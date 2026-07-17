@@ -5,6 +5,7 @@
 	import { fade, slide } from 'svelte/transition';
 
 	import { getUsage } from '$lib/apis';
+	import { BRAND } from '$lib/brand';
 	import { getSessionUser, userSignOut } from '$lib/apis/auths';
 
 	import {
@@ -563,7 +564,7 @@
 
 				{#if $user?.role === 'admin'}
 					<a
-						href="https://docs.openwebui.com"
+						href={BRAND.supportUrl}
 						target="_blank"
 						draggable="false"
 						class="flex rounded-xl py-1.5 px-3 w-full hover:bg-gray-50 dark:hover:bg-gray-800 transition cursor-pointer select-none"

@@ -2987,7 +2987,8 @@ ENABLE_ADMIN_ANALYTICS = os.getenv('ENABLE_ADMIN_ANALYTICS', 'True').lower() == 
 ENABLE_COMMUNITY_SHARING = ConfigVar(
     'ENABLE_COMMUNITY_SHARING',
     'ui.enable_community_sharing',
-    os.getenv('ENABLE_COMMUNITY_SHARING', 'True').lower() == 'true',
+    # Kolb-Bot: upstream community sharing UI is removed; default off.
+    os.getenv('ENABLE_COMMUNITY_SHARING', 'False').lower() == 'true',
 )
 
 ENABLE_MESSAGE_RATING = ConfigVar(

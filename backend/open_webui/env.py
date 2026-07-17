@@ -768,11 +768,15 @@ if LICENSE_PUBLIC_KEY:
 # WEBUI Identity
 ####################################
 
-WEBUI_NAME = os.getenv('WEBUI_NAME', 'Open WebUI')
-if WEBUI_NAME != 'Open WebUI':
-    WEBUI_NAME += ' (Open WebUI)'
+from open_webui.brand import FAVICON_PATH, PRIMARY_DOMAIN, PRODUCT_NAME
 
-WEBUI_FAVICON_URL = 'https://openwebui.com/favicon.png'
+WEBUI_NAME = os.getenv('WEBUI_NAME', PRODUCT_NAME)
+
+# Absolute URL because it is embedded in outbound webhook payloads (e.g. Teams
+# cards), which cannot resolve a relative path.
+WEBUI_FAVICON_URL = os.getenv(
+    'WEBUI_FAVICON_URL', f'https://{PRIMARY_DOMAIN}{FAVICON_PATH}'
+)
 WEBUI_BUILD_HASH = os.getenv('WEBUI_BUILD_HASH', 'dev-build')
 TRUSTED_SIGNATURE_KEY = os.getenv('TRUSTED_SIGNATURE_KEY', '')
 
@@ -978,7 +982,8 @@ PIP_PACKAGE_INDEX_OPTIONS = os.getenv('PIP_PACKAGE_INDEX_OPTIONS', '').split()
 # OFFLINE_MODE
 ####################################
 
-ENABLE_VERSION_UPDATE_CHECK = os.getenv('ENABLE_VERSION_UPDATE_CHECK', 'true').lower() == 'true'
+# Kolb-Bot: no outbound calls to upstream release feeds unless explicitly enabled.
+ENABLE_VERSION_UPDATE_CHECK = os.getenv('ENABLE_VERSION_UPDATE_CHECK', 'false').lower() == 'true'
 OFFLINE_MODE = os.getenv('OFFLINE_MODE', 'false').lower() == 'true'
 
 if OFFLINE_MODE:

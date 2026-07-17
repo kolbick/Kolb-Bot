@@ -420,6 +420,7 @@ from open_webui.config import (
     async_reset_config,
     reset_config,
 )
+from open_webui.brand import DEFAULT_DESCRIPTION, PRODUCT_NAME, THEME_DARK_BACKGROUND
 from open_webui.constants import ERROR_MESSAGES, TASKS
 from open_webui.env import (
     AIOHTTP_CLIENT_SESSION_SSL,
@@ -613,23 +614,22 @@ class SPAStaticFiles(StaticFiles):
 
 if LOG_FORMAT != 'json':
     banner = rf"""
- ██████╗ ██████╗ ███████╗███╗   ██╗    ██╗    ██╗███████╗██████╗ ██╗   ██╗██╗
-██╔═══██╗██╔══██╗██╔════╝████╗  ██║    ██║    ██║██╔════╝██╔══██╗██║   ██║██║
-██║   ██║██████╔╝█████╗  ██╔██╗ ██║    ██║ █╗ ██║█████╗  ██████╔╝██║   ██║██║
-██║   ██║██╔═══╝ ██╔══╝  ██║╚██╗██║    ██║███╗██║██╔══╝  ██╔══██╗██║   ██║██║
-╚██████╔╝██║     ███████╗██║ ╚████║    ╚███╔███╔╝███████╗██████╔╝╚██████╔╝██║
- ╚═════╝ ╚═╝     ╚══════╝╚═╝  ╚═══╝     ╚══╝╚══╝ ╚══════╝╚═════╝  ╚═════╝ ╚═╝
+██╗  ██╗ ██████╗ ██╗     ██████╗       ██████╗  ██████╗ ████████╗
+██║ ██╔╝██╔═══██╗██║     ██╔══██╗      ██╔══██╗██╔═══██╗╚══██╔══╝
+█████╔╝ ██║   ██║██║     ██████╔╝█████╗██████╔╝██║   ██║   ██║
+██╔═██╗ ██║   ██║██║     ██╔══██╗╚════╝██╔══██╗██║   ██║   ██║
+██║  ██╗╚██████╔╝███████╗██████╔╝      ██████╔╝╚██████╔╝   ██║
+╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═════╝       ╚═════╝  ╚═════╝    ╚═╝
 
 
-v{VERSION} - building the best AI user interface.
+{PRODUCT_NAME} v{VERSION}
 {f'Commit: {WEBUI_BUILD_HASH}' if WEBUI_BUILD_HASH != 'dev-build' else ''}
-https://github.com/open-webui/open-webui
 """
     try:
         print(banner)
     except UnicodeEncodeError:
         # Stdout can't encode the box-drawing banner (Windows cp1252, redirected/headless stdout); fall back to ASCII.
-        print(f'Open WebUI v{VERSION} - building the best AI user interface.\nhttps://github.com/open-webui/open-webui')
+        print(f'{PRODUCT_NAME} v{VERSION}')
 
 
 @asynccontextmanager
@@ -747,7 +747,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title='Open WebUI',
+    title=PRODUCT_NAME,
     docs_url='/docs' if ENV == 'dev' else None,
     openapi_url='/openapi.json' if ENV == 'dev' else None,
     redoc_url=None,
@@ -2855,10 +2855,10 @@ async def get_manifest_json():
         return {
             'name': app.state.WEBUI_NAME,
             'short_name': app.state.WEBUI_NAME,
-            'description': f'{app.state.WEBUI_NAME} is an open, extensible, user-friendly interface for AI that adapts to your workflow.',
+            'description': DEFAULT_DESCRIPTION,
             'start_url': '/',
             'display': 'standalone',
-            'background_color': '#343541',
+            'background_color': THEME_DARK_BACKGROUND,
             'icons': [
                 {
                     'src': '/static/logo.png',

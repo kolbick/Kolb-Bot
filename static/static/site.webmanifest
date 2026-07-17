@@ -1,6 +1,6 @@
 {
-  "name": "Open WebUI",
-  "short_name": "WebUI",
+  "name": "Kolb-Bot",
+  "short_name": "Kolb-Bot",
   "icons": [
     {
       "src": "/static/web-app-manifest-192x192.png",
