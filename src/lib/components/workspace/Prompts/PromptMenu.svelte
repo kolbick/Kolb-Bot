@@ -13,7 +13,6 @@
 	const i18n = getContext('i18n');
 
 	export let editHandler: Function;
-	export let shareHandler: Function;
 	export let cloneHandler: Function;
 	export let exportHandler: Function;
 	export let deleteHandler: Function;
@@ -66,20 +65,6 @@
 
 				<div class="flex items-center">{$i18n.t('Edit')}</div>
 			</button>
-
-			{#if $config.features.enable_community_sharing}
-				<button
-					class="select-none flex h-[1.6875rem] w-full cursor-pointer items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"
-					draggable="false"
-					on:click={() => {
-						shareHandler();
-						closeMenu();
-					}}
-				>
-					<Share className="size-3.5" />
-					<div class="flex items-center">{$i18n.t('Share')}</div>
-				</button>
-			{/if}
 
 			<button
 				class="select-none flex h-[1.6875rem] w-full cursor-pointer items-center gap-2 rounded-xl bg-transparent px-2 text-[13px] hover:text-gray-900 dark:hover:text-gray-100"

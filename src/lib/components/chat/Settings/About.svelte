@@ -63,16 +63,13 @@
 						</Tooltip>
 
 						{#if $config?.features?.enable_version_update_check}
-							<a
-								href="https://github.com/open-webui/open-webui/releases/tag/v{version.latest}"
-								target="_blank"
-							>
+							<span>
 								{updateAvailable === null
 									? $i18n.t('Checking for updates...')
 									: updateAvailable
 										? `(v${version.latest} ${$i18n.t('available!')})`
 										: $i18n.t('(latest)')}
-							</a>
+							</span>
 						{/if}
 					</div>
 
@@ -107,35 +104,12 @@
 			</UserSettingSection>
 		{/if}
 
-		<UserSettingSection title={$i18n.t('Community')}>
-			{#if $config?.license_metadata}
-				<div class="text-xs text-gray-600 dark:text-gray-400">
-					{#if !$WEBUI_NAME.includes('Open WebUI')}
-						<span>{$WEBUI_NAME}</span> -
-					{/if}
-
-					<span class="capitalize">{$config?.license_metadata?.type}</span> license purchased by
-					<span class="capitalize">{$config?.license_metadata?.organization_name}</span>
-				</div>
-			{:else}
-				<div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-400 dark:text-gray-600">
-					<a
-						class="hover:text-gray-700 dark:hover:text-gray-400"
-						href="https://discord.gg/5rJgQTnV4s"
-						target="_blank">Discord</a
-					>
-					<a
-						class="hover:text-gray-700 dark:hover:text-gray-400"
-						href="https://twitter.com/OpenWebUI"
-						target="_blank">X</a
-					>
-					<a
-						class="hover:text-gray-700 dark:hover:text-gray-400"
-						href="https://github.com/open-webui/open-webui"
-						target="_blank">GitHub</a
-					>
-				</div>
-			{/if}
+		<UserSettingSection title={$i18n.t('About')}>
+			<div class="text-xs text-gray-400 dark:text-gray-500">
+				{$i18n.t(
+					'A private, self-hosted AI workspace. See the LICENSE file and docs/LICENSE_NOTES.md in the repository for full license details.'
+				)}
+			</div>
 
 			<div class="text-xs text-gray-400 dark:text-gray-500">
 				Emoji graphics provided by
@@ -143,19 +117,12 @@
 				<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC-BY 4.0</a>.
 			</div>
 
+			<!--
+				Required third-party attribution; do not remove. This notice is
+				preserved under the upstream license terms (see docs/LICENSE_NOTES.md).
+			-->
 			<div class="text-xs text-gray-400 dark:text-gray-500">
-				Copyright (c) {new Date().getFullYear()}
-				<a href="https://openwebui.com" target="_blank" class="underline">Open WebUI Inc.</a>
-				<a href="https://github.com/open-webui/open-webui/blob/main/LICENSE" target="_blank"
-					>All rights reserved.</a
-				>
-			</div>
-
-			<div class="text-xs text-gray-400 dark:text-gray-500">
-				{$i18n.t('Created by')}
-				<a class="text-gray-500 dark:text-gray-400" href="https://github.com/tjbck" target="_blank"
-					>Tim J. Baek</a
-				>
+				Incorporates Open WebUI. Copyright (c) {new Date().getFullYear()} Open WebUI Inc. All rights reserved.
 			</div>
 		</UserSettingSection>
 	</div>

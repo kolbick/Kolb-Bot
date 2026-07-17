@@ -186,6 +186,10 @@ COPY --chown=$UID:$GID ./backend .
 
 EXPOSE 8080
 
+LABEL org.opencontainers.image.title="Kolb-Bot" \
+      org.opencontainers.image.description="Kolb-Bot: a private, self-hosted AI workspace." \
+      org.opencontainers.image.url="https://kolb-bot.com"
+
 HEALTHCHECK CMD curl --silent --fail http://localhost:${PORT:-8080}/health | jq -ne 'input.status == true' || exit 1
 
 # Minimal, atomic permission hardening for OpenShift (arbitrary UID):

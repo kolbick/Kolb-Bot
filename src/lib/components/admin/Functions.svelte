@@ -151,33 +151,6 @@
 	const shouldIgnoreRowClick = (target: EventTarget | null) => {
 		return target instanceof Element && !!target.closest('button, a, input, [role="menu"]');
 	};
-	const shareHandler = async (func) => {
-		const item = await getFunctionById(localStorage.token, func.id).catch((error) => {
-			toast.error(`${error}`);
-			return null;
-		});
-
-		toast.success($i18n.t('Redirecting you to Open WebUI Community'));
-
-		const url = 'https://openwebui.com';
-
-		const tab = await window.open(`${url}/functions/create`, '_blank');
-
-		// Define the event handler function
-		const messageHandler = (event) => {
-			if (event.origin !== url) return;
-			if (event.data === 'loaded') {
-				tab.postMessage(JSON.stringify(item), '*');
-
-				// Remove the event listener after handling the message
-				window.removeEventListener('message', messageHandler);
-			}
-		};
-
-		window.addEventListener('message', messageHandler, false);
-		console.log(item);
-	};
-
 	const cloneHandler = async (func) => {
 		const _function = await getFunctionById(localStorage.token, func.id).catch((error) => {
 			toast.error(`${error}`);
@@ -645,9 +618,6 @@
 											editHandler={() => {
 												goto(`/admin/functions/edit?id=${encodeURIComponent(func.id)}`);
 											}}
-											shareHandler={() => {
-												shareHandler(func);
-											}}
 											cloneHandler={() => {
 												cloneHandler(func);
 											}}
@@ -732,13 +702,6 @@
 	)}
 </div> -->
 
-		{#if $config?.features.enable_community_sharing}
-			<CommunityDiscover
-				href="https://openwebui.com/functions"
-				title={$i18n.t('Discover a function')}
-				description={$i18n.t('Discover, download, and explore custom functions')}
-			/>
-		{/if}
 	</div>
 
 	<DeleteConfirmDialog

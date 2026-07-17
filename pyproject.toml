@@ -1,6 +1,6 @@
 [project]
-name = "open-webui"
-description = "Open WebUI"
+name = "kolb-bot"
+description = "Kolb-Bot"
 authors = [
     { name = "Timothy Jaeryang Baek", email = "tim@openwebui.com" }
 ]
@@ -171,7 +171,7 @@ all = [
 ]
 
 [project.scripts]
-open-webui = "open_webui:app"
+kolb-bot = "open_webui:app"
 
 [build-system]
 requires = ["hatchling"]

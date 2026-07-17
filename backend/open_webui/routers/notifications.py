@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from open_webui.brand import PRODUCT_NAME
+
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -94,7 +96,7 @@ async def set_default_notification_target(target_id: str, user=Depends(get_verif
 async def test_notification_target(request: Request, target_id: str, user=Depends(get_verified_user)):
     await _check_notifications_access(user)
     try:
-        app_name = getattr(request.app.state, 'WEBUI_NAME', 'Open WebUI')
+        app_name = getattr(request.app.state, 'WEBUI_NAME', PRODUCT_NAME)
         return await test_target(user.id, target_id, app_name)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

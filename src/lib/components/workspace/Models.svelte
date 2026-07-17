@@ -210,25 +210,6 @@
 		goto('/workspace/models/create');
 	};
 
-	const shareModelHandler = async (model) => {
-		toast.success($i18n.t('Redirecting you to Open WebUI Community'));
-
-		const url = 'https://openwebui.com';
-		const fullModel = getFullModel(model);
-
-		const tab = await window.open(`${url}/post?type=model`, '_blank');
-
-		const messageHandler = async (event) => {
-			if (event.origin !== url) return;
-			if (event.data === 'loaded') {
-				tab.postMessage(JSON.stringify(await fullModel), '*');
-				window.removeEventListener('message', messageHandler);
-			}
-		};
-
-		window.addEventListener('message', messageHandler, false);
-	};
-
 	const hideModelHandler = async (model) => {
 		const updatedModel = {
 			...model,
@@ -825,9 +806,6 @@
 												editHandler={() => {
 													goto(`/workspace/models/edit?id=${encodeURIComponent(model.id)}`);
 												}}
-												shareHandler={() => {
-													shareModelHandler(model);
-												}}
 												cloneHandler={() => {
 													cloneModelHandler(model);
 												}}
@@ -913,13 +891,6 @@
 		{/if}
 	</div>
 
-	{#if $config?.features.enable_community_sharing}
-		<CommunityDiscover
-			href="https://openwebui.com/models"
-			title={$i18n.t('Discover a model')}
-			description={$i18n.t('Discover, download, and explore model presets')}
-		/>
-	{/if}
 {:else}
 	<div class="w-full h-full flex justify-center items-center">
 		<Spinner className="size-5" />

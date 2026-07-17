@@ -2,6 +2,7 @@
 	import { createEventDispatcher, getContext, onMount, tick } from 'svelte';
 
 	import { goto } from '$app/navigation';
+	import { BRAND } from '$lib/brand';
 	import { fade, slide } from 'svelte/transition';
 
 	import { getUsage } from '$lib/apis';
@@ -461,7 +462,7 @@
 
 				{#if $user?.role === 'admin'}
 					<a
-						href="https://docs.openwebui.com"
+						href={BRAND.supportUrl}
 						target="_blank"
 						draggable="false"
 						class="flex h-[1.6875rem] items-center gap-2 rounded-xl px-2 text-[13px] w-full hover:bg-gray-50/40 dark:hover:bg-gray-800/40 transition cursor-pointer select-none"
@@ -476,22 +477,6 @@
 						<div class=" self-center truncate">{$i18n.t('Documentation')}</div>
 					</a>
 
-					<!-- Releases -->
-					<a
-						href="https://github.com/open-webui/open-webui/releases"
-						target="_blank"
-						draggable="false"
-						class="flex h-[1.6875rem] items-center gap-2 rounded-xl px-2 text-[13px] w-full hover:bg-gray-50/40 dark:hover:bg-gray-800/40 transition cursor-pointer select-none"
-						id="chat-share-button"
-						on:click={() => {
-							show = false;
-						}}
-					>
-						<div class="self-center">
-							<MapIcon className="size-3.5" />
-						</div>
-						<div class=" self-center truncate">{$i18n.t('Releases')}</div>
-					</a>
 				{/if}
 
 				<button

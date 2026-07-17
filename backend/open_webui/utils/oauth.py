@@ -1,3 +1,4 @@
+from open_webui.brand import PRODUCT_NAME
 import asyncio
 import base64
 import fnmatch
@@ -486,7 +487,7 @@ async def get_oauth_client_info_with_dynamic_client_registration(
         redirect_base_url = (str(webui_url or request.base_url)).rstrip('/')
 
         oauth_client_metadata = OAuthClientMetadata(
-            client_name='Open WebUI',
+            client_name=PRODUCT_NAME,
             redirect_uris=[f'{redirect_base_url}/oauth/clients/{client_id}/callback'],
             grant_types=['authorization_code', 'refresh_token'],
             response_types=['code'],

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from open_webui.brand import PRODUCT_NAME
+
 import asyncio
 import inspect
 import logging
@@ -1016,7 +1018,7 @@ def build_event(
 
 
 async def dispatch_webhook_event(app: Any, event: Event) -> None:
-    name = getattr(getattr(app, 'state', None), 'WEBUI_NAME', 'Open WebUI')
+    name = getattr(getattr(app, 'state', None), 'WEBUI_NAME', PRODUCT_NAME)
     subject = event.subject or {}
     subject_id = subject.get('id')
     definition = EVENT_DEFINITIONS_BY_NAME.get(event.event)

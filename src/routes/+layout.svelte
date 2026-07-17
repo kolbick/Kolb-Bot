@@ -73,7 +73,6 @@
 
 	import NotificationToast from '$lib/components/NotificationToast.svelte';
 	import AppSidebar from '$lib/components/app/AppSidebar.svelte';
-	import SyncStatsModal from '$lib/components/chat/Settings/SyncStatsModal.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
 	import { getOutputText } from '$lib/components/chat/Messages/structuredOutput';
 	import { getUserSettings } from '$lib/apis/users';
@@ -112,8 +111,6 @@
 
 	let showRefresh = false;
 
-	let showSyncStatsModal = false;
-	let syncStatsEventData = null;
 
 	let heartbeatInterval = null;
 	let disconnectToastTimer = null;
@@ -539,7 +536,7 @@
 
 			if ($isLastActiveTab) {
 				if ($settings?.notificationEnabled ?? false) {
-					new Notification(`${data.title} • Open WebUI`, {
+					new Notification(`${data.title} • Kolb-Bot`, {
 						body: timeStr,
 						icon: `${WEBUI_BASE_URL}/static/favicon.png`
 					});
@@ -674,7 +671,7 @@
 
 					if ($isLastActiveTab) {
 						if ($settings?.notificationEnabled ?? false) {
-							new Notification(`${displayTitle} • Open WebUI`, {
+							new Notification(`${displayTitle} • Kolb-Bot`, {
 								body: contentPreview,
 								icon: `${WEBUI_BASE_URL}/static/favicon.png`
 							});
@@ -781,7 +778,7 @@
 
 				if ($isLastActiveTab) {
 					if ($settings?.notificationEnabled ?? false) {
-						new Notification(`${title} • Open WebUI`, {
+						new Notification(`${title} • Kolb-Bot`, {
 							body: data?.content,
 							icon: `${WEBUI_API_BASE_URL}/users/${data?.user?.id}/profile/image`
 						});
@@ -975,21 +972,6 @@
 		}
 	};
 
-	const windowMessageEventHandler = async (event) => {
-		if (
-			!['https://openwebui.com', 'https://www.openwebui.com', 'http://localhost:9999'].includes(
-				event.origin
-			)
-		) {
-			return;
-		}
-
-		if (event.data === 'export:stats' || event.data?.type === 'export:stats') {
-			syncStatsEventData = event.data;
-			showSyncStatsModal = true;
-		}
-	};
-
 	onMount(async () => {
 		const originalFetch = window.fetch.bind(window);
 		window.fetch = async (input, init) => {
@@ -1007,7 +989,6 @@
 			return response;
 		};
 
-		window.addEventListener('message', windowMessageEventHandler);
 
 		let touchstartY = 0;
 
@@ -1270,18 +1251,8 @@
 			loaded = true;
 		}
 
-		// Auto-show SyncStatsModal when opened with ?sync=true (from community)
-		if (
-			(window.opener ?? false) &&
-			$page.url.searchParams.get('sync') === 'true' &&
-			($config?.features?.enable_community_sharing ?? false)
-		) {
-			showSyncStatsModal = true;
-		}
-
 		return () => {
 			window.removeEventListener('resize', onResize);
-			window.removeEventListener('message', windowMessageEventHandler);
 			document.removeEventListener('touchstart', touchstartHandler);
 			document.removeEventListener('touchmove', touchmoveHandler);
 			document.removeEventListener('touchend', touchendHandler);
@@ -1332,7 +1303,6 @@
 {/if}
 
 {#if $config?.features.enable_community_sharing}
-	<SyncStatsModal bind:show={showSyncStatsModal} eventData={syncStatsEventData} />
 {/if}
 
 <Toaster

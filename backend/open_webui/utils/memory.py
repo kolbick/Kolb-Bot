@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from open_webui.brand import PRODUCT_NAME
+
 import asyncio
 import json
 import logging
@@ -565,7 +567,7 @@ Conversation:
             'messages': [
                 {
                     'role': 'system',
-                    'content': "You are Open WebUI's private memory reviewer. Return only valid JSON.",
+                    'content': f"You are {PRODUCT_NAME}'s private memory reviewer. Return only valid JSON.",
                 },
                 {'role': 'user', 'content': review_prompt},
             ],

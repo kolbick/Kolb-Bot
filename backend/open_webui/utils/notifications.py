@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from open_webui.brand import PRODUCT_NAME
+
 import logging
 import re
 import time
@@ -343,7 +345,7 @@ def _notification_webhook_content(event: Any) -> tuple[str, str, dict[str, Any],
     return str(title), message, event.model_dump(), message if title else None
 
 
-async def test_target(user_id: str, target_id: str, app_name: str = 'Open WebUI') -> dict[str, Any]:
+async def test_target(user_id: str, target_id: str, app_name: str = PRODUCT_NAME) -> dict[str, Any]:
     notifications = await _load_notifications(user_id)
     target = _find_target(notifications, target_id)
     if not target:
@@ -351,7 +353,7 @@ async def test_target(user_id: str, target_id: str, app_name: str = 'Open WebUI'
     await _send_webhook(
         app_name,
         target,
-        'This is a test notification from Open WebUI.',
+        f'This is a test notification from {PRODUCT_NAME}.',
         {'action': 'test', 'user_id': user_id},
         'Test notification',
     )
@@ -359,7 +361,7 @@ async def test_target(user_id: str, target_id: str, app_name: str = 'Open WebUI'
 
 
 async def notify_target(
-    user_id: str, message: str, target: str = '', title: str = '', app_name: str = 'Open WebUI'
+    user_id: str, message: str, target: str = '', title: str = '', app_name: str = PRODUCT_NAME
 ) -> dict[str, Any]:
     notifications = await _load_notifications(user_id)
     item = _find_target(notifications, target)
@@ -383,7 +385,7 @@ async def dispatch_notification_event(app: Any, event: Any) -> None:
 
     from open_webui.events import event_user_ids
 
-    app_name = getattr(getattr(app, 'state', None), 'WEBUI_NAME', 'Open WebUI')
+    app_name = getattr(getattr(app, 'state', None), 'WEBUI_NAME', PRODUCT_NAME)
     for user_id in event_user_ids(event):
         try:
             notifications = await _load_notifications(user_id)

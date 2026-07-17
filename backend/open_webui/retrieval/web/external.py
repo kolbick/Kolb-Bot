@@ -21,7 +21,7 @@ def search_external(
 ) -> List[SearchResult]:
     try:
         headers = {
-            'User-Agent': 'Open WebUI (https://github.com/open-webui/open-webui) RAG Bot',
+            'User-Agent': 'Kolb-Bot (https://kolb-bot.com) RAG Bot',
             'Authorization': f'Bearer {external_api_key}',
         }
         headers = include_user_info_headers(headers, user)

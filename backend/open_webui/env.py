@@ -134,7 +134,7 @@ ENV = os.getenv('ENV', 'dev')
 FROM_INIT_PY = os.getenv('FROM_INIT_PY', 'False').lower() == 'true'
 
 if FROM_INIT_PY:
-    PACKAGE_DATA = {'version': importlib.metadata.version('open-webui')}
+    PACKAGE_DATA = {'version': importlib.metadata.version('kolb-bot')}
 else:
     try:
         PACKAGE_DATA = json.loads((BASE_DIR / 'package.json').read_text())
@@ -368,7 +368,7 @@ RAG_SYSTEM_CONTEXT = os.getenv('RAG_SYSTEM_CONTEXT', 'False').lower() == 'true'
 REDIS_URL = os.getenv('REDIS_URL', '')
 REDIS_CLUSTER = os.getenv('REDIS_CLUSTER', 'False').lower() == 'true'
 
-REDIS_KEY_PREFIX = os.getenv('REDIS_KEY_PREFIX', 'open-webui')
+REDIS_KEY_PREFIX = os.getenv('REDIS_KEY_PREFIX', 'kolb-bot')
 
 REDIS_SENTINEL_HOSTS = os.getenv('REDIS_SENTINEL_HOSTS', '')
 REDIS_SENTINEL_PORT = os.getenv('REDIS_SENTINEL_PORT', '26379')
@@ -508,7 +508,7 @@ import ssl as _ssl
 # to a path directly) take precedence over this global fallback.
 #
 # This follows the industry convention of ``SSL_CERT_FILE`` / ``REQUESTS_CA_BUNDLE``
-# but is scoped to Open WebUI to avoid interfering with system-level settings.
+# but is scoped to Kolb-Bot to avoid interfering with system-level settings.
 AIOHTTP_CLIENT_SSL_CERT_FILE = os.getenv('AIOHTTP_CLIENT_SSL_CERT_FILE', '').strip()
 
 
@@ -540,7 +540,7 @@ def _parse_ssl_env(value: str) -> 'bool | _ssl.SSLContext':
     - ``"/path/to/ca-bundle.crt"`` → ``SSLContext`` loading that CA file
       (takes precedence over ``AIOHTTP_CLIENT_SSL_CERT_FILE``)
 
-    This allows users with corporate or internal CAs to point Open WebUI
+    This allows users with corporate or internal CAs to point Kolb-Bot
     at a custom CA bundle without disabling verification entirely.
     """
     lower = value.strip().lower()
@@ -722,7 +722,7 @@ WEBUI_AUTH_TRUSTED_GROUPS_HEADER = os.getenv('WEBUI_AUTH_TRUSTED_GROUPS_HEADER',
 WEBUI_AUTH_TRUSTED_ROLE_HEADER = os.getenv('WEBUI_AUTH_TRUSTED_ROLE_HEADER', None)
 
 # Custom header name for API key authentication.  Defaults to 'x-api-key'.
-# Useful when Open WebUI sits behind a reverse proxy / API gateway that
+# Useful when Kolb-Bot sits behind a reverse proxy / API gateway that
 # already uses the Authorization header for its own authentication — set
 # this to a unique header (e.g. 'X-OpenWebUI-Key') so the middleware
 # checks the custom header instead and avoids the 401 short-circuit.
@@ -765,7 +765,7 @@ BYPASS_PYDUB_PREPROCESSING = os.getenv('BYPASS_PYDUB_PREPROCESSING', 'False').lo
 
 # When disabled (default), the OpenAI catch-all proxy endpoint (/{path:path})
 # is blocked. Enable only if you need direct passthrough to upstream OpenAI-
-# compatible APIs for endpoints not natively handled by Open WebUI.
+# compatible APIs for endpoints not natively handled by Kolb-Bot.
 ENABLE_OPENAI_API_PASSTHROUGH = os.getenv('ENABLE_OPENAI_API_PASSTHROUGH', 'False').lower() == 'true'
 
 WEBUI_AUTH_SIGNOUT_REDIRECT_URL = os.getenv('WEBUI_AUTH_SIGNOUT_REDIRECT_URL', None)
@@ -839,11 +839,15 @@ if LICENSE_PUBLIC_KEY:
 # WEBUI Identity
 ####################################
 
-WEBUI_NAME = os.getenv('WEBUI_NAME', 'Open WebUI')
-if WEBUI_NAME != 'Open WebUI':
-    WEBUI_NAME += ' (Open WebUI)'
+from open_webui.brand import FAVICON_PATH, PRIMARY_DOMAIN, PRODUCT_NAME
 
-WEBUI_FAVICON_URL = 'https://openwebui.com/favicon.png'
+WEBUI_NAME = os.getenv('WEBUI_NAME', PRODUCT_NAME)
+
+# Absolute URL because it is embedded in outbound webhook payloads (e.g. Teams
+# cards), which cannot resolve a relative path.
+WEBUI_FAVICON_URL = os.getenv(
+    'WEBUI_FAVICON_URL', f'https://{PRIMARY_DOMAIN}{FAVICON_PATH}'
+)
 WEBUI_BUILD_HASH = os.getenv('WEBUI_BUILD_HASH', 'dev-build')
 TRUSTED_SIGNATURE_KEY = os.getenv('TRUSTED_SIGNATURE_KEY', '')
 
@@ -1052,7 +1056,8 @@ PIP_PACKAGE_INDEX_OPTIONS = os.getenv('PIP_PACKAGE_INDEX_OPTIONS', '').split()
 # OFFLINE_MODE
 ####################################
 
-ENABLE_VERSION_UPDATE_CHECK = os.getenv('ENABLE_VERSION_UPDATE_CHECK', 'true').lower() == 'true'
+# Kolb-Bot: no outbound calls to upstream release feeds unless explicitly enabled.
+ENABLE_VERSION_UPDATE_CHECK = os.getenv('ENABLE_VERSION_UPDATE_CHECK', 'false').lower() == 'true'
 OFFLINE_MODE = os.getenv('OFFLINE_MODE', 'false').lower() == 'true'
 
 if OFFLINE_MODE:
@@ -1126,7 +1131,7 @@ OTEL_METRICS_EXPORTER_OTLP_INSECURE = (
 OTEL_LOGS_EXPORTER_OTLP_INSECURE = (
     os.getenv('OTEL_LOGS_EXPORTER_OTLP_INSECURE', str(OTEL_EXPORTER_OTLP_INSECURE)).lower() == 'true'
 )
-OTEL_SERVICE_NAME = os.getenv('OTEL_SERVICE_NAME', 'open-webui')
+OTEL_SERVICE_NAME = os.getenv('OTEL_SERVICE_NAME', 'kolb-bot')
 OTEL_RESOURCE_ATTRIBUTES = os.getenv('OTEL_RESOURCE_ATTRIBUTES', '')  # e.g. key1=val1,key2=val2
 OTEL_TRACES_SAMPLER = os.getenv('OTEL_TRACES_SAMPLER', 'parentbased_always_on').lower()
 OTEL_BASIC_AUTH_USERNAME = os.getenv('OTEL_BASIC_AUTH_USERNAME', '')

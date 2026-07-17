@@ -5,9 +5,9 @@ Kolb-Bot is derived from **Open WebUI**.
 | Item | Value |
 | --- | --- |
 | Upstream repository | https://github.com/open-webui/open-webui |
-| Imported release | `v0.9.6` |
-| Upstream tag commit | `1a97751e376e00a1897bc3679215ae1c7bd8fd42` |
-| Import method | Vendored tree import of the release tag (commit "Import Open WebUI v0.9.6 source") |
+| Imported source | `dev` branch tip (version 0.10.2-dev) |
+| Upstream commit | `1a32d92d08aafbbc7443039cf8bce2485bc8d180` |
+| Import method | Vendored tree import (initial: tag v0.9.6, commit 1a97751e; then re-vendored to the dev tip at the owner's request) |
 | Import date | 2026-07-17 |
 | Git remote | `upstream` → `https://github.com/open-webui/open-webui.git` |
 
@@ -16,9 +16,17 @@ are preserved unmodified at the repository root. Upstream's changelog and
 troubleshooting guide are preserved as `docs/UPSTREAM_CHANGELOG.md` and
 `docs/UPSTREAM_TROUBLESHOOTING.md`.
 
+## Note on tracking the dev branch
+
+At the owner's request this build tracks the upstream **dev branch** rather
+than a tagged stable release (the build spec originally required a pinned
+stable tag). The commit above is the pinned snapshot actually vendored —
+future syncs should record the new commit here each time. Expect dev-branch
+snapshots to be less stable than releases.
+
 ## Note on import history
 
-The release was imported as a single vendored commit rather than a full
+The source was imported as a single vendored commit rather than a full
 upstream history merge: the build environment could not push upstream's
 multi-hundred-megabyte commit history, and the vendored import keeps the fork
 history reviewable. The exact tag and commit above are the provenance record;
