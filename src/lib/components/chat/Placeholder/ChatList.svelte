@@ -9,6 +9,7 @@
 	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
 	import Loader from '$lib/components/common/Loader.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
+	import Tooltip from '$lib/components/common/Tooltip.svelte';
 
 	dayjs.extend(localizedFormat);
 
@@ -18,6 +19,7 @@
 	export let allChatsLoaded = false;
 
 	export let loadHandler: Function = null;
+	export let showOwnerInfo = false;
 
 	let chatList = null;
 
@@ -61,7 +63,7 @@
 
 {#if chatList}
 	{#if chatList.length > 0}
-		<div class="flex text-xs font-medium mb-1 items-center -mr-0.5">
+		<div class="flex text-xs font-normal mb-1 items-center -mr-0.5">
 			<button
 				class="px-1.5 py-1 cursor-pointer select-none basis-3/5"
 				on:click={() => setSortKey('title')}
@@ -121,7 +123,7 @@
 		{#each chatList as chat, idx (chat.id)}
 			{#if (idx === 0 || (idx > 0 && chat.time_range !== chatList[idx - 1].time_range)) && chat?.time_range}
 				<div
-					class="w-full text-xs text-gray-500 dark:text-gray-500 font-medium {idx === 0
+					class="w-full text-xs text-gray-500 dark:text-gray-500 font-normal {idx === 0
 						? ''
 						: 'pt-5'} pb-2 px-2"
 				>
@@ -157,10 +159,20 @@
 					{chat?.title}
 				</div>
 
-				<div class="hidden sm:flex sm:basis-2/5 items-center justify-end">
+				<div class="hidden sm:flex sm:basis-2/5 items-center justify-end gap-2">
 					<div class=" text-gray-500 dark:text-gray-400 text-xs">
 						{dayjs(chat?.updated_at * 1000).calendar()}
 					</div>
+
+					{#if showOwnerInfo && chat.user_id && chat.owner_name}
+						<Tooltip content={chat.owner_name}>
+							<img
+								src="/api/v1/users/{chat.user_id}/profile/image"
+								alt=""
+								class="size-4 rounded-full shrink-0 object-cover"
+							/>
+						</Tooltip>
+					{/if}
 				</div>
 			</a>
 		{/each}

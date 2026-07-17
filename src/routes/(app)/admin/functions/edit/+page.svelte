@@ -25,7 +25,7 @@
 			console.log('Version is lower than required');
 			toast.error(
 				$i18n.t(
-					'Kolb-Bot version (v{{OPEN_WEBUI_VERSION}}) is lower than required version (v{{REQUIRED_VERSION}})',
+					'Open WebUI version (v{{OPEN_WEBUI_VERSION}}) is lower than required version (v{{REQUIRED_VERSION}})',
 					{
 						OPEN_WEBUI_VERSION: WEBUI_VERSION,
 						REQUIRED_VERSION: manifest?.required_open_webui_version ?? '0.0.0'
@@ -60,6 +60,11 @@
 	};
 
 	onMount(async () => {
+		if (!$config?.features?.enable_plugins) {
+			goto('/admin');
+			return;
+		}
+
 		console.log('mounted');
 		const id = $page.url.searchParams.get('id');
 
@@ -76,7 +81,7 @@
 </script>
 
 {#if func}
-	<div class="px-[16px] h-full">
+	<div class="px-[16px] h-full min-w-0 overflow-x-hidden">
 		<FunctionEditor
 			edit={true}
 			id={func.id}

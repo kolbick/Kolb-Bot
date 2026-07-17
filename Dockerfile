@@ -126,7 +126,7 @@ RUN chown -R $UID:$GID /app $HOME
 # Install common system dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    git build-essential pandoc gcc netcat-openbsd curl jq \
+    git build-essential pandoc gcc netcat-openbsd curl jq ca-certificates \
     libmariadb-dev \
     python3-dev \
     ffmpeg libsm6 libxext6 zstd \
@@ -185,10 +185,6 @@ COPY --chown=$UID:$GID --from=build /app/package.json /app/package.json
 COPY --chown=$UID:$GID ./backend .
 
 EXPOSE 8080
-
-LABEL org.opencontainers.image.title="Kolb-Bot" \
-      org.opencontainers.image.description="Kolb-Bot: a private, self-hosted AI workspace." \
-      org.opencontainers.image.url="https://kolb-bot.com"
 
 HEALTHCHECK CMD curl --silent --fail http://localhost:${PORT:-8080}/health | jq -ne 'input.status == true' || exit 1
 

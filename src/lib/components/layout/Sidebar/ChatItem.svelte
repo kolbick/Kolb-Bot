@@ -9,49 +9,46 @@
 	import { toast } from 'svelte-sonner';
 	import { goto, invalidate, invalidateAll } from '$app/navigation';
 	import { onMount, getContext, createEventDispatcher, tick } from 'svelte';
-	const i18n = getContext('i18n');
-
-	const dispatch = createEventDispatcher();
-
 	import {
 		archiveChatById,
 		cloneChatById,
 		deleteChatById,
 		getAllTags,
 		getChatById,
-		getChatList,
 		getChatListByTagName,
-		getPinnedChatList,
 		updateChatById,
 		updateChatFolderIdById
 	} from '$lib/apis/chats';
 	import {
 		chatId,
 		chatTitle as _chatTitle,
-		chats,
 		mobile,
-		pinnedChats,
 		showSidebar,
-		currentChatPage,
 		tags,
 		selectedFolder,
-		activeChatIds
+		settings,
+		user
 	} from '$lib/stores';
+	import { refreshChatList } from '$lib/stores/chatList';
 
 	import ChatMenu from './ChatMenu.svelte';
 	import DeleteConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
 	import ShareChatModal from '$lib/components/chat/ShareChatModal.svelte';
-	import GarbageBin from '$lib/components/icons/GarbageBin.svelte';
 	import Tooltip from '$lib/components/common/Tooltip.svelte';
-	import ArchiveBox from '$lib/components/icons/ArchiveBox.svelte';
 	import DragGhost from '$lib/components/common/DragGhost.svelte';
-	import Check from '$lib/components/icons/Check.svelte';
-	import XMark from '$lib/components/icons/XMark.svelte';
-	import Document from '$lib/components/icons/Document.svelte';
-	import Sparkles from '$lib/components/icons/Sparkles.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
+	import ChatIcon from './icons/Chat.svelte';
+	import MoreHorizontalIcon from './icons/MoreHorizontal.svelte';
+	import SparklesIcon from './icons/Sparkles.svelte';
+	import ArchiveBoxIcon from '$lib/components/icons/ArchiveBox.svelte';
+	import GarbageBinIcon from '$lib/components/icons/GarbageBin.svelte';
 	import { generateTitle } from '$lib/apis';
 	import { createMessagesList } from '$lib/utils';
+	import { getOutputText } from '$lib/components/chat/Messages/structuredOutput';
+
+	const i18n = getContext('i18n');
+
+	const dispatch = createEventDispatcher();
 
 	export let className = '';
 
@@ -60,9 +57,14 @@
 	export let createdAt: number | null = null;
 	export let updatedAt: number | null = null;
 	export let lastReadAt: number | null = null;
+	export let active = false;
 
 	export let selected = false;
 	export let shiftKey = false;
+	export let readonly = false;
+
+	export let ownerName: string | null = null;
+	export let ownerUserId: string | null = null;
 
 	export let onDragEnd = () => {};
 
@@ -102,8 +104,9 @@
 
 	$: unread =
 		id !== $chatId &&
-		!$activeChatIds.has(id) &&
+		!active &&
 		(effectiveReadAt === null || (updatedAt !== null && updatedAt > effectiveReadAt));
+	$: showInlineActions = id === $chatId || confirmEdit || mouseOver || selected;
 
 	const loadChat = async () => {
 		if (!chat) {
@@ -130,15 +133,18 @@
 				_chatTitle.set(title);
 			}
 
-			currentChatPage.set(1);
-			await chats.set(await getChatList(localStorage.token, $currentChatPage));
-			await pinnedChats.set(await getPinnedChatList(localStorage.token));
+			await refreshChatList(localStorage.token, { refreshPinned: true });
 
 			dispatch('change');
 		}
 	};
 
 	const cloneChatHandler = async (id) => {
+		if (!($user?.role === 'admin' || ($user?.permissions?.chat?.import ?? true))) {
+			toast.error($i18n.t('Access prohibited'));
+			return;
+		}
+
 		const res = await cloneChatById(
 			localStorage.token,
 			id,
@@ -153,9 +159,7 @@
 		if (res) {
 			goto(`/c/${res.id}`);
 
-			currentChatPage.set(1);
-			await chats.set(await getChatList(localStorage.token, $currentChatPage));
-			await pinnedChats.set(await getPinnedChatList(localStorage.token));
+			await refreshChatList(localStorage.token, { refreshPinned: true });
 		}
 	};
 
@@ -219,9 +223,7 @@
 			);
 
 			if (res) {
-				currentChatPage.set(1);
-				await chats.set(await getChatList(localStorage.token, $currentChatPage));
-				await pinnedChats.set(await getPinnedChatList(localStorage.token));
+				await refreshChatList(localStorage.token, { refreshPinned: true });
 
 				dispatch('change');
 
@@ -256,6 +258,7 @@
 				id: id
 			})
 		);
+		event.dataTransfer.setData('application/x-open-webui-drag', '');
 
 		dragged = true;
 		itemElement.style.opacity = '0.5'; // Optional: Visual cue to show it's being dragged
@@ -350,14 +353,14 @@
 		const history = chatContent?.history;
 		let messages = [];
 		if (history?.messages && history?.currentId) {
-			messages = createMessagesList(history, history.currentId).map((message) => ({
+			messages = createMessagesList(history, history.currentId).map((message: any) => ({
 				role: message.role,
-				content: message.content
+				content: getOutputText(message.output) || message.content || ''
 			}));
 		} else {
-			messages = (chatContent?.messages ?? []).map((message) => ({
+			messages = (chatContent?.messages ?? []).map((message: any) => ({
 				role: message.role,
-				content: message.content
+				content: getOutputText(message.output) || message.content || ''
 			}));
 		}
 
@@ -424,7 +427,7 @@
 	}}
 >
 	<div class=" text-sm text-gray-500 flex-1 line-clamp-3">
-		{$i18n.t('This will delete')} <span class="  font-semibold">{title}</span>.
+		{$i18n.t('This will delete')} <span class="  font-normal">{title}</span>.
 	</div>
 </DeleteConfirmDialog>
 
@@ -432,7 +435,7 @@
 	<DragGhost {x} {y}>
 		<div class=" bg-black/80 backdrop-blur-2xl px-2 py-1 rounded-lg w-fit max-w-40">
 			<div class="flex items-center gap-1">
-				<Document className=" size-[18px]" strokeWidth="2" />
+				<ChatIcon className=" size-[18px]" strokeWidth="1.5" />
 				<div class=" text-xs text-white line-clamp-1">
 					{title}
 				</div>
@@ -445,17 +448,20 @@
 	id="sidebar-chat-group"
 	bind:this={itemElement}
 	class=" w-full {className} relative group"
-	draggable={!confirmEdit}
+	draggable={!confirmEdit && !readonly}
 >
 	{#if confirmEdit}
 		<div
 			id="sidebar-chat-item"
-			class=" w-full flex justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
-			confirmEdit
-				? 'bg-gray-100 dark:bg-gray-900 selected'
+			class=" w-full flex justify-between rounded-xl px-2 py-[6px] {id === $chatId || confirmEdit
+				? ($settings?.highContrastMode ?? false)
+					? 'bg-black/[0.035] dark:bg-white/[0.06] selected'
+					: 'bg-black/[0.035] dark:bg-white/[0.045] selected'
 				: selected
-					? 'bg-gray-100 dark:bg-gray-950 selected'
-					: 'group-hover:bg-gray-100 dark:group-hover:bg-gray-950'}  whitespace-nowrap text-ellipsis relative {generating
+					? ($settings?.highContrastMode ?? false)
+						? 'bg-black/[0.035] dark:bg-white/[0.055] selected'
+						: 'bg-black/[0.035] dark:bg-white/[0.045] selected'
+					: 'hover:bg-gray-50 dark:hover:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-900'}  whitespace-nowrap text-ellipsis relative transition {generating
 				? 'cursor-not-allowed'
 				: ''}"
 		>
@@ -486,12 +492,15 @@
 	{:else}
 		<a
 			id="sidebar-chat-item"
-			class=" w-full flex justify-between rounded-xl px-[11px] py-[6px] {id === $chatId ||
-			confirmEdit
-				? 'bg-gray-100 dark:bg-gray-900 selected'
+			class=" w-full flex justify-between rounded-xl px-2 py-[6px] {id === $chatId || confirmEdit
+				? ($settings?.highContrastMode ?? false)
+					? 'bg-black/[0.035] dark:bg-white/[0.06] selected'
+					: 'bg-black/[0.035] dark:bg-white/[0.045] selected'
 				: selected
-					? 'bg-gray-100 dark:bg-gray-950 selected'
-					: ' group-hover:bg-gray-100 dark:group-hover:bg-gray-950'}  whitespace-nowrap text-ellipsis"
+					? ($settings?.highContrastMode ?? false)
+						? 'bg-black/[0.035] dark:bg-white/[0.055] selected'
+						: 'bg-black/[0.035] dark:bg-white/[0.045] selected'
+					: ' hover:bg-gray-50 dark:hover:bg-gray-900 group-hover:bg-gray-50 dark:group-hover:bg-gray-900'}  whitespace-nowrap text-ellipsis transition"
 			href="/c/{id}"
 			on:click={() => {
 				dispatch('select');
@@ -509,6 +518,7 @@
 				lastReadAt = Date.now() / 1000;
 			}}
 			on:dblclick={async (e) => {
+				if (readonly) return;
 				e.preventDefault();
 				e.stopPropagation();
 
@@ -524,8 +534,18 @@
 			on:focus={(e) => {}}
 			draggable="false"
 		>
+			{#if ownerUserId}
+				<Tooltip content={ownerName || 'Unknown'}>
+					<img
+						src="/api/v1/users/{ownerUserId}/profile/image"
+						alt=""
+						class="size-3.5 rounded-full shrink-0 object-cover mr-1.5"
+					/>
+				</Tooltip>
+			{/if}
+
 			<!-- Loading spinner for active chat (left side) -->
-			{#if $activeChatIds.has(id)}
+			{#if active}
 				<div class="shrink-0 self-center pr-2">
 					<Spinner className="size-3" />
 				</div>
@@ -540,155 +560,133 @@
 				<div
 					dir="auto"
 					class="text-left self-center overflow-hidden w-full h-[20px] truncate {unread
-						? 'font-medium text-gray-900 dark:text-gray-100'
-						: ''}"
+						? 'font-normal text-gray-800 dark:text-gray-200'
+						: ''} {showInlineActions && !readonly ? 'pr-12' : ''}"
 				>
 					{title}
 				</div>
 			</div>
 
 			<!-- Time ago indicator -->
-			{#if createdAt && !mouseOver}
+			{#if (updatedAt ?? createdAt) && !showInlineActions}
 				<div class="shrink-0 self-center text-[10px] text-gray-400 dark:text-gray-500 pl-2">
-					{formatTimeAgo(createdAt)}
+					{formatTimeAgo(updatedAt ?? createdAt)}
 				</div>
 			{/if}
 		</a>
 	{/if}
 
 	<!-- svelte-ignore a11y-no-static-element-interactions -->
-	<div
-		id="sidebar-chat-item-menu"
-		class="
-        {id === $chatId || confirmEdit
-			? 'from-gray-100 dark:from-gray-900 selected'
-			: selected
-				? 'from-gray-100 dark:from-gray-950 selected'
-				: 'invisible group-hover:visible from-gray-100 dark:from-gray-950'}
-            absolute {className === 'pr-2'
-			? 'right-[8px]'
-			: 'right-1'} top-[4px] py-1 pr-0.5 mr-1.5 pl-5 bg-linear-to-l from-80%
+	{#if !readonly}
+		<div
+			id="sidebar-chat-item-menu"
+			class="{showInlineActions
+				? 'selected'
+				: 'invisible group-hover:visible'} absolute {className === 'pr-2'
+				? 'right-[8px]'
+				: 'right-1'} inset-y-0 mr-1.5 flex items-center"
+			on:mouseenter={(e) => {
+				mouseOver = true;
+			}}
+			on:mouseleave={(e) => {
+				mouseOver = false;
+			}}
+		>
+			{#if confirmEdit}
+				<div
+					class="flex self-center items-center space-x-1.5 z-10 translate-y-[0.5px] -translate-x-[0.5px]"
+				>
+					<Tooltip content={$i18n.t('Generate')}>
+						<button
+							class="flex size-5 items-center justify-center self-center dark:hover:text-white transition disabled:cursor-not-allowed"
+							id="generate-title-button"
+							disabled={generating}
+							on:click={() => {
+								generateTitleHandler();
+							}}
+						>
+							<SparklesIcon strokeWidth="1.5" />
+						</button>
+					</Tooltip>
+				</div>
+			{:else if shiftKey && mouseOver}
+				<div class=" flex items-center self-center space-x-1.5">
+					<Tooltip content={$i18n.t('Archive')} className="flex items-center">
+						<button
+							class="flex size-5 items-center justify-center self-center dark:hover:text-white transition disabled:cursor-not-allowed"
+							disabled={archiving}
+							on:click={() => {
+								archiveChatHandler(id);
+							}}
+							type="button"
+						>
+							<ArchiveBoxIcon className="size-3.5" strokeWidth="1.7" />
+						</button>
+					</Tooltip>
 
-              to-transparent"
-		on:mouseenter={(e) => {
-			mouseOver = true;
-		}}
-		on:mouseleave={(e) => {
-			mouseOver = false;
-		}}
-	>
-		{#if confirmEdit}
-			<div
-				class="flex self-center items-center space-x-1.5 z-10 translate-y-[0.5px] -translate-x-[0.5px]"
-			>
-				<Tooltip content={$i18n.t('Generate')}>
-					<button
-						class=" self-center dark:hover:text-white transition disabled:cursor-not-allowed"
-						id="generate-title-button"
-						disabled={generating}
-						on:click={() => {
-							generateTitleHandler();
+					<Tooltip content={$i18n.t('Delete')}>
+						<button
+							class=" self-center dark:hover:text-white transition disabled:cursor-not-allowed"
+							disabled={deleting}
+							on:click={() => {
+								deleteChatHandler(id);
+							}}
+							type="button"
+						>
+							<GarbageBinIcon className="size-3.5" strokeWidth="1.7" />
+						</button>
+					</Tooltip>
+				</div>
+			{:else}
+				<div class="flex self-center z-10 items-end">
+					<ChatMenu
+						chatId={id}
+						cloneChatHandler={() => {
+							cloneChatHandler(id);
 						}}
-					>
-						<Sparkles strokeWidth="2" />
-					</button>
-				</Tooltip>
-			</div>
-		{:else if shiftKey && mouseOver}
-			<div class=" flex items-center self-center space-x-1.5">
-				<Tooltip content={$i18n.t('Archive')} className="flex items-center">
-					<button
-						class=" self-center dark:hover:text-white transition disabled:cursor-not-allowed"
-						disabled={archiving}
-						on:click={() => {
+						shareHandler={() => {
+							showShareChatModal = true;
+						}}
+						{moveChatHandler}
+						archiveChatHandler={() => {
 							archiveChatHandler(id);
 						}}
-						type="button"
-					>
-						<ArchiveBox className="size-4  translate-y-[0.5px]" strokeWidth="2" />
-					</button>
-				</Tooltip>
-
-				<Tooltip content={$i18n.t('Delete')}>
-					<button
-						class=" self-center dark:hover:text-white transition disabled:cursor-not-allowed"
-						disabled={deleting}
-						on:click={() => {
-							deleteChatHandler(id);
-						}}
-						type="button"
-					>
-						<GarbageBin strokeWidth="2" />
-					</button>
-				</Tooltip>
-			</div>
-		{:else}
-			<div class="flex self-center z-10 items-end">
-				<ChatMenu
-					chatId={id}
-					cloneChatHandler={() => {
-						cloneChatHandler(id);
-					}}
-					shareHandler={() => {
-						showShareChatModal = true;
-					}}
-					{moveChatHandler}
-					archiveChatHandler={() => {
-						archiveChatHandler(id);
-					}}
-					{renameHandler}
-					deleteHandler={() => {
-						showDeleteConfirm = true;
-					}}
-					onClose={() => {
-						dispatch('unselect');
-					}}
-					onPinChange={async () => {
-						dispatch('change');
-					}}
-				>
-					<button
-						aria-label="Chat Menu"
-						class=" self-center dark:hover:text-white transition m-0"
-						on:click={() => {
-							dispatch('select');
-						}}
-					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 16 16"
-							fill="currentColor"
-							class="w-4 h-4"
-						>
-							<path
-								d="M2 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM6.5 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM12.5 6.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"
-							/>
-						</svg>
-					</button>
-				</ChatMenu>
-
-				{#if id === $chatId}
-					<!-- Shortcut support using "delete-chat-button" id -->
-					<button
-						id="delete-chat-button"
-						class="hidden"
-						on:click={() => {
+						{renameHandler}
+						deleteHandler={() => {
 							showDeleteConfirm = true;
 						}}
+						onClose={() => {
+							dispatch('unselect');
+						}}
+						onPinChange={async () => {
+							dispatch('change');
+						}}
 					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 16 16"
-							fill="currentColor"
-							class="w-4 h-4"
+						<button
+							aria-label="Chat Menu"
+							class="flex size-5 items-center justify-center self-center dark:hover:text-white transition m-0"
+							on:click={() => {
+								dispatch('select');
+							}}
 						>
-							<path
-								d="M2 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM6.5 8a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM12.5 6.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"
-							/>
-						</svg>
-					</button>
-				{/if}
-			</div>
-		{/if}
-	</div>
+							<MoreHorizontalIcon className="size-3.5" strokeWidth="2" />
+						</button>
+					</ChatMenu>
+
+					{#if id === $chatId}
+						<!-- Shortcut support using "delete-chat-button" id -->
+						<button
+							id="delete-chat-button"
+							class="hidden"
+							on:click={() => {
+								showDeleteConfirm = true;
+							}}
+						>
+							<MoreHorizontalIcon className="size-3.5" strokeWidth="2" />
+						</button>
+					{/if}
+				</div>
+			{/if}
+		</div>
+	{/if}
 </div>

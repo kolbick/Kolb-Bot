@@ -1,5 +1,5 @@
 """
-Built-in tools for Kolb-Bot.
+Built-in tools for Open WebUI.
 
 These tools are automatically available when native function calling is enabled.
 
@@ -12,12 +12,13 @@ import asyncio
 import json
 import logging
 import time
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import Request
 
 from open_webui.models.channels import Channel, ChannelMember, Channels
 from open_webui.models.chats import Chats
+from open_webui.models.config import Config
 from open_webui.models.groups import Groups
 from open_webui.models.memories import Memories
 from open_webui.models.messages import Message, Messages
@@ -33,20 +34,57 @@ from open_webui.routers.images import (
 )
 from open_webui.routers.memories import (
     AddMemoryForm,
+    ListMemoryPathsForm,
     MemoryUpdateModel,
-    QueryMemoryForm,
-    query_memory,
+    ReadMemoryPathForm,
+    SearchMemoriesForm,
+    UpdateMemoriesForm,
+    list_memory_paths as _list_memory_paths,
+    read_memory_path as _read_memory_path,
+    search_memories as _search_memories,
+    update_memories as _update_memories,
     update_memory_by_id,
 )
 from open_webui.routers.memories import (
     add_memory as _add_memory,
 )
 from open_webui.routers.retrieval import search_web as _search_web
+from open_webui.tasks import stop_item_tasks
+from open_webui.events import EVENTS, publish_event
+from open_webui.socket.main import sio
+from open_webui.utils.notifications import notify_target
 from open_webui.utils.sanitize import sanitize_code
 
 log = logging.getLogger(__name__)
 
 MAX_KNOWLEDGE_BASE_SEARCH_ITEMS = 10_000
+
+
+async def _has_write_access_to_note(note, user_id: str) -> bool:
+    if note.user_id == user_id:
+        return True
+
+    from open_webui.models.access_grants import AccessGrants
+
+    user_group_ids = [group.id for group in await Groups.get_groups_by_member_id(user_id)]
+    return await AccessGrants.has_access(
+        user_id=user_id,
+        resource_type='note',
+        resource_id=note.id,
+        permission='write',
+        user_group_ids=set(user_group_ids),
+    )
+
+
+async def _emit_note_updated(request: Request, user: dict, note) -> None:
+    await sio.emit('events:note', note.model_dump(), to=f'note:{note.id}')
+    await publish_event(
+        request,
+        EVENTS.NOTE_UPDATED,
+        actor=user,
+        subject_id=note.id,
+        data={'title': note.title},
+    )
 
 
 async def _has_read_access_to_file(
@@ -72,6 +110,33 @@ async def _has_read_access_to_file(
 # =============================================================================
 # TIME UTILITIES
 # =============================================================================
+
+
+async def notify(
+    message: str,
+    target: str = '',
+    title: str = '',
+    __request__: Request = None,
+    __user__: dict = None,
+) -> str:
+    """
+    Send a notification to the user's configured notification target.
+
+    :param message: Notification body.
+    :param target: Optional target id or name. Empty uses the default target.
+    :param title: Optional notification title.
+    """
+    user_id = (__user__ or {}).get('id')
+    if not user_id:
+        return 'Notification failed: user not found.'
+
+    app_name = getattr(getattr(__request__, 'app', None), 'state', None)
+    app_name = getattr(app_name, 'WEBUI_NAME', 'Open WebUI')
+    try:
+        result = await notify_target(user_id, message, target=target, title=title, app_name=app_name)
+        return f'Notification sent to {result.get("target_id")}.'
+    except Exception as e:
+        return f'Notification failed: {e}'
 
 
 async def get_current_timestamp(
@@ -225,10 +290,10 @@ async def search_web(
         return json.dumps({'error': 'Request context not available'})
 
     try:
-        engine = __request__.app.state.config.WEB_SEARCH_ENGINE
+        engine = await Config.get('web.search.engine')
         user = UserModel(**__user__) if __user__ else None
 
-        configured = __request__.app.state.config.WEB_SEARCH_RESULT_COUNT
+        configured = await Config.get('web.search.result_count')
         max_count = 5 if configured is None else configured
         count = max(1, min(count, max_count)) if count is not None else max_count
 
@@ -261,12 +326,12 @@ async def fetch_url(
         return json.dumps({'error': 'Request context not available'})
 
     try:
-        content, _ = await asyncio.to_thread(get_content_from_url, __request__, url)
+        content, _ = await get_content_from_url(__request__, url)
 
         # Truncate if configured (WEB_FETCH_MAX_CONTENT_LENGTH)
         # Guard: content may be None if the web loader silently failed
         if content is not None:
-            max_length = getattr(__request__.app.state.config, 'WEB_FETCH_MAX_CONTENT_LENGTH', None)
+            max_length = await Config.get('web.fetch.max_content_length')
             if max_length and max_length > 0 and len(content) > max_length:
                 content = content[:max_length] + '\n\n[Content truncated...]'
         else:
@@ -358,10 +423,11 @@ async def edit_image(
     __message_id__: str = None,
 ) -> str:
     """
-    Edit existing images based on a text prompt.
+    Transform one or more existing images according to a text prompt.
+    Supports targeted edits such as adding, removing, replacing, inpainting, extending, or compositing image content.
 
-    :param prompt: A description of the changes to make to the images
-    :param image_urls: A list of URLs of the images to edit
+    :param prompt: A description of the transformation to apply to the provided images
+    :param image_urls: Source image URLs to modify or use as composition inputs
     :return: Confirmation that the images were edited, or an error message
     """
     if __request__ is None:
@@ -475,7 +541,7 @@ async def execute_code(
             )
             code = blocking_code + '\n' + code
 
-        engine = getattr(__request__.app.state.config, 'CODE_INTERPRETER_ENGINE', 'pyodide')
+        engine = await Config.get('code_interpreter.engine', 'pyodide')
         if engine == 'pyodide':
             # Execute via frontend pyodide using bidirectional event call
             if __event_call__ is None:
@@ -514,20 +580,14 @@ async def execute_code(
         elif engine == 'jupyter':
             from open_webui.utils.code_interpreter import execute_code_jupyter
 
+            jupyter_auth = await Config.get('code_interpreter.jupyter.auth')
+
             output = await execute_code_jupyter(
-                __request__.app.state.config.CODE_INTERPRETER_JUPYTER_URL,
+                await Config.get('code_interpreter.jupyter.url'),
                 code,
-                (
-                    __request__.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_TOKEN
-                    if __request__.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH == 'token'
-                    else None
-                ),
-                (
-                    __request__.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH_PASSWORD
-                    if __request__.app.state.config.CODE_INTERPRETER_JUPYTER_AUTH == 'password'
-                    else None
-                ),
-                __request__.app.state.config.CODE_INTERPRETER_JUPYTER_TIMEOUT,
+                (await Config.get('code_interpreter.jupyter.auth_token') if jupyter_auth == 'token' else None),
+                (await Config.get('code_interpreter.jupyter.auth_password') if jupyter_auth == 'password' else None),
+                await Config.get('code_interpreter.jupyter.timeout'),
             )
 
             stdout = output.get('stdout', '')
@@ -593,17 +653,88 @@ async def execute_code(
 # =============================================================================
 
 
-async def search_memories(
-    query: str,
-    count: int = 5,
+async def list_memory_paths(
+    query: str = '',
+    count: int = 100,
+    type: str = 'all',
     __request__: Request = None,
     __user__: dict = None,
 ) -> str:
     """
-    Search the user's stored memories for relevant information.
+    List saved memory paths to find existing memory groups before writing or moving memories.
 
-    :param query: The search query to find relevant memories
+    :param query: Optional query to filter memory paths or contents
+    :param count: Maximum number of paths to return
+    :param type: "user", "context", or "all"
+    :return: JSON with memory paths, counts, children, and update times
+    """
+    try:
+        user = UserModel(**__user__) if __user__ else None
+        result = await _list_memory_paths(
+            ListMemoryPathsForm(
+                query=query or None,
+                type=type if type in {'user', 'context', 'all'} else 'all',
+                limit=count,
+            ),
+            user,
+        )
+        return json.dumps(result, ensure_ascii=False)
+    except Exception as e:
+        log.exception(f'list_memory_paths error: {e}')
+        return json.dumps({'error': str(e)})
+
+
+async def read_memory_path(
+    path: str,
+    count: int = 50,
+    type: str = 'all',
+    include_children: bool = True,
+    __request__: Request = None,
+    __user__: dict = None,
+) -> str:
+    """
+    Read saved memories at a memory path, including nearby parent and child paths.
+
+    :param path: Memory path to read
+    :param count: Maximum number of memories to return
+    :param type: "user", "context", or "all"
+    :param include_children: Include memories under child paths
+    :return: JSON with parent paths, child paths, and memories at the path
+    """
+    try:
+        user = UserModel(**__user__) if __user__ else None
+        result = await _read_memory_path(
+            ReadMemoryPathForm(
+                path=path,
+                type=type if type in {'user', 'context', 'all'} else 'all',
+                include_children=include_children,
+                limit=count,
+            ),
+            user,
+        )
+        return json.dumps(result, ensure_ascii=False)
+    except Exception as e:
+        log.exception(f'read_memory_path error: {e}')
+        return json.dumps({'error': str(e)})
+
+
+async def search_memories(
+    query: str = '',
+    count: int = 5,
+    type: str = 'all',
+    path: Optional[str] = None,
+    memory_id: Optional[str] = None,
+    __request__: Request = None,
+    __user__: dict = None,
+) -> str:
+    """
+    Search or browse saved memories by content, path, type, or memory ID.
+
+    :param query: Optional query to search memory content and path
     :param count: Number of memories to return (default 5)
+    :param type: "user", "context", or "all"
+    :param path: Optional memory path to search around
+    :param memory_id: Optional exact memory ID to read
     :return: JSON with matching memories and their dates
     """
     if __request__ is None:
@@ -612,28 +743,34 @@ async def search_memories(
     try:
         user = UserModel(**__user__) if __user__ else None
 
-        results = await query_memory(
-            __request__,
-            QueryMemoryForm(content=query, k=count),
+        memories = await _search_memories(
+            SearchMemoriesForm(
+                query=query or None,
+                type=type if type in {'user', 'context', 'all'} else 'all',
+                path=path,
+                memory_id=memory_id,
+                limit=count,
+            ),
             user,
         )
 
-        if results and hasattr(results, 'documents') and results.documents:
-            memories = []
-            for doc_idx, doc in enumerate(results.documents[0]):
-                memory_id = None
-                if results.ids and results.ids[0]:
-                    memory_id = results.ids[0][doc_idx]
-                created_at = 'Unknown'
-                if results.metadatas and results.metadatas[0][doc_idx].get('created_at'):
-                    created_at = time.strftime(
-                        '%Y-%m-%d',
-                        time.localtime(results.metadatas[0][doc_idx]['created_at']),
-                    )
-                memories.append({'id': memory_id, 'date': created_at, 'content': doc})
-            return json.dumps(memories, ensure_ascii=False)
-        else:
+        if not memories:
             return json.dumps([])
+
+        return json.dumps(
+            [
+                {
+                    'id': memory.id,
+                    'type': memory.type,
+                    'path': memory.path,
+                    'content': memory.content,
+                    'created_at': time.strftime('%Y-%m-%d', time.localtime(memory.created_at)),
+                    'updated_at': time.strftime('%Y-%m-%d', time.localtime(memory.updated_at)),
+                }
+                for memory in memories
+            ],
+            ensure_ascii=False,
+        )
     except Exception as e:
         log.exception(f'search_memories error: {e}')
         return json.dumps({'error': str(e)})
@@ -641,13 +778,21 @@ async def search_memories(
 
 async def add_memory(
     content: str,
+    type: str = 'user',
+    path: Optional[str] = None,
     __request__: Request = None,
     __user__: dict = None,
 ) -> str:
     """
-    Store a new memory for the user.
+    Save enduring information that can improve future chats.
+
+    Save stable preferences, goals, projects, relationships, habits, and standing instructions.
+    Do not save one-off activity, meals, routine daily events, temporary mood, or other short-lived details
+    unless the user explicitly asks you to remember them.
 
     :param content: The memory content to store
+    :param type: Use "user" for facts/preferences about the user, or "context" for other durable context
+    :param path: Optional stable memory address for grouping related memories
     :return: Confirmation that the memory was stored
     """
     if __request__ is None:
@@ -658,27 +803,75 @@ async def add_memory(
 
         memory = await _add_memory(
             __request__,
-            AddMemoryForm(content=content),
+            AddMemoryForm(content=content, type=Memories.normalize_memory_type(type), path=path),
             user,
         )
 
-        return json.dumps({'status': 'success', 'id': memory.id}, ensure_ascii=False)
+        return json.dumps(
+            {'status': 'success', 'id': memory.id, 'type': memory.type, 'path': memory.path},
+            ensure_ascii=False,
+        )
     except Exception as e:
         log.exception(f'add_memory error: {e}')
+        return json.dumps({'error': str(e)})
+
+
+async def update_memory(
+    operations: list[dict],
+    __request__: Request = None,
+    __user__: dict = None,
+) -> str:
+    """
+    Apply a batch of memory changes after learning enduring information.
+
+    Use type "user" for facts, preferences, or instructions about the user.
+    Use type "context" for other durable context that may help future chats.
+    Do not save one-off activity, meals, routine daily events, temporary mood, or other short-lived details
+    unless the user explicitly asks you to remember them.
+    Path is optional. Use it as a stable memory address to group related memories.
+    Prefer an existing path from list_memory_paths when one fits.
+    Leave path empty when no useful grouping is clear.
+
+    Operation shapes:
+    - {"action": "add", "content": "...", "type": "user"|"context", "path": "..."}
+    - {"action": "replace", "id": "...", "content": "...", "type": "user"|"context", "path": "..."}
+    - {"action": "move", "id": "...", "path": "..."}
+    - {"action": "remove", "id": "..."}
+
+    :param operations: Memory operations to apply in one request
+    :return: JSON with operation results
+    """
+    if __request__ is None:
+        return json.dumps({'error': 'Request context not available'})
+
+    try:
+        user = UserModel(**__user__) if __user__ else None
+        operation_results = await _update_memories(
+            __request__,
+            UpdateMemoriesForm(operations=operations),
+            user,
+        )
+        return json.dumps(operation_results, ensure_ascii=False)
+    except Exception as e:
+        log.exception(f'update_memory error: {e}')
         return json.dumps({'error': str(e)})
 
 
 async def replace_memory_content(
     memory_id: str,
     content: str,
+    type: Optional[str] = None,
+    path: Optional[str] = None,
     __request__: Request = None,
     __user__: dict = None,
 ) -> str:
     """
-    Update the content of an existing memory by its ID.
+    Update an existing saved memory by its ID when its content needs correction.
 
     :param memory_id: The ID of the memory to update
     :param content: The new content for the memory
+    :param type: Optional "user" or "context" type for the updated memory
+    :param path: Optional stable memory address for grouping related memories
     :return: Confirmation that the memory was updated
     """
     if __request__ is None:
@@ -690,12 +883,22 @@ async def replace_memory_content(
         memory = await update_memory_by_id(
             memory_id=memory_id,
             request=__request__,
-            form_data=MemoryUpdateModel(content=content),
+            form_data=MemoryUpdateModel(
+                content=content,
+                type=Memories.normalize_memory_type(type) if type else None,
+                path=path,
+            ),
             user=user,
         )
 
         return json.dumps(
-            {'status': 'success', 'id': memory.id, 'content': memory.content},
+            {
+                'status': 'success',
+                'id': memory.id,
+                'type': memory.type,
+                'path': memory.path,
+                'content': memory.content,
+            },
             ensure_ascii=False,
         )
     except Exception as e:
@@ -709,7 +912,7 @@ async def delete_memory(
     __user__: dict = None,
 ) -> str:
     """
-    Delete a memory by its ID.
+    Delete a saved memory by its ID.
 
     :param memory_id: The ID of the memory to delete
     :return: Confirmation that the memory was deleted
@@ -740,7 +943,7 @@ async def list_memories(
     __user__: dict = None,
 ) -> str:
     """
-    List all stored memories for the user.
+    List all stored memories for the user, including IDs and timestamps.
 
     :return: JSON list of all memories with id, content, and dates
     """
@@ -753,16 +956,18 @@ async def list_memories(
         memories = await Memories.get_memories_by_user_id(user.id)
 
         if memories:
-            result = [
+            memory_rows = [
                 {
                     'id': m.id,
+                    'type': m.type,
+                    'path': m.path,
                     'content': m.content,
                     'created_at': time.strftime('%Y-%m-%d %H:%M', time.localtime(m.created_at)),
                     'updated_at': time.strftime('%Y-%m-%d %H:%M', time.localtime(m.updated_at)),
                 }
                 for m in memories
             ]
-            return json.dumps(result, ensure_ascii=False)
+            return json.dumps(memory_rows, ensure_ascii=False)
         else:
             return json.dumps([])
     except Exception as e:
@@ -784,7 +989,7 @@ async def search_notes(
     __user__: dict = None,
 ) -> str:
     """
-    Search the user's notes by title and content.
+    Search the user's saved notes by title and content.
 
     :param query: The search query to find matching notes
     :param count: Maximum number of results to return (default: 5)
@@ -901,12 +1106,16 @@ async def view_note(
 
         from open_webui.models.access_grants import AccessGrants
 
-        if note.user_id != user_id and not await AccessGrants.has_access(
-            user_id=user_id,
-            resource_type='note',
-            resource_id=note.id,
-            permission='read',
-            user_group_ids=set(user_group_ids),
+        if (
+            __user__.get('role') != 'admin'
+            and note.user_id != user_id
+            and not await AccessGrants.has_access(
+                user_id=user_id,
+                resource_type='note',
+                resource_id=note.id,
+                permission='read',
+                user_group_ids=set(user_group_ids),
+            )
         ):
             return json.dumps({'error': 'Access denied'})
 
@@ -981,16 +1190,20 @@ async def write_note(
 
 async def replace_note_content(
     note_id: str,
-    content: str,
+    content: Optional[str] = None,
+    operations: Optional[list[dict]] = None,
     title: Optional[str] = None,
     __request__: Request = None,
     __user__: dict = None,
 ) -> str:
     """
-    Update the content of a note. Use this to modify task lists, add notes, or update content.
+    Update an existing note by replacing the whole markdown content or applying range operations.
 
     :param note_id: The ID of the note to update
-    :param content: The new markdown content for the note
+    :param content: The new markdown content for a whole-note update
+    :param operations: Optional note operations:
+    - {"action": "replace", "content": "..."}
+    - {"action": "replace_range", "start": 0, "end": 10, "content": "...", "expected": "..."}
     :param title: Optional new title for the note
     :return: JSON with success status and updated note info
     """
@@ -1006,25 +1219,113 @@ async def replace_note_content(
         note = await Notes.get_note_by_id(note_id)
 
         if not note:
-            return json.dumps({'error': 'Note not found'})
+            return json.dumps({'error': 'Note not found', 'code': 'not_found'})
 
-        # Check write permission
         user_id = __user__.get('id')
-        user_group_ids = [group.id for group in await Groups.get_groups_by_member_id(user_id)]
+        if __user__.get('role') != 'admin' and not await _has_write_access_to_note(note, user_id):
+            return json.dumps({'error': 'Write access denied', 'code': 'write_access_denied'})
 
-        from open_webui.models.access_grants import AccessGrants
+        current_content = ((note.data or {}).get('content') or {}).get('md') or ''
+        applied_operation_count = 0
+        if operations is not None:
+            if not isinstance(operations, list) or len(operations) == 0:
+                return json.dumps({'error': 'operations must be a non-empty list', 'code': 'invalid_operations'})
 
-        if note.user_id != user_id and not await AccessGrants.has_access(
-            user_id=user_id,
-            resource_type='note',
-            resource_id=note.id,
-            permission='write',
-            user_group_ids=set(user_group_ids),
-        ):
-            return json.dumps({'error': 'Write access denied'})
+            range_operations = []
+            for idx, operation in enumerate(operations):
+                if not isinstance(operation, dict):
+                    return json.dumps(
+                        {'error': 'each operation must be an object', 'code': 'invalid_operation', 'index': idx}
+                    )
 
-        # Build update form
-        update_data = {'data': {'content': {'md': content}}}
+                action = operation.get('action')
+                replacement = operation.get('content')
+
+                if action == 'replace':
+                    if len(operations) != 1:
+                        return json.dumps(
+                            {
+                                'error': 'replace operation must be the only operation',
+                                'code': 'invalid_operations',
+                                'index': idx,
+                            }
+                        )
+                    if not isinstance(replacement, str):
+                        return json.dumps(
+                            {
+                                'error': 'replace operation content must be a string',
+                                'code': 'invalid_content',
+                                'index': idx,
+                            }
+                        )
+                    content = replacement
+                    applied_operation_count = 1
+                    break
+
+                if action != 'replace_range':
+                    return json.dumps(
+                        {'error': 'unknown operation action', 'code': 'invalid_action', 'index': idx, 'action': action}
+                    )
+
+                start = operation.get('start')
+                end = operation.get('end')
+                expected = operation.get('expected')
+                if not isinstance(start, int) or not isinstance(end, int):
+                    return json.dumps(
+                        {'error': 'operation start and end must be integers', 'code': 'invalid_range', 'index': idx}
+                    )
+                if not isinstance(replacement, str):
+                    return json.dumps(
+                        {'error': 'operation content must be a string', 'code': 'invalid_content', 'index': idx}
+                    )
+                if start < 0 or end < start or end > len(current_content):
+                    return json.dumps(
+                        {'error': 'operation range is out of bounds', 'code': 'range_out_of_bounds', 'index': idx}
+                    )
+                if expected is not None and current_content[start:end] != expected:
+                    return json.dumps(
+                        {
+                            'error': 'operation expected text does not match current content',
+                            'code': 'expected_mismatch',
+                            'index': idx,
+                        }
+                    )
+
+                range_operations.append({'start': start, 'end': end, 'content': replacement})
+
+            range_operations.sort(key=lambda operation: operation['start'])
+            previous_end = 0
+            for idx, operation in enumerate(range_operations):
+                if operation['start'] < previous_end:
+                    return json.dumps(
+                        {'error': 'operation ranges must not overlap', 'code': 'overlapping_operations', 'index': idx}
+                    )
+                previous_end = operation['end']
+
+            if range_operations:
+                content = current_content
+                for operation in reversed(range_operations):
+                    content = content[: operation['start']] + operation['content'] + content[operation['end'] :]
+                applied_operation_count = len(range_operations)
+        elif content is None:
+            return json.dumps({'error': 'content or operations is required', 'code': 'content_required'})
+
+        try:
+            await stop_item_tasks(__request__.app.state.redis, f'note:{note_id}')
+        except Exception:
+            pass
+
+        update_data = {
+            'data': {
+                **(note.data or {}),
+                'content': {
+                    **((note.data or {}).get('content') or {}),
+                    'json': None,
+                    'html': '',
+                    'md': content,
+                },
+            }
+        }
         if title:
             update_data['title'] = title
 
@@ -1032,7 +1333,9 @@ async def replace_note_content(
         updated_note = await Notes.update_note_by_id(note_id, form)
 
         if not updated_note:
-            return json.dumps({'error': 'Failed to update note'})
+            return json.dumps({'error': 'Failed to update note', 'code': 'update_failed'})
+
+        await _emit_note_updated(__request__, __user__, updated_note)
 
         return json.dumps(
             {
@@ -1040,12 +1343,13 @@ async def replace_note_content(
                 'id': updated_note.id,
                 'title': updated_note.title,
                 'updated_at': updated_note.updated_at,
+                'applied_operation_count': applied_operation_count,
             },
             ensure_ascii=False,
         )
     except Exception as e:
         log.exception(f'replace_note_content error: {e}')
-        return json.dumps({'error': str(e)})
+        return json.dumps({'error': str(e), 'code': 'unexpected_error'})
 
 
 # =============================================================================
@@ -1064,6 +1368,7 @@ async def search_chats(
 ) -> str:
     """
     Search the user's previous chat conversations by title and message content.
+    Helpful for finding details from earlier conversations.
 
     :param query: The search query to find matching chats
     :param count: Maximum number of results to return (default: 5)
@@ -1102,7 +1407,7 @@ async def search_chats(
 
             # Find a matching message snippet
             snippet = ''
-            messages = chat.chat.get('history', {}).get('messages', {})
+            messages = (getattr(chat, 'chat', None) or {}).get('history', {}).get('messages', {})
             lower_query = query.lower()
 
             for msg_id, msg in messages.items():
@@ -1141,7 +1446,8 @@ async def view_chat(
     __user__: dict = None,
 ) -> str:
     """
-    Get the full conversation history of a chat by its ID.
+    Get the full conversation history of a chat by its ID after a relevant
+    previous chat has been identified.
 
     :param chat_id: The ID of the chat to retrieve
     :return: JSON with the chat's id, title, and messages
@@ -1200,6 +1506,85 @@ async def view_chat(
 
 
 # =============================================================================
+# SUB-AGENT TOOL
+# =============================================================================
+
+
+async def delegate_task(
+    task: str,
+    context: str = '',
+    background: bool = False,
+    __request__: Request = None,
+    __user__: dict = None,
+    __metadata__: dict = None,
+    __chat_id__: str = None,
+    __message_id__: str = None,
+) -> str:
+    """
+    Delegate focused work to a parallel sub-agent using the current model and tools.
+
+    :param task: The specific task for the sub-agent to complete
+    :param context: Relevant context, decisions, or file paths for the task
+    :param background: Return immediately and continue this chat when the sub-agent finishes
+    :return: Foreground result text, or a JSON dispatch handle for background work
+    """
+    if __request__ is None:
+        return 'Error: request context not available.'
+    if getattr(__request__.state, 'internal', False) is True:
+        return 'Error: sub-agents cannot delegate recursively.'
+
+    from open_webui.utils.subagents import delegate
+
+    return await delegate(
+        task,
+        context,
+        background,
+        request=__request__,
+        user_data=__user__ or {},
+        metadata=__metadata__ or {},
+        parent_chat_id=__chat_id__ or '',
+        parent_message_id=__message_id__,
+    )
+
+
+async def timer(
+    prompt: str,
+    at: str,
+    cancel_on: list[Literal['chat.read', 'chat.user_message']] | None = None,
+    __request__: Request = None,
+    __user__: dict = None,
+    __metadata__: dict = None,
+    __chat_id__: str = None,
+    __message_id__: str = None,
+) -> str:
+    """
+    Set a one-shot timer for this chat.
+
+    :param prompt: The prompt to send back into this chat when the timer fires
+    :param at: Relative time like 10s, 5m, 1h, 2d, or a timezone-aware RFC 3339 timestamp
+    :param cancel_on: Optional events that cancel the timer before it fires
+    :return: JSON status with the scheduled time, or an error string
+    """
+    if __request__ is None:
+        return 'Error: request context not available.'
+    if getattr(__request__.state, 'internal', False) is True:
+        return 'Error: timers cannot be set from internal chats.'
+
+    from open_webui.utils.timers import create_timer
+
+    return await create_timer(
+        prompt=prompt,
+        at=at,
+        cancel_on=cancel_on,
+        request=__request__,
+        user_data=__user__ or {},
+        metadata=__metadata__ or {},
+        parent_chat_id=__chat_id__ or '',
+        parent_message_id=__message_id__,
+    )
+
+
+# =============================================================================
 # CHANNELS TOOLS
 # =============================================================================
 
@@ -1211,7 +1596,7 @@ async def search_channels(
     __user__: dict = None,
 ) -> str:
     """
-    Search for channels by name and description that the user has access to.
+    Search channels by name and description to find accessible team spaces.
 
     :param query: The search query to find matching channels
     :param count: Maximum number of results to return (default: 5)
@@ -1265,7 +1650,8 @@ async def search_channel_messages(
     __user__: dict = None,
 ) -> str:
     """
-    Search for messages in channels the user is a member of, including thread replies.
+    Search messages in channels the user is a member of, including thread replies.
+    Helpful for finding prior team/channel discussion.
 
     :param query: The search query to find matching messages
     :param count: Maximum number of results to return (default: 10)
@@ -1493,7 +1879,8 @@ async def list_knowledge_bases(
     __user__: dict = None,
 ) -> str:
     """
-    List the user's accessible knowledge bases.
+    List the user's accessible knowledge bases so a relevant internal source
+    can be chosen.
 
     :param count: Maximum number of KBs to return (default: 10)
     :param skip: Number of results to skip for pagination (default: 0)
@@ -1551,7 +1938,8 @@ async def search_knowledge_bases(
     __user__: dict = None,
 ) -> str:
     """
-    Search the user's accessible knowledge bases by name and description.
+    Search the user's accessible knowledge bases by name and description to find
+    a relevant internal source.
 
     :param query: The search query to find matching knowledge bases
     :param count: Maximum number of results to return (default: 5)
@@ -1614,6 +2002,7 @@ async def search_knowledge_files(
     """
     Search files by filename across knowledge bases the user has access to.
     When the model has attached knowledge, searches only within attached KBs and files.
+    Helpful when looking for a specific document or file name.
 
     :param query: The search query to find matching files by filename
     :param knowledge_id: Optional KB id to limit search to a specific knowledge base
@@ -1785,6 +2174,7 @@ async def grep_knowledge_files(
     Search for exact text across knowledge files. Returns matching lines with line numbers.
     Unlike query_knowledge_files (semantic/vector search), this performs exact string matching.
     Automatically detects regex patterns (e.g. "error|warn", "version \\d+").
+    Helpful for literal strings, identifiers, error messages, or regex-style searches.
 
     :param pattern: The text pattern to search for (regex auto-detected)
     :param file_id: Optional file ID to search within a single file only
@@ -2347,6 +2737,7 @@ async def query_knowledge_files(
     """
     Search knowledge base files using semantic/vector search. Searches across collections (KBs),
     individual files, and notes that the user has access to.
+    Helpful for internal documentation, uploaded knowledge, and attached model knowledge.
 
     :param query: The search query to find semantically relevant content
     :param knowledge_ids: Optional list of KB ids to limit search to specific knowledge bases
@@ -2383,6 +2774,7 @@ async def query_knowledge_files(
         from open_webui.models.files import Files
         from open_webui.models.knowledge import Knowledges
         from open_webui.models.notes import Notes
+        from open_webui.retrieval.external import retrieve_external_knowledge
         from open_webui.retrieval.utils import query_collection
 
         user_id = __user__.get('id')
@@ -2394,6 +2786,7 @@ async def query_knowledge_files(
             return json.dumps({'error': 'Embedding function not configured'})
 
         collection_names = []
+        external_knowledges = []
         note_results = []  # Notes aren't vectorized, handle separately
 
         # If model has attached knowledge, use those
@@ -2416,7 +2809,10 @@ async def query_knowledge_files(
                             user_group_ids=set(user_group_ids),
                         )
                     ):
-                        collection_names.append(item_id)
+                        if (knowledge.meta or {}).get('source') == 'external':
+                            external_knowledges.append(knowledge)
+                        else:
+                            collection_names.append(item_id)
 
                 elif item_type == 'file':
                     # Individual file - use file-{id} as collection name
@@ -2462,7 +2858,10 @@ async def query_knowledge_files(
                         user_group_ids=set(user_group_ids),
                     )
                 ):
-                    collection_names.append(knowledge_id)
+                    if (knowledge.meta or {}).get('source') == 'external':
+                        external_knowledges.append(knowledge)
+                    else:
+                        collection_names.append(knowledge_id)
         else:
             # No model knowledge and no specific IDs - search all accessible KBs
             result = await Knowledges.search_knowledge_bases(
@@ -2475,7 +2874,11 @@ async def query_knowledge_files(
                 skip=0,
                 limit=50,
             )
-            collection_names = [knowledge_base.id for knowledge_base in result.items]
+            for knowledge_base in result.items:
+                if (knowledge_base.meta or {}).get('source') == 'external':
+                    external_knowledges.append(knowledge_base)
+                else:
+                    collection_names.append(knowledge_base.id)
 
         chunks = []
 
@@ -2507,6 +2910,31 @@ async def query_knowledge_files(
                         chunk_info['distance'] = distances[idx]
                     chunks.append(chunk_info)
 
+        for knowledge in external_knowledges:
+            query_results = await retrieve_external_knowledge(
+                __request__,
+                knowledge,
+                queries=[query],
+                count=count,
+                user=type('UserContext', (), {'id': user_id, 'role': user_role})(),
+            )
+            documents = query_results.get('documents', [[]])[0]
+            metadatas = query_results.get('metadatas', [[]])[0]
+            distances = query_results.get('distances', [[]])[0]
+
+            for idx, doc in enumerate(documents):
+                metadata = metadatas[idx] if idx < len(metadatas) else {}
+                chunk_info = {
+                    'content': doc,
+                    'source': metadata.get('source', metadata.get('name', knowledge.name)),
+                    'file_id': metadata.get('file_id', f'external-{knowledge.id}'),
+                    'type': 'external',
+                    'knowledge_id': knowledge.id,
+                }
+                if idx < len(distances):
+                    chunk_info['distance'] = distances[idx]
+                chunks.append(chunk_info)
+
         # Limit to requested count
         chunks = chunks[:count]
 
@@ -2525,7 +2953,7 @@ async def query_knowledge_bases(
     """
     Search knowledge bases by semantic similarity to query.
     Finds KBs whose name/description match the meaning of your query.
-    Use this to discover relevant knowledge bases before querying their files.
+    Helpful for discovering which knowledge base to query next.
 
     :param query: Natural language query describing what you're looking for
     :param count: Maximum results (default: 5)
@@ -2731,9 +3159,7 @@ async def create_tasks(
     __user__: dict = None,
 ) -> str:
     """
-    Create a task checklist to track progress on multi-step work.
-    Call this once at the start to define all steps, then use
-    update_task to mark each task as you complete it.
+    Create a visible task checklist for multi-step work so progress can be shown in chat.
 
     :param tasks: List of task items. Each item: content (string, required), status (pending|in_progress|completed|cancelled, default pending), id (optional, auto-generated).
     :return: JSON with the full task list and summary counts
@@ -2784,9 +3210,7 @@ async def update_task(
     __user__: dict = None,
 ) -> str:
     """
-    Mark a single task as completed, in_progress, pending, or cancelled.
-    Call this after finishing each step. You MUST call this for every
-    task, including the very last one.
+    Mark a single visible task item as completed, in_progress, pending, or cancelled.
 
     :param id: The task ID to update
     :param status: New status: completed, in_progress, pending, or cancelled (default: completed)
@@ -3226,8 +3650,7 @@ async def search_calendar_events(
 ) -> str:
     """
     Search calendar events, reminders, and scheduled items by text and/or date range.
-    Use this to check what's coming up, find a specific event or reminder, or list
-    the user's schedule for a time period.
+    Helpful for finding upcoming events, reminders, or schedule items.
 
     :param query: Search text to match against event title, description, or location (optional)
     :param start: Only return events starting at or after this datetime, e.g. "2026-04-20 00:00" (optional)

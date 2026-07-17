@@ -18,11 +18,11 @@ from fastapi.responses import (
     PlainTextResponse,
     StreamingResponse,
 )
-from open_webui.brand import PRODUCT_NAME
 from open_webui.config import (
     CACHE_DIR,
 )
 from open_webui.constants import ERROR_MESSAGES
+from open_webui.events import EVENTS, publish_event, publish_model_provider_request_failed
 from open_webui.env import (
     AIOHTTP_CLIENT_SESSION_SSL,
     AIOHTTP_CLIENT_TIMEOUT,
@@ -35,10 +35,11 @@ from open_webui.env import (
 )
 from open_webui.internal.db import get_async_session
 from open_webui.models.access_grants import AccessGrants
+from open_webui.models.config import Config
 from open_webui.models.groups import Groups
 from open_webui.models.models import Models
 from open_webui.models.users import UserModel
-from open_webui.utils.access_control import check_model_access, has_connection_access
+from open_webui.utils.access_control import check_model_access, has_connection_access, has_permission
 from open_webui.utils.anthropic import get_anthropic_models, is_anthropic_url
 from open_webui.utils.auth import get_admin_user, get_verified_user
 from open_webui.utils.headers import get_custom_headers, include_user_info_headers
@@ -162,7 +163,7 @@ async def get_headers_and_cookies(
         **(
             {
                 'HTTP-Referer': 'https://openwebui.com/',
-                'X-Title': PRODUCT_NAME,
+                'X-Title': 'Open WebUI',
             }
             if 'openrouter.ai' in url
             else {}
@@ -208,7 +209,7 @@ async def get_headers_and_cookies(
         headers['Authorization'] = f'Bearer {token}'
 
     if config.get('headers') and isinstance(config.get('headers'), dict):
-        custom_headers = get_custom_headers(config.get('headers'), user, metadata)
+        custom_headers = get_custom_headers(config.get('headers'), user, metadata, request=request)
         headers.update(custom_headers)
 
     return headers, cookies
@@ -237,15 +238,157 @@ def get_microsoft_entra_id_access_token():
 
 router = APIRouter()
 
+LLAMACPP_LOADED_STATES = {'loaded', 'sleeping'}
+LLAMACPP_UNLOADED_STATES = {'loading', 'unloaded'}
+
+
+def get_llamacpp_model_loaded_state(model: dict, provider: str, manual_model_ids: bool = False) -> bool | None:
+    if provider != 'llama.cpp':
+        return None
+
+    status = model.get('status')
+    if isinstance(status, dict):
+        value = status.get('value')
+        if value in LLAMACPP_LOADED_STATES:
+            return True
+        if value in LLAMACPP_UNLOADED_STATES:
+            return False
+
+    if not manual_model_ids and 'status' not in model:
+        return True
+
+    return None
+
+
+OPENAI_CONFIG_KEYS = {
+    'ENABLE_OPENAI_API': 'openai.enable',
+    'OPENAI_API_BASE_URLS': 'openai.api_base_urls',
+    'OPENAI_API_KEYS': 'openai.api_keys',
+    'OPENAI_API_CONFIGS': 'openai.api_configs',
+}
+
+
+async def get_openai_config() -> dict:
+    values = await Config.get_many(*OPENAI_CONFIG_KEYS.values())
+    return {field: values[storage_key] for field, storage_key in OPENAI_CONFIG_KEYS.items() if storage_key in values}
+
+
+async def get_openai_runtime_config() -> tuple[bool, list[str], list[str], dict]:
+    values = await Config.get_many('openai.enable', 'openai.api_base_urls', 'openai.api_keys', 'openai.api_configs')
+    return (
+        values.get('openai.enable'),
+        values.get('openai.api_base_urls') or [],
+        values.get('openai.api_keys') or [],
+        values.get('openai.api_configs') or {},
+    )
+
+
+async def normalize_openai_api_keys(api_base_urls: list[str], api_keys: list[str]) -> list[str]:
+    if len(api_keys) > len(api_base_urls):
+        api_keys = api_keys[: len(api_base_urls)]
+    elif len(api_keys) < len(api_base_urls):
+        api_keys = [*api_keys, *([''] * (len(api_base_urls) - len(api_keys)))]
+
+    await Config.upsert({'openai.api_keys': api_keys})
+    return api_keys
+
+
+async def get_openai_connection(idx: int) -> tuple[str, str, dict]:
+    _, api_base_urls, api_keys, api_configs = await get_openai_runtime_config()
+    url = api_base_urls[idx]
+    key = api_keys[idx]
+    api_config = api_configs.get(str(idx), api_configs.get(url, {}))
+    return url, key, api_config
+
+
+async def get_anthropic_token_count_target(request: Request, form_data: dict, user: UserModel):
+    """Resolve the upstream LiteLLM connection for an Anthropic token-count request."""
+    requested_model = form_data.get('model')
+    if not requested_model:
+        raise HTTPException(status_code=400, detail='model is required')
+
+    payload = {**form_data}
+    model_id = requested_model
+    model_info = await Models.get_model_by_id(model_id)
+    await check_model_access(user, model_info, BYPASS_MODEL_ACCESS_CONTROL)
+
+    if model_info and model_info.base_model_id:
+        model_id = model_info.base_model_id
+        payload['model'] = model_id
+
+    models = request.app.state.OPENAI_MODELS
+    if not models or model_id not in models:
+        await get_all_models(request, user=user)
+        models = request.app.state.OPENAI_MODELS
+
+    model = models.get(model_id)
+    if not model or 'urlIdx' not in model:
+        raise HTTPException(status_code=404, detail=ERROR_MESSAGES.MODEL_NOT_FOUND())
+
+    url, key, api_config = await get_openai_connection(model['urlIdx'])
+    prefix_id = api_config.get('prefix_id')
+    if prefix_id:
+        payload['model'] = payload['model'].replace(f'{prefix_id}.', '')
+
+    headers, cookies = await get_headers_and_cookies(request, url, key, api_config, user=user)
+    return requested_model, payload, url, key, headers, cookies
+
+
+async def count_anthropic_tokens(request: Request, form_data: dict, user: UserModel) -> int:
+    """Forward an Anthropic token-count request through an OpenAI-compatible connection."""
+    requested_model, payload, url, key, headers, cookies = await get_anthropic_token_count_target(
+        request, form_data, user
+    )
+    request_url = f'{url.rstrip("/")}/messages/count_tokens'
+    response = None
+
+    try:
+        session = await get_session()
+        response = await session.request(
+            method='POST',
+            url=request_url,
+            data=json.dumps(payload),
+            headers=headers,
+            cookies=cookies,
+            ssl=AIOHTTP_CLIENT_SESSION_SSL,
+            timeout=aiohttp.ClientTimeout(total=AIOHTTP_CLIENT_TIMEOUT),
+        )
+
+        try:
+            response_data = await response.json()
+        except Exception:
+            response_data = await response.text()
+
+        if response.status >= 400:
+            await publish_model_provider_request_failed(
+                request,
+                actor=user,
+                provider='openai-compatible',
+                base_url=url,
+                api_key=key,
+                status=response.status,
+                requested_model=requested_model,
+                upstream_error=response_data,
+            )
+            raise HTTPException(status_code=response.status, detail=response_data)
+
+        input_tokens = response_data.get('input_tokens') if isinstance(response_data, dict) else None
+        if isinstance(input_tokens, bool) or not isinstance(input_tokens, int) or input_tokens < 0:
+            raise HTTPException(status_code=502, detail='Invalid token-count response from upstream provider')
+
+        return input_tokens
+    except HTTPException:
+        raise
+    except Exception:
+        log.exception('Failed to count Anthropic tokens for model %s', requested_model)
+        raise HTTPException(status_code=502, detail=ERROR_MESSAGES.SERVER_CONNECTION_ERROR)
+    finally:
+        await cleanup_response(response)
+
 
 @router.get('/config')
 async def get_config(request: Request, user=Depends(get_admin_user)):
-    return {
-        'ENABLE_OPENAI_API': request.app.state.config.ENABLE_OPENAI_API,
-        'OPENAI_API_BASE_URLS': request.app.state.config.OPENAI_API_BASE_URLS,
-        'OPENAI_API_KEYS': request.app.state.config.OPENAI_API_KEYS,
-        'OPENAI_API_CONFIGS': request.app.state.config.OPENAI_API_CONFIGS,
-    }
+    return await get_openai_config()
 
 
 class OpenAIConfigForm(BaseModel):
@@ -257,42 +400,67 @@ class OpenAIConfigForm(BaseModel):
 
 @router.post('/config/update')
 async def update_config(request: Request, form_data: OpenAIConfigForm, user=Depends(get_admin_user)):
-    request.app.state.config.ENABLE_OPENAI_API = form_data.ENABLE_OPENAI_API
-    request.app.state.config.OPENAI_API_BASE_URLS = form_data.OPENAI_API_BASE_URLS
-    request.app.state.config.OPENAI_API_KEYS = form_data.OPENAI_API_KEYS
+    api_keys = form_data.OPENAI_API_KEYS
 
-    # Check if API KEYS length is same than API URLS length
-    if len(request.app.state.config.OPENAI_API_KEYS) != len(request.app.state.config.OPENAI_API_BASE_URLS):
-        if len(request.app.state.config.OPENAI_API_KEYS) > len(request.app.state.config.OPENAI_API_BASE_URLS):
-            request.app.state.config.OPENAI_API_KEYS = request.app.state.config.OPENAI_API_KEYS[
-                : len(request.app.state.config.OPENAI_API_BASE_URLS)
-            ]
-        else:
-            request.app.state.config.OPENAI_API_KEYS += [''] * (
-                len(request.app.state.config.OPENAI_API_BASE_URLS) - len(request.app.state.config.OPENAI_API_KEYS)
-            )
+    if len(api_keys) > len(form_data.OPENAI_API_BASE_URLS):
+        api_keys = api_keys[: len(form_data.OPENAI_API_BASE_URLS)]
+    elif len(api_keys) < len(form_data.OPENAI_API_BASE_URLS):
+        api_keys = [*api_keys, *([''] * (len(form_data.OPENAI_API_BASE_URLS) - len(api_keys)))]
 
-    request.app.state.config.OPENAI_API_CONFIGS = form_data.OPENAI_API_CONFIGS
+    valid_keys = set(map(str, range(len(form_data.OPENAI_API_BASE_URLS))))
+    api_configs = {key: value for key, value in form_data.OPENAI_API_CONFIGS.items() if key in valid_keys}
 
-    # Remove the API configs that are not in the API URLS
-    keys = list(map(str, range(len(request.app.state.config.OPENAI_API_BASE_URLS))))
-    request.app.state.config.OPENAI_API_CONFIGS = {
-        key: value for key, value in request.app.state.config.OPENAI_API_CONFIGS.items() if key in keys
-    }
+    await Config.upsert(
+        {
+            'openai.enable': form_data.ENABLE_OPENAI_API,
+            'openai.api_base_urls': form_data.OPENAI_API_BASE_URLS,
+            'openai.api_keys': api_keys,
+            'openai.api_configs': api_configs,
+        }
+    )
+
+    await get_all_models.cache.clear()
+    request.app.state.BASE_MODELS = []
+    request.app.state.OPENAI_MODELS = {}
+    models = getattr(request.app.state, 'MODELS', None)
+    if hasattr(models, 'clear'):
+        models.clear()
+    else:
+        request.app.state.MODELS = {}
+
+    await publish_event(
+        request,
+        EVENTS.MODEL_PROVIDER_CONFIG_UPDATED,
+        actor=user,
+        subject_id='openai',
+        subject_type='model.provider_config',
+        data={
+            'provider': 'openai',
+            'enabled': form_data.ENABLE_OPENAI_API,
+            'base_url_count': len(form_data.OPENAI_API_BASE_URLS),
+        },
+    )
 
     return {
-        'ENABLE_OPENAI_API': request.app.state.config.ENABLE_OPENAI_API,
-        'OPENAI_API_BASE_URLS': request.app.state.config.OPENAI_API_BASE_URLS,
-        'OPENAI_API_KEYS': request.app.state.config.OPENAI_API_KEYS,
-        'OPENAI_API_CONFIGS': request.app.state.config.OPENAI_API_CONFIGS,
+        'ENABLE_OPENAI_API': form_data.ENABLE_OPENAI_API,
+        'OPENAI_API_BASE_URLS': form_data.OPENAI_API_BASE_URLS,
+        'OPENAI_API_KEYS': api_keys,
+        'OPENAI_API_CONFIGS': api_configs,
     }
 
 
 @router.post('/audio/speech')
 async def speech(request: Request, user=Depends(get_verified_user)):
+    if user.role != 'admin' and not await has_permission(user.id, 'chat.tts', await Config.get('user.permissions')):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=ERROR_MESSAGES.ACCESS_PROHIBITED,
+        )
+
     idx = None
     try:
-        idx = request.app.state.config.OPENAI_API_BASE_URLS.index('https://api.openai.com/v1')
+        _, api_base_urls, _, _ = await get_openai_runtime_config()
+        idx = api_base_urls.index('https://api.openai.com/v1')
 
         body = await request.body()
         name = hashlib.sha256(body).hexdigest()
@@ -306,12 +474,7 @@ async def speech(request: Request, user=Depends(get_verified_user)):
         if file_path.is_file():
             return FileResponse(file_path)
 
-        url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-        key = request.app.state.config.OPENAI_API_KEYS[idx]
-        api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-            str(idx),
-            request.app.state.config.OPENAI_API_CONFIGS.get(url, {}),  # Legacy support
-        )
+        url, key, api_config = await get_openai_connection(idx)
 
         headers, cookies = await get_headers_and_cookies(request, url, key, api_config, user=user)
 
@@ -353,7 +516,7 @@ async def speech(request: Request, user=Depends(get_verified_user)):
 
             raise HTTPException(
                 status_code=r.status if r else 500,
-                detail=detail if detail else ERROR_MESSAGES.SERVER_CONNECTION_ERROR,
+                detail=detail if detail else 'Open WebUI: Server Connection Error',
             )
 
     except ValueError:
@@ -361,29 +524,15 @@ async def speech(request: Request, user=Depends(get_verified_user)):
 
 
 async def get_all_models_responses(request: Request, user: UserModel) -> list:
-    if not request.app.state.config.ENABLE_OPENAI_API:
+    enable_openai_api, api_base_urls, api_keys, api_configs = await get_openai_runtime_config()
+    if not enable_openai_api:
         return []
 
-    # Cache config values locally to avoid repeated Redis lookups.
-    # Each access to request.app.state.config.<KEY> triggers a Redis GET;
-    # caching here avoids hundreds of redundant round-trips.
-    api_base_urls = request.app.state.config.OPENAI_API_BASE_URLS
-    api_keys = list(request.app.state.config.OPENAI_API_KEYS)
-    api_configs = request.app.state.config.OPENAI_API_CONFIGS
-
-    # Check if API KEYS length is same than API URLS length
     num_urls = len(api_base_urls)
     num_keys = len(api_keys)
 
     if num_keys != num_urls:
-        # if there are more keys than urls, remove the extra keys
-        if num_keys > num_urls:
-            api_keys = api_keys[:num_urls]
-            request.app.state.config.OPENAI_API_KEYS = api_keys
-        # if there are more urls than keys, add empty keys
-        else:
-            api_keys += [''] * (num_urls - num_keys)
-            request.app.state.config.OPENAI_API_KEYS = api_keys
+        api_keys = await normalize_openai_api_keys(api_base_urls, api_keys)
 
     request_tasks = []
     for idx, url in enumerate(api_base_urls):
@@ -488,17 +637,17 @@ async def get_filtered_models(models, user, db=None):
 
 @cached(
     ttl=MODELS_CACHE_TTL,
-    key=lambda _, user: f'openai_all_models_{user.id}' if user else 'openai_all_models',
+    # key_builder (not key) is the per-call hook in aiocache 0.12; `key=` is a
+    # static key, so a `key=lambda` collapsed every caller to one shared entry.
+    key_builder=lambda _func, request, user=None: f'openai_all_models_{user.id}' if user else 'openai_all_models',
 )
 async def get_all_models(request: Request, user: UserModel) -> dict[str, list]:
     log.info('get_all_models()')
 
-    if not request.app.state.config.ENABLE_OPENAI_API:
+    enable_openai_api, api_base_urls, _, api_configs = await get_openai_runtime_config()
+    if not enable_openai_api:
+        request.app.state.OPENAI_MODELS = {}
         return {'data': []}
-
-    # Cache config value locally to avoid repeated Redis lookups inside
-    # the nested loop in get_merged_models (one GET per model otherwise).
-    api_base_urls = request.app.state.config.OPENAI_API_BASE_URLS
 
     responses = await get_all_models_responses(request, user=user)
 
@@ -540,21 +689,25 @@ async def get_all_models(request: Request, user: UserModel) -> dict[str, list]:
                         continue
 
                     if model_id and model_id not in models:
+                        api_config = api_configs.get(str(idx), api_configs.get(base_url, {}))
+                        provider = model.get('provider', '')
                         merged = {
                             **model,
                             'name': model.get('name', model_id),
                             'owned_by': 'openai',
                             'openai': model,
                             'connection_type': model.get('connection_type', 'external'),
-                            'provider': model.get('provider', ''),
+                            'provider': provider,
                             'urlIdx': idx,
                         }
 
-                        # llama.cpp router mode: derive loaded state from
-                        # the status object returned by GET /v1/models.
-                        status = model.get('status')
-                        if isinstance(status, dict) and 'value' in status:
-                            merged['loaded'] = status['value'] in ('loaded', 'sleeping')
+                        loaded = get_llamacpp_model_loaded_state(
+                            model,
+                            provider,
+                            manual_model_ids=bool(api_config.get('model_ids')),
+                        )
+                        if loaded is not None:
+                            merged['loaded'] = loaded
 
                         models[model_id] = merged
 
@@ -570,7 +723,7 @@ async def get_all_models(request: Request, user: UserModel) -> dict[str, list]:
 @router.get('/models')
 @router.get('/models/{url_idx}')
 async def get_models(request: Request, url_idx: int | None = None, user=Depends(get_verified_user)):
-    if not request.app.state.config.ENABLE_OPENAI_API:
+    if not await Config.get('openai.enable'):
         raise HTTPException(status_code=503, detail='OpenAI API is disabled')
 
     models = {
@@ -580,13 +733,7 @@ async def get_models(request: Request, url_idx: int | None = None, user=Depends(
     if url_idx is None:
         models = await get_all_models(request, user=user)
     else:
-        url = request.app.state.config.OPENAI_API_BASE_URLS[url_idx]
-        key = request.app.state.config.OPENAI_API_KEYS[url_idx]
-
-        api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-            str(url_idx),
-            request.app.state.config.OPENAI_API_CONFIGS.get(url, {}),  # Legacy support
-        )
+        url, key, api_config = await get_openai_connection(url_idx)
 
         r = None
         async with aiohttp.ClientSession(
@@ -645,7 +792,7 @@ async def get_models(request: Request, url_idx: int | None = None, user=Depends(
             except aiohttp.ClientError as e:
                 # ClientError covers all aiohttp requests issues
                 log.exception(f'Client error: {str(e)}')
-                raise HTTPException(status_code=500, detail=ERROR_MESSAGES.SERVER_CONNECTION_ERROR)
+                raise HTTPException(status_code=500, detail='Open WebUI: Server Connection Error')
             except Exception as e:
                 log.exception(f'Unexpected error: {e}')
                 error_detail = f'Unexpected error: {str(e)}'
@@ -860,7 +1007,7 @@ RESPONSES_ALLOWED_FIELDS: dict[str, set[str]] = {
 def _normalize_stored_item(item: dict) -> dict:
     """Strip local-only fields from a stored output item before replaying it.
 
-    Kolb-Bot stores extra bookkeeping fields (``id``, ``status``,
+    Open WebUI stores extra bookkeeping fields (``id``, ``status``,
     ``started_at``, ``ended_at``, ``duration``, ``_tag_type``,
     ``attributes``, ``summary``, etc.) that the Responses API does
     not accept.  This helper returns a copy containing only the
@@ -1056,6 +1203,9 @@ async def generate_chat_completion(
     form_data: dict,
     user=Depends(get_verified_user),
 ):
+    if not await Config.get('openai.enable'):
+        raise HTTPException(status_code=503, detail='OpenAI API is disabled')
+
     # NOTE: We intentionally do NOT use Depends(get_async_session) here.
     # Database operations (get_model_by_id, AccessGrants.has_access) manage their own short-lived sessions.
     # This prevents holding a connection during the entire LLM call (30-60+ seconds),
@@ -1115,13 +1265,7 @@ async def generate_chat_completion(
             detail=ERROR_MESSAGES.MODEL_NOT_FOUND(),
         )
 
-    # Get the API config for the model
-    api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-        str(idx),
-        request.app.state.config.OPENAI_API_CONFIGS.get(
-            request.app.state.config.OPENAI_API_BASE_URLS[idx], {}
-        ),  # Legacy support
-    )
+    url, key, api_config = await get_openai_connection(idx)
 
     prefix_id = api_config.get('prefix_id', None)
     if prefix_id:
@@ -1135,9 +1279,6 @@ async def generate_chat_completion(
             'email': user.email,
             'role': user.role,
         }
-
-    url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-    key = request.app.state.config.OPENAI_API_KEYS[idx]
 
     # Check if model is a reasoning model that needs special handling
     if is_openai_new_model(payload['model']):
@@ -1194,6 +1335,7 @@ async def generate_chat_completion(
             request_url = f'{url}/responses'
         else:
             request_url = f'{url}/chat/completions'
+    requested_model = payload.get('model')
     # For Chat Completions, strip image parts from multimodal tool messages
     # (Chat Completions doesn't support images in tool content).
     if not is_responses and 'messages' in payload:
@@ -1236,8 +1378,28 @@ async def generate_chat_completion(
                 )
                 try:
                     error_json = json.loads(error_body)
+                    await publish_model_provider_request_failed(
+                        request,
+                        actor=user,
+                        provider='openai-compatible',
+                        base_url=url,
+                        api_key=key,
+                        status=r.status,
+                        requested_model=requested_model,
+                        upstream_error=error_json,
+                    )
                     return JSONResponse(status_code=r.status, content=error_json)
                 except json.JSONDecodeError:
+                    await publish_model_provider_request_failed(
+                        request,
+                        actor=user,
+                        provider='openai-compatible',
+                        base_url=url,
+                        api_key=key,
+                        status=r.status,
+                        requested_model=requested_model,
+                        upstream_error=error_body,
+                    )
                     return JSONResponse(
                         status_code=r.status,
                         content={'error': {'message': error_body, 'code': r.status}},
@@ -1257,6 +1419,16 @@ async def generate_chat_completion(
                 response = await r.text()
 
             if r.status >= 400:
+                await publish_model_provider_request_failed(
+                    request,
+                    actor=user,
+                    provider='openai-compatible',
+                    base_url=url,
+                    api_key=key,
+                    status=r.status,
+                    requested_model=requested_model,
+                    upstream_error=response,
+                )
                 if isinstance(response, (dict, list)):
                     return JSONResponse(status_code=r.status, content=response)
                 else:
@@ -1304,12 +1476,7 @@ async def embeddings(request: Request, form_data: dict, user):
     if model_id in models:
         idx = models[model_id]['urlIdx']
 
-    url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-    key = request.app.state.config.OPENAI_API_KEYS[idx]
-    api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-        str(idx),
-        request.app.state.config.OPENAI_API_CONFIGS.get(url, {}),  # Legacy support
-    )
+    url, key, api_config = await get_openai_connection(idx)
 
     r = None
     streaming = False
@@ -1335,6 +1502,7 @@ async def embeddings(request: Request, form_data: dict, user):
             headers['api-version'] = api_version
     else:
         embeddings_url = f'{url}/embeddings'
+    requested_model = form_data.get('model')
 
     try:
         session = await get_session()
@@ -1362,6 +1530,16 @@ async def embeddings(request: Request, form_data: dict, user):
                 response_data = await r.text()
 
             if r.status >= 400:
+                await publish_model_provider_request_failed(
+                    request,
+                    actor=user,
+                    provider='openai-compatible',
+                    base_url=url,
+                    api_key=key,
+                    status=r.status,
+                    requested_model=requested_model,
+                    upstream_error=response_data,
+                )
                 if isinstance(response_data, (dict, list)):
                     return JSONResponse(status_code=r.status, content=response_data)
                 else:
@@ -1427,12 +1605,7 @@ async def responses(
         if model_id in models:
             idx = models[model_id]['urlIdx']
 
-    url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-    key = request.app.state.config.OPENAI_API_KEYS[idx]
-    api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-        str(idx),
-        request.app.state.config.OPENAI_API_CONFIGS.get(url, {}),  # Legacy support
-    )
+    url, key, api_config = await get_openai_connection(idx)
 
     r = None
     streaming = False
@@ -1483,6 +1656,16 @@ async def responses(
                 response_data = await r.text()
 
             if r.status >= 400:
+                await publish_model_provider_request_failed(
+                    request,
+                    actor=user,
+                    provider='openai-compatible',
+                    base_url=url,
+                    api_key=key,
+                    status=r.status,
+                    requested_model=payload.get('model'),
+                    upstream_error=response_data,
+                )
                 if isinstance(response_data, (dict, list)):
                     return JSONResponse(status_code=r.status, content=response_data)
                 else:
@@ -1536,14 +1719,8 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         if model_id in models:
             idx = models[model_id]['urlIdx']
 
-    url = request.app.state.config.OPENAI_API_BASE_URLS[idx]
-    key = request.app.state.config.OPENAI_API_KEYS[idx]
-    api_config = request.app.state.config.OPENAI_API_CONFIGS.get(
-        str(idx),
-        request.app.state.config.OPENAI_API_CONFIGS.get(
-            request.app.state.config.OPENAI_API_BASE_URLS[idx], {}
-        ),  # Legacy support
-    )
+    url, key, api_config = await get_openai_connection(idx)
+    base_url = url
 
     r = None
     streaming = False
@@ -1600,6 +1777,16 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
                 response_data = await r.text()
 
             if r.status >= 400:
+                await publish_model_provider_request_failed(
+                    request,
+                    actor=user,
+                    provider='openai-compatible',
+                    base_url=base_url,
+                    api_key=key,
+                    status=r.status,
+                    requested_model=model_id,
+                    upstream_error=response_data,
+                )
                 if isinstance(response_data, (dict, list)):
                     return JSONResponse(status_code=r.status, content=response_data)
                 else:
@@ -1613,7 +1800,7 @@ async def proxy(path: str, request: Request, user=Depends(get_verified_user)):
         log.exception(e)
         raise HTTPException(
             status_code=r.status if r else 500,
-            detail=ERROR_MESSAGES.SERVER_CONNECTION_ERROR,
+            detail='Open WebUI: Server Connection Error',
         )
     finally:
         if not streaming:

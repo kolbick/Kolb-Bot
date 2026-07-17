@@ -31,14 +31,19 @@ from pymilvus import (
     connections,
     utility,
 )
+from pymilvus.exceptions import MilvusException
 
 log = logging.getLogger(__name__)
 
 RESOURCE_ID_FIELD = 'resource_id'
+# Milvus VARCHAR hard cap for the `text` field (see _create_shared_collection).
+# Chunks longer than this are truncated before insert so one oversized chunk
+# can't fail the whole batch (and leave the file with zero embeddings).
+MILVUS_TEXT_MAX_LENGTH = 65535
 
 # Milvus expressions are SQL-like strings with no parameterized-query API;
 # values get interpolated into single-quoted literals. Reject anything that
-# can't be a legitimate Kolb-Bot collection name.
+# can't be a legitimate Open WebUI collection name.
 _SAFE_RESOURCE_ID_RE = re.compile(r'^[A-Za-z0-9_-]{1,255}$')
 _SAFE_METADATA_KEY_RE = re.compile(r'^[A-Za-z_][A-Za-z0-9_]{0,63}$')
 
@@ -90,8 +95,8 @@ class MilvusClient(VectorDBBase):
         """
         Maps the traditional collection name to multi-tenant collection and resource ID.
 
-        WARNING: This mapping relies on current Kolb-Bot naming conventions for
-        collection names. If Kolb-Bot changes how it generates collection names
+        WARNING: This mapping relies on current Open WebUI naming conventions for
+        collection names. If Open WebUI changes how it generates collection names
         (e.g., "user-memory-" prefix, "file-" prefix, web search patterns, or hash
         formats), this mapping will break and route data to incorrect collections.
         POTENTIALLY CAUSING HUGE DATA CORRUPTION, DATA CONSISTENCY ISSUES AND INCORRECT
@@ -141,7 +146,19 @@ class MilvusClient(VectorDBBase):
             index_params['params'] = {'nlist': MILVUS_IVF_FLAT_NLIST}
 
         collection.create_index('vector', index_params)
-        collection.create_index(RESOURCE_ID_FIELD)
+        try:
+            # A Milvus server auto-selects the scalar index type; embedded
+            # Milvus Lite requires an explicit one.
+            collection.create_index(RESOURCE_ID_FIELD)
+        except MilvusException:
+            try:
+                collection.create_index(RESOURCE_ID_FIELD, {'index_type': 'INVERTED'})
+            except MilvusException as e:
+                # The index only accelerates resource_id filters; never fail
+                # collection creation over it.
+                log.warning(
+                    f'Could not create {RESOURCE_ID_FIELD} index on {mt_collection_name}: {e}'
+                )
         log.info(f'Created shared collection: {mt_collection_name}')
         return collection
 
@@ -169,17 +186,34 @@ class MilvusClient(VectorDBBase):
         self._ensure_collection(mt_collection, dimension)
         collection = Collection(mt_collection)
 
-        entities = [
-            {
-                'id': item['id'],
-                'vector': item['vector'],
-                'text': item['text'],
-                'metadata': item['metadata'],
-                RESOURCE_ID_FIELD: resource_id,
-            }
-            for item in items
-        ]
-        collection.insert(entities)
+        entities = []
+        for item in items:
+            text = item['text'] or ''
+            if len(text) > MILVUS_TEXT_MAX_LENGTH:
+                log.warning(
+                    f'Milvus: truncating text id={item["id"]} '
+                    f'{len(text)}->{MILVUS_TEXT_MAX_LENGTH} chars '
+                    f'(collection={mt_collection}, resource_id={resource_id})'
+                )
+                text = text[:MILVUS_TEXT_MAX_LENGTH]
+            entities.append(
+                {
+                    'id': item['id'],
+                    'vector': item['vector'],
+                    'text': text,
+                    'metadata': item['metadata'],
+                    RESOURCE_ID_FIELD: resource_id,
+                }
+            )
+
+        try:
+            collection.insert(entities)
+        except MilvusException as e:
+            log.error(
+                f'Milvus insert failed (collection={mt_collection}, '
+                f'resource_id={resource_id}, items={len(entities)}): {e}'
+            )
+            raise
 
     def search(
         self,

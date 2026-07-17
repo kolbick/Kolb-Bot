@@ -12,7 +12,7 @@ the inner task. That `CancelledError` then propagates into whatever
 the inner task was doing, including in-flight DB queries, embedding
 calls and disk I/O.
 
-In Kolb-Bot this surfaces as:
+In Open WebUI this surfaces as:
 
 * SQLAlchemy logging multi-page `NotImplementedError:
   terminate_force_close()` tracebacks at ERROR every time a request is
@@ -39,6 +39,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.security import HTTPAuthorizationCredentials
 from open_webui.env import CUSTOM_API_KEY_HEADER
 from open_webui.internal.db import ScopedSession
+from open_webui.models.config import Config
 from open_webui.utils.auth import get_http_authorization_cred
 from starlette.datastructures import MutableHeaders
 from starlette.requests import Request
@@ -131,7 +132,7 @@ class AuthTokenMiddleware:
 
     The header used for API-key transport is controlled by the
     ``CUSTOM_API_KEY_HEADER`` environment variable (default ``x-api-key``).
-    This is useful when Kolb-Bot sits behind a reverse proxy that
+    This is useful when Open WebUI sits behind a reverse proxy that
     consumes the ``Authorization`` header for its own authentication —
     set the env var to a unique header (e.g. ``X-OpenWebUI-Key``) so
     the middleware checks that instead and avoids the 401 short-circuit.
@@ -165,7 +166,7 @@ class AuthTokenMiddleware:
                 token = HTTPAuthorizationCredentials(scheme='Bearer', credentials=api_key)
 
         request.state.token = token
-        request.state.enable_api_keys = self._fastapi_app.state.config.ENABLE_API_KEYS
+        request.state.enable_api_keys = await Config.get('auth.enable_api_keys')
 
         async def send_with_timing(message: Message) -> None:
             if message['type'] == 'http.response.start':

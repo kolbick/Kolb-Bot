@@ -1,8 +1,27 @@
 from __future__ import annotations
 
-from open_webui.brand import PRODUCT_NAME
-
+import errno
 from enum import Enum
+
+
+_ERRNO_MESSAGES = {
+    errno.ENAMETOOLONG: 'File name is too long.',
+    errno.ENOSPC: 'The server is out of storage space.',
+    errno.EDQUOT: 'Server storage quota exceeded.',
+    errno.EACCES: 'Server storage is not writable.',
+    errno.EPERM: 'Server storage is not writable.',
+    errno.EROFS: 'Server storage is not writable.',
+}
+
+
+def _error_message(err='', fallback='') -> str:
+    if not err:
+        return 'Something went wrong :/'
+    if isinstance(err, OSError) and err.errno in _ERRNO_MESSAGES:
+        return f'[ERROR: {_ERRNO_MESSAGES[err.errno]}]'
+    if isinstance(err, Exception):
+        return f'[ERROR: {fallback}]' if fallback else 'Something went wrong :/'
+    return f'[ERROR: {err}]'
 
 
 class MESSAGES(str, Enum):
@@ -20,7 +39,7 @@ class ERROR_MESSAGES(str, Enum):
     def __str__(self) -> str:
         return super().__str__()
 
-    DEFAULT = lambda err='': f'{"Something went wrong :/" if err == "" else "[ERROR: " + str(err) + "]"}'
+    DEFAULT = _error_message
     ENV_VAR_NOT_FOUND = 'Required environment variable not found. Terminating now.'
     CREATE_USER_ERROR = 'Oops! Something went wrong while creating your account. Please try again later. If the issue persists, contact support for assistance.'
     DELETE_USER_ERROR = 'Oops! Something went wrong. We encountered an issue while trying to delete the user. Please give it another shot.'
@@ -102,7 +121,7 @@ class ERROR_MESSAGES(str, Enum):
 
     FEATURE_DISABLED = lambda name='': f'{name} is disabled'
     INPUT_TOO_LONG = lambda size='': f'Input prompt exceeds maximum length of {size}'
-    SERVER_CONNECTION_ERROR = f'{PRODUCT_NAME}: Server Connection Error'
+    SERVER_CONNECTION_ERROR = 'Open WebUI: Server Connection Error'
     REQUIRED_FIELD_EMPTY = lambda name='': f'Required field {name} is empty'
     OAUTH_NOT_CONFIGURED = lambda name='': f"Provider '{name}' is not configured"
 

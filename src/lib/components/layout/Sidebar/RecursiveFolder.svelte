@@ -11,7 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { toast } from 'svelte-sonner';
 
-	import { chatId, mobile, selectedFolder, showSidebar } from '$lib/stores';
+	import { chatId, mobile, selectedFolder, showSidebar, user } from '$lib/stores';
 
 	import {
 		deleteFolderById,
@@ -19,7 +19,8 @@
 		updateFolderById,
 		updateFolderParentIdById,
 		getFolderById,
-		createNewFolder
+		createNewFolder,
+		getSharedFolderChats
 	} from '$lib/apis/folders';
 	import {
 		getChatById,
@@ -29,16 +30,17 @@
 		importChats
 	} from '$lib/apis/chats';
 
-	import ChevronDown from '../../icons/ChevronDown.svelte';
-	import ChevronRight from '../../icons/ChevronRight.svelte';
+	import ChevronDown from './icons/ChevronDown.svelte';
+	import ChevronRight from './icons/ChevronRight.svelte';
 	import Collapsible from '../../common/Collapsible.svelte';
 	import DragGhost from '$lib/components/common/DragGhost.svelte';
 
-	import FolderOpen from '$lib/components/icons/FolderOpen.svelte';
-	import EllipsisHorizontal from '$lib/components/icons/EllipsisHorizontal.svelte';
+	import FolderIcon from './icons/Folder.svelte';
+	import MoreHorizontal from './icons/MoreHorizontal.svelte';
 
 	import ChatItem from './ChatItem.svelte';
 	import FolderMenu from './Folders/FolderMenu.svelte';
+	import FolderShareModal from './Folders/FolderShareModal.svelte';
 	import DeleteConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
 	import FolderModal from './Folders/FolderModal.svelte';
 	import Emoji from '$lib/components/common/Emoji.svelte';
@@ -63,6 +65,7 @@
 	let folderElement;
 
 	let showFolderModal = false;
+	let showShareModal = false;
 	let edit = false;
 
 	let showCreateSubFolderModal = false;
@@ -78,7 +81,7 @@
 	const onDragOver = (e) => {
 		e.preventDefault();
 		e.stopPropagation();
-		if (dragged || parentDragged) {
+		if (dragged || parentDragged || folders[folderId]?.shared) {
 			return;
 		}
 		draggedOver = true;
@@ -158,6 +161,11 @@
 									return null;
 								});
 								if (!chat && item) {
+									if (!($user?.role === 'admin' || ($user?.permissions?.chat?.import ?? true))) {
+										toast.error($i18n.t('Access prohibited'));
+										return;
+									}
+
 									chat = await importChats(localStorage.token, [
 										{
 											chat: item.chat,
@@ -173,29 +181,35 @@
 									});
 								}
 
-								// Move the chat
-								const res = await updateChatFolderIdById(
-									localStorage.token,
-									chat.id,
-									folderId
-								).catch((error) => {
-									toast.error(`${error}`);
-									return null;
-								});
+								if (chat) {
+									// Move the chat
+									const res = await updateChatFolderIdById(
+										localStorage.token,
+										chat.id,
+										folderId
+									).catch((error) => {
+										toast.error(`${error}`);
+										return null;
+									});
 
-								onItemMove({
-									originFolderId: chat.folder_id,
-									targetFolderId: folderId,
-									e
-								});
+									onItemMove({
+										originFolderId: chat.folder_id,
+										targetFolderId: folderId,
+										e
+									});
 
-								if (res) {
-									dispatch('update');
+									if (res) {
+										dispatch('update');
+									}
 								}
 							}
 						} catch (error) {
 							console.log('Error parsing dataTransfer:', error);
 						}
+
+						// Only process the first non-file item; all share the same
+						// text/plain payload, so continuing would duplicate the move.
+						break;
 					}
 				}
 			}
@@ -233,6 +247,7 @@
 				id: folderId
 			})
 		);
+		event.dataTransfer.setData('application/x-open-webui-drag', '');
 
 		dragged = true;
 		folderElement.style.opacity = '0.5'; // Optional: Visual cue to show it's being dragged
@@ -374,10 +389,18 @@
 	export const setFolderItems = async () => {
 		await tick();
 		if (open) {
-			chats = await getChatListByFolderId(localStorage.token, folderId).catch((error) => {
-				toast.error(`${error}`);
-				return [];
-			});
+			// Always use getSharedFolderChats so owners also see chats
+			// created by users who have write access to this folder.
+			try {
+				const res = await getSharedFolderChats(localStorage.token, folderId);
+				chats = res?.chats ?? [];
+			} catch (error) {
+				// Fallback to regular API
+				chats = await getChatListByFolderId(localStorage.token, folderId).catch((error) => {
+					toast.error(`${error}`);
+					return [];
+				});
+			}
 		} else {
 			chats = null;
 		}
@@ -478,11 +501,13 @@
 	onSubmit={createSubFolderHandler}
 />
 
+<FolderShareModal bind:show={showShareModal} folder={folders[folderId]} />
+
 {#if dragged && x && y}
 	<DragGhost {x} {y}>
 		<div class=" bg-black/80 backdrop-blur-2xl px-2 py-1 rounded-lg w-fit max-w-40">
 			<div class="flex items-center gap-1">
-				<FolderOpen className="size-3.5" strokeWidth="2" />
+				<FolderIcon className="size-3.5" strokeWidth="1.5" />
 				<div class=" text-xs text-white line-clamp-1">
 					{folders[folderId].name}
 				</div>
@@ -491,7 +516,7 @@
 	</DragGhost>
 {/if}
 
-<div bind:this={folderElement} class="relative {className}" draggable="true">
+<div bind:this={folderElement} class="relative {className}" draggable={!folders[folderId]?.shared}>
 	{#if draggedOver}
 		<div
 			class="absolute top-0 left-0 w-full h-full rounded-xs bg-gray-100/50 dark:bg-gray-700/20 bg-opacity-50 dark:bg-opacity-10 z-50 pointer-events-none touch-none"
@@ -510,11 +535,12 @@
 		<div class="w-full group">
 			<div
 				id="folder-{folderId}-button"
-				class="relative w-full py-1 px-1.5 rounded-xl flex items-center gap-1.5 hover:bg-gray-100 dark:hover:bg-gray-900 transition {$selectedFolder?.id ===
+				class="relative w-full py-1 px-1.5 rounded-xl flex items-center gap-1.5 hover:bg-gray-50/40 dark:hover:bg-gray-800/40 transition {$selectedFolder?.id ===
 				folderId
-					? 'bg-gray-100 dark:bg-gray-900 selected'
+					? 'bg-gray-100/80 dark:bg-gray-850/50 selected'
 					: ''}"
 				on:dblclick={(e) => {
+					if (folders[folderId]?.shared && folders[folderId]?.permission !== 'write') return;
 					if (clickTimer) {
 						clearTimeout(clickTimer); // cancel the single-click action
 						clickTimer = null;
@@ -535,7 +561,7 @@
 						});
 
 						if (folder) {
-							await selectedFolder.set(folder);
+							await selectedFolder.set({ ...folders[folderId], ...folder });
 						}
 
 						await goto('/');
@@ -551,7 +577,7 @@
 				}}
 			>
 				<button
-					class="text-gray-500 dark:text-gray-500 transition-all p-1 hover:bg-gray-200 dark:hover:bg-gray-850 rounded-lg"
+					class="text-gray-600 dark:text-gray-400 transition-all p-1 hover:bg-gray-50/40 dark:hover:bg-gray-800/40 rounded-lg"
 					on:click={(e) => {
 						e.stopPropagation();
 						e.stopImmediatePropagation();
@@ -566,17 +592,21 @@
 
 						<div class="hidden group-hover:flex transition-all p-[1px]">
 							{#if open}
-								<ChevronDown className=" size-3" strokeWidth="2.5" />
+								<ChevronDown className=" size-3" strokeWidth="1.5" />
 							{:else}
-								<ChevronRight className=" size-3" strokeWidth="2.5" />
+								<ChevronRight className=" size-3" strokeWidth="1.5" />
 							{/if}
 						</div>
 					{:else}
-						<div class="p-[1px]">
+						<div class="flex group-hover:hidden transition-all">
+							<FolderIcon className="size-3.5" strokeWidth="1.5" />
+						</div>
+
+						<div class="hidden group-hover:flex transition-all p-[1px]">
 							{#if open}
-								<ChevronDown className=" size-3" strokeWidth="2.5" />
+								<ChevronDown className=" size-3" strokeWidth="1.5" />
 							{:else}
-								<ChevronRight className=" size-3" strokeWidth="2.5" />
+								<ChevronRight className=" size-3" strokeWidth="1.5" />
 							{/if}
 						</div>
 					{/if}
@@ -614,29 +644,36 @@
 					{/if}
 				</div>
 
-				<button
-					class="absolute z-10 right-2 invisible group-hover:visible self-center flex items-center dark:text-gray-300"
-				>
-					<FolderMenu
-						onEdit={() => {
-							showFolderModal = true;
-						}}
-						onDelete={() => {
-							showDeleteConfirm = true;
-						}}
-						onExport={() => {
-							exportHandler();
-						}}
-						onCreateSubFolder={() => {
-							createSubFolderParentId = folderId;
-							showCreateSubFolderModal = true;
-						}}
+				{#if !folders[folderId]?.shared || folders[folderId]?.permission === 'write'}
+					<button
+						class="absolute z-10 right-2 invisible group-hover:visible self-center flex items-center dark:text-gray-300"
 					>
-						<div class="p-1 dark:hover:bg-gray-850 rounded-lg touch-auto">
-							<EllipsisHorizontal className="size-4" strokeWidth="2.5" />
-						</div>
-					</FolderMenu>
-				</button>
+						<FolderMenu
+							onEdit={() => {
+								showFolderModal = true;
+							}}
+							onShare={() => {
+								showShareModal = true;
+							}}
+							onDelete={() => {
+								showDeleteConfirm = true;
+							}}
+							onExport={() => {
+								exportHandler();
+							}}
+							onCreateSubFolder={() => {
+								createSubFolderParentId = folderId;
+								showCreateSubFolderModal = true;
+							}}
+						>
+							<div
+								class="flex size-5 items-center justify-center self-center dark:hover:text-white transition m-0 touch-auto"
+							>
+								<MoreHorizontal className="size-3.5" strokeWidth="2" />
+							</div>
+						</FolderMenu>
+					</button>
+				{/if}
 			</div>
 		</div>
 
@@ -684,6 +721,10 @@
 							createdAt={chat.created_at}
 							updatedAt={chat.updated_at}
 							lastReadAt={chat.last_read_at}
+							active={chat.active ?? false}
+							ownerName={folders[folderId]?.shared ? (chat.owner_name ?? null) : null}
+							ownerUserId={folders[folderId]?.shared && chat.owner_name ? chat.user_id : null}
+							readonly={chat.user_id !== $user?.id}
 							{shiftKey}
 							on:change={(e) => {
 								dispatch('change', e.detail);

@@ -4,6 +4,7 @@ import time
 import uuid
 from typing import Optional
 
+from open_webui.config import RAG_FILE_CONTENT_SEARCH_MAX_CHARS
 from open_webui.internal.db import Base, JSONField, get_async_db_context
 from open_webui.models.access_grants import AccessGrantModel, AccessGrants
 from open_webui.models.files import (
@@ -31,6 +32,7 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import defer
 
 log = logging.getLogger(__name__)
 
@@ -147,6 +149,7 @@ class KnowledgeDirectoryForm(BaseModel):
 ####################
 class KnowledgeUserModel(KnowledgeModel):
     user: Optional[UserResponse] = None
+    file_count: int | None = None
 
 
 class KnowledgeResponse(KnowledgeModel):
@@ -286,6 +289,17 @@ class KnowledgeTable:
                     elif view_option == 'shared':
                         stmt = stmt.filter(Knowledge.user_id != user_id)
 
+                    source = filter.get('source')
+                    if source == 'external':
+                        stmt = stmt.filter(Knowledge.meta['source'].as_string() == 'external')
+                    elif source == 'local':
+                        stmt = stmt.filter(
+                            or_(
+                                Knowledge.meta.is_(None),
+                                Knowledge.meta['source'].as_string() != 'external',
+                            )
+                        )
+
                     stmt = AccessGrants.has_permission_filter(
                         db=db,
                         query=stmt,
@@ -309,6 +323,14 @@ class KnowledgeTable:
 
                 knowledge_ids = [kb.id for kb, _ in items]
                 grants_map = await AccessGrants.get_grants_by_resources('knowledge', knowledge_ids, db=db)
+                file_counts = {}
+                if knowledge_ids:
+                    file_count_result = await db.execute(
+                        select(KnowledgeFile.knowledge_id, func.count(KnowledgeFile.id))
+                        .where(KnowledgeFile.knowledge_id.in_(knowledge_ids))
+                        .group_by(KnowledgeFile.knowledge_id)
+                    )
+                    file_counts = dict(file_count_result.all())
 
                 knowledge_bases = []
                 for knowledge_base, user in items:
@@ -323,6 +345,7 @@ class KnowledgeTable:
                                     )
                                 ).model_dump(),
                                 'user': (UserModel.model_validate(user).model_dump() if user else None),
+                                'file_count': file_counts.get(knowledge_base.id, 0),
                             }
                         )
                     )
@@ -369,6 +392,7 @@ class KnowledgeTable:
                             # to avoid PostgreSQL "invalid memory alloc request
                             # size" on large extracted-content rows (#24670).
                             content_text = File.data['content'].as_string()
+                            content_text = func.substr(content_text, 1, RAG_FILE_CONTENT_SEARCH_MAX_CHARS)
                             search_filter = or_(
                                 File.filename.ilike(f'%{q}%'),
                                 content_text.ilike(f'%{q}%'),
@@ -405,6 +429,7 @@ class KnowledgeTable:
                 if limit:
                     stmt = stmt.limit(limit)
 
+                stmt = stmt.options(defer(File.data))
                 result = await db.execute(stmt)
                 rows = result.all()
 
@@ -412,7 +437,13 @@ class KnowledgeTable:
                 for file, user, knowledge in rows:
                     items.append(
                         FileUserResponse(
-                            **FileModel.model_validate(file).model_dump(),
+                            id=file.id,
+                            user_id=file.user_id,
+                            hash=file.hash,
+                            filename=file.filename,
+                            meta=file.meta,
+                            created_at=file.created_at,
+                            updated_at=file.updated_at,
                             user=(UserResponse(**UserModel.model_validate(user).model_dump()) if user else None),
                             collection=(await self._to_knowledge_model(knowledge, db=db)).model_dump(),
                         )
@@ -554,6 +585,7 @@ class KnowledgeTable:
                             # to avoid PostgreSQL memory allocation failures on
                             # large content (#24670).
                             content_text = File.data['content'].as_string()
+                            content_text = func.substr(content_text, 1, RAG_FILE_CONTENT_SEARCH_MAX_CHARS)
                             stmt = stmt.filter(
                                 or_(
                                     File.filename.ilike(f'%{query_key}%'),
@@ -592,17 +624,23 @@ class KnowledgeTable:
                 if limit:
                     stmt = stmt.limit(limit)
 
+                stmt = stmt.options(defer(File.data))
                 result = await db.execute(stmt)
                 items = result.all()
 
-                files = []
-                for file, user in items:
-                    files.append(
-                        FileUserResponse(
-                            **FileModel.model_validate(file).model_dump(),
-                            user=(UserResponse(**UserModel.model_validate(user).model_dump()) if user else None),
-                        )
+                files = [
+                    FileUserResponse(
+                        id=file.id,
+                        user_id=file.user_id,
+                        hash=file.hash,
+                        filename=file.filename,
+                        meta=file.meta,
+                        created_at=file.created_at,
+                        updated_at=file.updated_at,
+                        user=(UserResponse(**UserModel.model_validate(user).model_dump()) if user else None),
                     )
+                    for file, user in items
+                ]
 
                 return KnowledgeFileListResponse(
                     items=files,
@@ -756,6 +794,25 @@ class KnowledgeTable:
                     .filter_by(id=id)
                     .values(
                         data=data,
+                        updated_at=int(time.time()),
+                    )
+                )
+                await db.commit()
+                return await self.get_knowledge_by_id(id=id, db=db)
+        except Exception as e:
+            log.exception(e)
+            return None
+
+    async def update_knowledge_meta_by_id(
+        self, id: str, meta: dict, db: Optional[AsyncSession] = None
+    ) -> Optional[KnowledgeModel]:
+        try:
+            async with get_async_db_context(db) as db:
+                await db.execute(
+                    update(Knowledge)
+                    .filter_by(id=id)
+                    .values(
+                        meta=meta,
                         updated_at=int(time.time()),
                     )
                 )

@@ -1,7 +1,7 @@
 <script>
 	import { io } from 'socket.io-client';
 	import { spring } from 'svelte/motion';
-	import PyodideWorker from '$lib/workers/pyodide.worker?worker';
+	import { createPyodideWorker } from '$lib/pyodide/createPyodideWorker';
 	import { Toaster, toast } from 'svelte-sonner';
 
 	let loadingProgress = spring(0, {
@@ -21,8 +21,6 @@
 		socket,
 		socketConnected,
 		chatId,
-		chats,
-		currentChatPage,
 		tags,
 		temporaryChatEnabled,
 		isLastActiveTab,
@@ -39,6 +37,7 @@
 		pyodideWorker,
 		desktopEvent
 	} from '$lib/stores';
+	import { refreshChatList } from '$lib/stores/chatList';
 	import { getFileContentById } from '$lib/apis/files';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -53,7 +52,7 @@
 
 	import { executeToolServer, getBackendConfig, getModels, getVersion } from '$lib/apis';
 	import { getSessionUser, updateUserTimezone, userSignOut } from '$lib/apis/auths';
-	import { getAllTags, getChatList } from '$lib/apis/chats';
+	import { getAllTags } from '$lib/apis/chats';
 	import { chatCompletion } from '$lib/apis/openai';
 	import {
 		addOpenAIConnection,
@@ -63,12 +62,20 @@
 	} from '$lib/utils/connections';
 
 	import { WEBUI_API_BASE_URL, WEBUI_BASE_URL, WEBUI_HOSTNAME } from '$lib/constants';
-	import { bestMatchingLanguage, displayFileHandler, getUserTimezone } from '$lib/utils';
+	import {
+		bestMatchingLanguage,
+		cleanText,
+		displayFileHandler,
+		getUserTimezone,
+		removeAllDetails
+	} from '$lib/utils';
 	import { setTextScale } from '$lib/utils/text-scale';
 
 	import NotificationToast from '$lib/components/NotificationToast.svelte';
 	import AppSidebar from '$lib/components/app/AppSidebar.svelte';
+	import SyncStatsModal from '$lib/components/chat/Settings/SyncStatsModal.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
+	import { getOutputText } from '$lib/components/chat/Messages/structuredOutput';
 	import { getUserSettings } from '$lib/apis/users';
 	import dayjs from 'dayjs';
 	import { getChannels } from '$lib/apis/channels';
@@ -101,16 +108,58 @@
 
 	let loaded = false;
 	let tokenTimer = null;
+	let isAuthRedirectInProgress = false;
 
 	let showRefresh = false;
 
+	let showSyncStatsModal = false;
+	let syncStatsEventData = null;
 
 	let heartbeatInterval = null;
 	let disconnectToastTimer = null;
 	let disconnectWarningShown = false;
+	let pageIsVisible = true;
+	let pageWasHidden = false;
+	let lastVisibleAt = Date.now();
+	let disconnectReason = null;
 
 	const BREAKPOINT = 768;
 	const DISCONNECT_TOAST_DELAY_MS = 2000;
+	const RECENT_RESUME_GRACE_MS = 8000;
+	const RESUME_DISCONNECT_REASONS = new Set(['ping timeout', 'transport close', 'transport error']);
+
+	const clearDisconnectToastTimer = () => {
+		if (disconnectToastTimer) {
+			clearTimeout(disconnectToastTimer);
+			disconnectToastTimer = null;
+		}
+	};
+
+	const recentlyResumed = () =>
+		pageWasHidden && Date.now() - lastVisibleAt < RECENT_RESUME_GRACE_MS;
+
+	const isLikelyResumeDisconnect = (reason) => {
+		return (!pageIsVisible || recentlyResumed()) && RESUME_DISCONNECT_REASONS.has(reason);
+	};
+
+	const scheduleDisconnectToast = () => {
+		clearDisconnectToastTimer();
+
+		const resumeDelay = isLikelyResumeDisconnect(disconnectReason)
+			? Math.max(RECENT_RESUME_GRACE_MS - (Date.now() - lastVisibleAt), 0)
+			: 0;
+
+		disconnectToastTimer = setTimeout(() => {
+			disconnectToastTimer = null;
+
+			if ($socket?.connected || !pageIsVisible || isLikelyResumeDisconnect(disconnectReason)) {
+				return;
+			}
+
+			disconnectWarningShown = true;
+			toast.warning($i18n.t('Connection lost. Reconnecting...'));
+		}, resumeDelay + DISCONNECT_TOAST_DELAY_MS);
+	};
 
 	const setupSocket = async (enableWebsocket) => {
 		const _socket = io(`${WEBUI_BASE_URL}` || undefined, {
@@ -134,19 +183,17 @@
 			console.log('connected', _socket.id);
 
 			// Cancel any pending disconnect toast if we reconnected quickly
-			if (disconnectToastTimer) {
-				clearTimeout(disconnectToastTimer);
-				disconnectToastTimer = null;
-			}
+			clearDisconnectToastTimer();
 
 			if (hasConnectedOnce) {
 				socketConnected.set(true);
 				// Only show "Reconnected" if the user actually saw the disconnect warning
 				if (disconnectWarningShown) {
 					toast.success($i18n.t('Reconnected'));
-					disconnectWarningShown = false;
 				}
 			}
+			disconnectWarningShown = false;
+			disconnectReason = null;
 			hasConnectedOnce = true;
 
 			const res = await getVersion(localStorage.token);
@@ -203,18 +250,15 @@
 		_socket.on('disconnect', (reason, details) => {
 			console.log(`Socket ${_socket.id} disconnected due to ${reason}`);
 			socketConnected.set(false);
-
-			// Delay showing the disconnect toast so brief interruptions
-			// (e.g. mobile tab backgrounding) don't flash a nuisance warning
-			if (disconnectToastTimer) {
-				clearTimeout(disconnectToastTimer);
-			}
+			disconnectReason = reason;
 			disconnectWarningShown = false;
-			disconnectToastTimer = setTimeout(() => {
-				disconnectToastTimer = null;
-				disconnectWarningShown = true;
-				toast.warning($i18n.t('Connection lost. Reconnecting...'));
-			}, DISCONNECT_TOAST_DELAY_MS);
+
+			// Delay visible warnings while mobile browsers resume suspended tabs.
+			if (isLikelyResumeDisconnect(reason)) {
+				clearDisconnectToastTimer();
+			} else {
+				scheduleDisconnectToast();
+			}
 
 			if (heartbeatInterval) {
 				clearInterval(heartbeatInterval);
@@ -234,7 +278,7 @@
 	const getOrCreateWorker = () => {
 		let worker = $pyodideWorker;
 		if (!worker) {
-			worker = new PyodideWorker();
+			worker = createPyodideWorker();
 			pyodideWorker.set(worker);
 		}
 		return worker;
@@ -472,7 +516,7 @@
 		const type = event?.data?.type ?? null;
 		const data = event?.data?.data ?? null;
 
-		// Calendar alerts are not chat-scoped — handle before chat_id checks
+		// Calendar alerts are not chat-scoped, handle before chat_id checks
 		if (type === 'calendar:alert' && data) {
 			const timeStr =
 				data.minutes_until <= 0
@@ -495,7 +539,7 @@
 
 			if ($isLastActiveTab) {
 				if ($settings?.notificationEnabled ?? false) {
-					new Notification(`${data.title} • Kolb-Bot`, {
+					new Notification(`${data.title} • Open WebUI`, {
 						body: timeStr,
 						icon: `${WEBUI_BASE_URL}/static/favicon.png`
 					});
@@ -605,10 +649,14 @@
 			}
 		}
 
-		if ((event.chat_id !== $chatId && !$temporaryChatEnabled) || isInBackground) {
+		if (
+			!event?.internal &&
+			((event.chat_id !== $chatId && !$temporaryChatEnabled) || isInBackground)
+		) {
 			if (type === 'chat:completion') {
-				const { done, content, title } = data;
+				const { done, content, output, title } = data;
 				const displayTitle = title || $i18n.t('New Chat');
+				const contentPreview = cleanText(removeAllDetails(getOutputText(output) || content || ''));
 
 				if (done) {
 					if (
@@ -626,8 +674,8 @@
 
 					if ($isLastActiveTab) {
 						if ($settings?.notificationEnabled ?? false) {
-							new Notification(`${displayTitle} • Kolb-Bot`, {
-								body: content,
+							new Notification(`${displayTitle} • Open WebUI`, {
+								body: contentPreview,
 								icon: `${WEBUI_BASE_URL}/static/favicon.png`
 							});
 						}
@@ -638,7 +686,7 @@
 							onClick: () => {
 								goto(`/c/${event.chat_id}`);
 							},
-							content: content,
+							content: contentPreview,
 							title: displayTitle
 						},
 						duration: 15000,
@@ -646,8 +694,7 @@
 					});
 				}
 			} else if (type === 'chat:title') {
-				currentChatPage.set(1);
-				await chats.set(await getChatList(localStorage.token, $currentChatPage));
+				await refreshChatList(localStorage.token);
 			} else if (type === 'chat:tags') {
 				tags.set(await getAllTags(localStorage.token));
 			}
@@ -734,7 +781,7 @@
 
 				if ($isLastActiveTab) {
 					if ($settings?.notificationEnabled ?? false) {
-						new Notification(`${title} • Kolb-Bot`, {
+						new Notification(`${title} • Open WebUI`, {
 							body: data?.content,
 							icon: `${WEBUI_API_BASE_URL}/users/${data?.user?.id}/profile/image`
 						});
@@ -757,6 +804,75 @@
 	};
 
 	const TOKEN_EXPIRY_BUFFER = 60; // seconds
+	const resolveFetchUrl = (input) => {
+		if (input instanceof Request) {
+			return new URL(input.url, window.location.origin);
+		}
+
+		return new URL(input, window.location.origin);
+	};
+
+	const resolveFetchHeaders = (input, init) => {
+		if (init?.headers) {
+			return new Headers(init.headers);
+		}
+
+		if (input instanceof Request) {
+			return input.headers;
+		}
+
+		return new Headers();
+	};
+
+	const isAuthenticatedBackendFetch = (input, init) => {
+		try {
+			const requestUrl = resolveFetchUrl(input);
+			const backendOrigin = new URL(WEBUI_BASE_URL || '/', window.location.origin).origin;
+
+			return (
+				requestUrl.origin === backendOrigin && resolveFetchHeaders(input, init).has('authorization')
+			);
+		} catch {
+			return false;
+		}
+	};
+
+	const redirectToAuthAfterUnauthorized = () => {
+		if (isAuthRedirectInProgress || window.location.pathname === '/auth') {
+			return;
+		}
+
+		isAuthRedirectInProgress = true;
+		if (tokenTimer) {
+			clearInterval(tokenTimer);
+			tokenTimer = null;
+		}
+		user.set(null);
+		localStorage.removeItem('token');
+		userSignOut().catch((error) => {
+			console.error('Error signing out expired session:', error);
+		});
+		toast.error($i18n.t('Session expired. Please sign in again.'));
+
+		const currentPath = `${window.location.pathname}${window.location.search}`;
+		goto(`/auth?redirect=${encodeURIComponent(currentPath)}`).finally(() => {
+			isAuthRedirectInProgress = false;
+		});
+	};
+
+	const isCurrentSessionUnauthorized = async (originalFetch) => {
+		return originalFetch(`${WEBUI_API_BASE_URL}/auths/`, {
+			method: 'GET',
+			headers: {
+				'Content-Type': 'application/json',
+				Authorization: `Bearer ${localStorage.token}`
+			},
+			credentials: 'include'
+		})
+			.then((res) => res.status === 401)
+			.catch(() => false);
+	};
+
 	const checkTokenExpiry = async () => {
 		const exp = $user?.expires_at; // token expiry time in unix timestamp
 		const now = Math.floor(Date.now() / 1000); // current time in unix timestamp
@@ -767,11 +883,7 @@
 		}
 
 		if (now >= exp - TOKEN_EXPIRY_BUFFER) {
-			const res = await userSignOut();
-			user.set(null);
-			localStorage.removeItem('token');
-
-			location.href = res?.redirect_url ?? '/auth';
+			redirectToAuthAfterUnauthorized();
 		}
 	};
 
@@ -863,7 +975,39 @@
 		}
 	};
 
+	const windowMessageEventHandler = async (event) => {
+		if (
+			!['https://openwebui.com', 'https://www.openwebui.com', 'http://localhost:9999'].includes(
+				event.origin
+			)
+		) {
+			return;
+		}
+
+		if (event.data === 'export:stats' || event.data?.type === 'export:stats') {
+			syncStatsEventData = event.data;
+			showSyncStatsModal = true;
+		}
+	};
+
 	onMount(async () => {
+		const originalFetch = window.fetch.bind(window);
+		window.fetch = async (input, init) => {
+			const response = await originalFetch(input, init);
+
+			if (
+				response.status === 401 &&
+				localStorage.token &&
+				isAuthenticatedBackendFetch(input, init) &&
+				(await isCurrentSessionUnauthorized(originalFetch))
+			) {
+				redirectToAuthAfterUnauthorized();
+			}
+
+			return response;
+		};
+
+		window.addEventListener('message', windowMessageEventHandler);
 
 		let touchstartY = 0;
 
@@ -937,18 +1081,39 @@
 		};
 
 		// Set yourself as the last active tab when this tab is focused
+		const handlePageHidden = () => {
+			pageIsVisible = false;
+			pageWasHidden = true;
+			clearDisconnectToastTimer();
+		};
+
+		const handlePageVisible = () => {
+			pageIsVisible = true;
+			lastVisibleAt = Date.now();
+
+			isLastActiveTab.set(true); // This tab is now the active tab
+			bc.postMessage('active'); // Notify other tabs that this tab is active
+
+			// Check token expiry when the tab becomes active
+			checkTokenExpiry();
+
+			if ($socket && !$socket.connected) {
+				scheduleDisconnectToast();
+			}
+		};
+
 		const handleVisibilityChange = () => {
 			if (document.visibilityState === 'visible') {
-				isLastActiveTab.set(true); // This tab is now the active tab
-				bc.postMessage('active'); // Notify other tabs that this tab is active
-
-				// Check token expiry when the tab becomes active
-				checkTokenExpiry();
+				handlePageVisible();
+			} else {
+				handlePageHidden();
 			}
 		};
 
 		// Add event listener for visibility state changes
 		document.addEventListener('visibilitychange', handleVisibilityChange);
+		window.addEventListener('pagehide', handlePageHidden);
+		window.addEventListener('pageshow', handlePageVisible);
 
 		// Call visibility change handler initially to set state on load
 		handleVisibilityChange();
@@ -973,18 +1138,6 @@
 
 				$socket?.on('events', chatEventHandler);
 				$socket?.on('events:channel', channelEventHandler);
-
-				const userSettings = await getUserSettings(localStorage.token);
-				if (userSettings) {
-					settings.set(userSettings.ui);
-				} else {
-					try {
-						settings.set(JSON.parse(localStorage.getItem('settings') ?? '{}'));
-					} catch {
-						settings.set({});
-					}
-				}
-				setTextScale($settings?.textScale ?? 1);
 
 				// Set up the token expiry check
 				if (tokenTimer) {
@@ -1117,12 +1270,24 @@
 			loaded = true;
 		}
 
+		// Auto-show SyncStatsModal when opened with ?sync=true (from community)
+		if (
+			(window.opener ?? false) &&
+			$page.url.searchParams.get('sync') === 'true' &&
+			($config?.features?.enable_community_sharing ?? false)
+		) {
+			showSyncStatsModal = true;
+		}
+
 		return () => {
 			window.removeEventListener('resize', onResize);
+			window.removeEventListener('message', windowMessageEventHandler);
 			document.removeEventListener('touchstart', touchstartHandler);
 			document.removeEventListener('touchmove', touchmoveHandler);
 			document.removeEventListener('touchend', touchendHandler);
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			window.removeEventListener('pagehide', handlePageHidden);
+			window.removeEventListener('pageshow', handlePageVisible);
 		};
 	});
 
@@ -1167,6 +1332,7 @@
 {/if}
 
 {#if $config?.features.enable_community_sharing}
+	<SyncStatsModal bind:show={showSyncStatsModal} eventData={syncStatsEventData} />
 {/if}
 
 <Toaster
@@ -1180,4 +1346,10 @@
 	richColors
 	position="top-right"
 	closeButton
+	toastOptions={{
+		classes: {
+			closeButton:
+				'!bg-white/80 !text-gray-500 !border-gray-200 hover:!bg-gray-50 hover:!text-gray-700 dark:!bg-gray-850 dark:!text-gray-400 dark:!border-gray-700 dark:hover:!bg-gray-800 dark:hover:!text-gray-200'
+		}
+	}}
 />

@@ -34,9 +34,9 @@ import { decode } from 'html-entities';
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const formatNumber = (num: number): string => {
-	return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 }).format(
-		num
-	);
+	return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
+		.format(num)
+		.toLowerCase();
 };
 
 function escapeRegExp(string: string): string {
@@ -254,6 +254,23 @@ export const sanitizeHistory = (history) => {
 		}
 	}
 
+	// Recover currentId before role reconstruction can make a malformed node
+	// look valid.
+	const currentMessage = history.messages?.[history.currentId];
+	if (!currentMessage?.id || !currentMessage?.role) {
+		let latestLeafId = null;
+		let latestTimestamp = -1;
+
+		for (const [id, message] of Object.entries(history.messages)) {
+			if (message.childrenIds.length === 0 && (message.timestamp ?? 0) > latestTimestamp) {
+				latestLeafId = id;
+				latestTimestamp = message.timestamp ?? 0;
+			}
+		}
+
+		history.currentId = latestLeafId ?? Object.keys(history.messages)[0] ?? null;
+	}
+
 	// Reconstruct missing parentId and role
 	for (const [id, message] of Object.entries(history.messages)) {
 		// Well-formed: has role and explicit parentId (null is valid for root)
@@ -279,20 +296,6 @@ export const sanitizeHistory = (history) => {
 	// Prune childrenIds referencing deleted/missing nodes
 	for (const message of Object.values(history.messages)) {
 		message.childrenIds = message.childrenIds.filter((childId) => history.messages[childId]);
-	}
-
-	// Recover currentId if it points to a missing or incomplete node
-	const currentMessage = history.messages?.[history.currentId];
-	if (!currentMessage?.id || !currentMessage?.role) {
-		let latestLeafId = null;
-		let latestTimestamp = -1;
-		for (const [id, message] of Object.entries(history.messages)) {
-			if (message.childrenIds.length === 0 && (message.timestamp ?? 0) > latestTimestamp) {
-				latestLeafId = id;
-				latestTimestamp = message.timestamp ?? 0;
-			}
-		}
-		history.currentId = latestLeafId ?? Object.keys(history.messages)[0] ?? null;
 	}
 };
 
@@ -489,6 +492,29 @@ export const formatDate = (inputDate) => {
 		return `{{LOCALIZED_DATE}} at {{LOCALIZED_TIME}}`;
 	}
 };
+
+const messageTimestampDate = (inputDate) => {
+	const date = new Date(inputDate < 1_000_000_000_000 ? inputDate * 1000 : inputDate);
+	return Number.isNaN(date.getTime()) ? null : date;
+};
+
+export const formatMessageTimestamp = (inputDate) =>
+	messageTimestampDate(inputDate)?.toLocaleString(undefined, {
+		month: 'short',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit'
+	}) ?? '';
+
+export const formatMessageTimestampFull = (inputDate) =>
+	messageTimestampDate(inputDate)?.toLocaleString(undefined, {
+		weekday: 'long',
+		year: 'numeric',
+		month: 'long',
+		day: 'numeric',
+		hour: 'numeric',
+		minute: '2-digit'
+	}) ?? '';
 
 export const copyToClipboard = async (text, html = null, formatted = false) => {
 	if (formatted) {
@@ -1927,7 +1953,8 @@ export const initMermaid = async () => {
 	mermaid.initialize({
 		startOnLoad: false, // Should be false when using render API
 		theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default',
-		securityLevel: 'loose'
+		securityLevel: 'loose',
+		htmlLabels: false
 	});
 	return mermaid;
 };
@@ -1999,11 +2026,23 @@ export const renderMermaidDiagram = async (
 	}
 };
 
-export const renderVegaVisualization = async (spec: string, i18n?: any) => {
+export const renderVegaVisualization = async (spec: string, lang: string = '', i18n?: any) => {
 	const vega = await import('vega');
 	const parsedSpec = JSON.parse(spec);
+	const hasVegaLiteKeys =
+		'mark' in parsedSpec ||
+		'encoding' in parsedSpec ||
+		'layer' in parsedSpec ||
+		'hconcat' in parsedSpec ||
+		'vconcat' in parsedSpec ||
+		'repeat' in parsedSpec ||
+		'facet' in parsedSpec;
+	const isVegaLite =
+		lang === 'vega-lite' ||
+		(parsedSpec.$schema && parsedSpec.$schema.includes('vega-lite')) ||
+		hasVegaLiteKeys;
 	let vegaSpec = parsedSpec;
-	if (parsedSpec.$schema && parsedSpec.$schema.includes('vega-lite')) {
+	if (isVegaLite) {
 		const vegaLite = await import('vega-lite');
 		vegaSpec = vegaLite.compile(parsedSpec).spec;
 	}

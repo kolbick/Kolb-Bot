@@ -114,7 +114,7 @@ async def has_access(
     Check if a user has the specified permission using an in-memory access_grants list.
 
     Used for config-driven resources (arena models, tool servers) that store
-    access control as JSON in ConfigVar rather than in the access_grant DB table.
+    access control as JSON config rather than in the access_grant DB table.
 
     Semantics:
     - None or []  → private (owner-only, deny all)
@@ -253,6 +253,23 @@ async def filter_allowed_access_grants(
     ):
         access_grants = strip_user_access_grants(access_grants)
 
+    if any(
+        (grant.get('principal_type') if isinstance(grant, dict) else getattr(grant, 'principal_type', None))
+        == 'group'
+        for grant in access_grants
+    ) and not await has_permission(
+        user_id,
+        'access_grants.allow_groups',
+        default_permissions,
+        db=db,
+    ):
+        access_grants = [
+            grant
+            for grant in access_grants
+            if (grant.get('principal_type') if isinstance(grant, dict) else getattr(grant, 'principal_type', None))
+            != 'group'
+        ]
+
     return access_grants
 
 
@@ -321,7 +338,8 @@ async def check_model_access(
         return
 
     if model_info:
-        if user.role == 'user':
+        # Enforce for every non-admin role (including pending); never fail open.
+        if user.role != 'admin':
             from open_webui.models.access_grants import AccessGrants
 
             user_group_ids = {group.id for group in await Groups.get_groups_by_member_id(user.id)}
