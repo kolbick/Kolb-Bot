@@ -1,0 +1,32 @@
+# Branding-audit allowlist. Every entry is a path prefix exempt from the
+# text scan, with the reason it must keep upstream references. Keep this list
+# as small as possible; nothing here may be user-visible product identity.
+
+# Required license content — legally must retain upstream names verbatim.
+LICENSE
+LICENSE_HISTORY
+LICENSE_NOTICE
+CODE_OF_CONDUCT.md
+CONTRIBUTOR_LICENSE_AGREEMENT
+
+# Upstream provenance and sync documentation — must name the upstream project
+# to be useful (docs/UPSTREAM.md, UPSTREAM_SYNC.md, UPSTREAM_CHANGELOG.md,
+# LICENSE_NOTES.md, BUILD_SPEC.md, BRANDING docs describing what was renamed).
+docs/
+
+# In-app About screen retains the upstream copyright attribution required by
+# the license; it is the single sanctioned user-visible mention.
+src/lib/components/chat/Settings/About.svelte
+
+# The rebrand/audit tooling itself must spell out the forbidden patterns.
+scripts/apply-brand.py
+scripts/audit-branding.sh
+scripts/audit-branding-allowlist.txt
+
+# Dependency/source metadata, not user-visible: upstream authorship in
+# pyproject and the pinned source references used for upstream sync.
+pyproject.toml
+
+# Terminal service build documentation references the upstream Open Terminal
+# repository it builds from (MIT attribution requirement).
+services/kolb-terminal/

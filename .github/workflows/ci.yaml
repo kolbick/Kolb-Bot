@@ -1,0 +1,57 @@
+# Kolb-Bot CI — build, test, and branding audit.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-audit:
+    name: Build, test & branding audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Brand configuration unit tests
+        run: npm run test:frontend
+
+      - name: Production build
+        run: npm run build
+        env:
+          APP_BUILD_HASH: ${{ github.sha }}
+
+      - name: Branding audit (source + production bundle)
+        run: bash scripts/audit-branding.sh
+
+  backend-checks:
+    name: Backend syntax & brand module tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile all backend modules
+        run: python -m compileall -q backend/open_webui
+
+      - name: Brand module tests
+        run: python -m unittest discover -s backend/test -p 'test_brand*.py' -v

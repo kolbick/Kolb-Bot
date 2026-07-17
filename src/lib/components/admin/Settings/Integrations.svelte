@@ -288,15 +288,8 @@
 						<div class="mt-1.5">
 							<div class="text-xs text-gray-500">
 								{$i18n.t(
-									'Connect to Open Terminal instances. All users will have access to file browsing and terminal tools through these servers.'
+									'Connect to terminal server instances. All users will have access to file browsing and terminal tools through these servers.'
 								)}
-							</div>
-							<div class="text-xs text-gray-600 dark:text-gray-300 mt-1">
-								<a
-									class="underline"
-									href="https://github.com/open-webui/open-terminal"
-									target="_blank">{$i18n.t('Learn more about Open Terminal')} ↗</a
-								>
 							</div>
 						</div>
 					</div>

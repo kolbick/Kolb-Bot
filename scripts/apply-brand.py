@@ -60,11 +60,28 @@ def replace_names(text: str) -> str:
     return ''.join(parts)
 
 
+# Locale values include hand-translated spellings ("Open-WebUI", "Open WEBUI"),
+# so locale files get a case-insensitive variant match instead of the literal
+# replacements used for source code.
+LOCALE_VARIANT_RE = re.compile(r'open[\s_-]?web[\s_-]?ui', re.I)
+
+
+def replace_locale_names(text: str) -> str:
+    parts = []
+    last = 0
+    for m in INTERPOLATION_RE.finditer(text):
+        parts.append(LOCALE_VARIANT_RE.sub(PRODUCT_NAME, text[last : m.start()]))
+        parts.append(m.group(0))
+        last = m.end()
+    parts.append(LOCALE_VARIANT_RE.sub(PRODUCT_NAME, text[last:]))
+    return ''.join(parts)
+
+
 def rebrand_locales() -> int:
     changed = 0
     for path in sorted((ROOT / 'src/lib/i18n/locales').glob('*/translation.json')):
         data = json.loads(path.read_text(encoding='utf-8'))
-        out = {replace_names(k): replace_names(v) for k, v in data.items()}
+        out = {replace_locale_names(k): replace_locale_names(v) for k, v in data.items()}
         if out != data:
             path.write_text(
                 json.dumps(out, ensure_ascii=False, indent='\t') + '\n', encoding='utf-8'

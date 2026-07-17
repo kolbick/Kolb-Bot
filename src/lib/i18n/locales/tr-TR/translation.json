@@ -1547,7 +1547,7 @@
 	"Kolb-Bot uses faster-whisper internally.": "Kolb-Bot, dahili olarak faster-whisper kullanır.",
 	"Kolb-Bot uses SpeechT5 and CMU Arctic speaker embeddings.": "Kolb-Bot, SpeechT5 ve CMU Arctic konuşmacı gömme kullanır.",
 	"Kolb-Bot version": "Kolb-Bot sürümü",
-	"Kolb-Bot version (v{{OPEN_WEBUI_VERSION}}) is lower than required version (v{{REQUIRED_VERSION}})": "Open-WebUI sürümü (v{{OPEN_WEBUI_VERSION}}) gerekli sürümden (v{{REQUIRED_VERSION}}) düşük",
+	"Kolb-Bot version (v{{OPEN_WEBUI_VERSION}}) is lower than required version (v{{REQUIRED_VERSION}})": "Kolb-Bot sürümü (v{{OPEN_WEBUI_VERSION}}) gerekli sürümden (v{{REQUIRED_VERSION}}) düşük",
 	"OpenAI": "OpenAI",
 	"OpenAI API": "OpenAI API",
 	"OpenAI API Base URL": "OpenAI API Temel URL'si",
