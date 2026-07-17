@@ -37,5 +37,9 @@ the `upstream` remote allows fetching the full history at any time
 
 | Service | Upstream | Pinned ref | Status |
 | --- | --- | --- | --- |
-| Kolb Terminal | Open Terminal (MIT) — see `services/kolb-terminal/` | `TERMINAL_SOURCE_REF` in `.env` (pin on first deploy) | Unverified build scaffold — see docs/OPEN_TERMINAL.md |
-| Kolb Computer | CPTR (Open Use License) — external service, not vendored | n/a | Config-level integration — see docs/CPTR_INTEGRATION.md |
+| Kolb Terminal | `open-webui/open-terminal` (MIT) — see `services/kolb-terminal/` | `v0.11.34` (`TERMINAL_SOURCE_REF` in `.env`) | Built and verified against real upstream source; on by default with per-user isolation — see docs/OPEN_TERMINAL.md |
+| Kolb Computer | CPTR (Open Use License) — external service, not vendored | n/a | Config-level integration, auto-wired at startup when configured — see docs/CPTR_INTEGRATION.md |
+
+Optional, not vendored: `open-webui/terminals` (early-stage orchestrator for
+container-per-user terminal isolation, requires Docker socket access — see
+docs/OPEN_TERMINAL.md "Stronger isolation").

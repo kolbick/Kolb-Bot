@@ -1,54 +1,79 @@
-# Kolb Terminal — branded build of Open Terminal (MIT licensed).
+# Kolb Terminal — built from the official Open Terminal source (MIT
+# licensed): https://github.com/open-webui/open-terminal
 #
-# Builds from the official Open Terminal source at a pinned ref, from source,
-# not from a prebuilt image. The upstream MIT license and copyright notice are
-# preserved in the image at /app/LICENSE; only user-visible display identity
-# is changed (via KOLB_TERMINAL_* environment below and the display name the
-# main app assigns to the connection).
+# Verified against the real upstream source at build time (see
+# docs/OPEN_TERMINAL.md). Uses the full (non-slim) image because per-user
+# isolation (OPEN_TERMINAL_MULTI_USER) needs `useradd`/`sudo`, which the
+# slim/alpine variants deliberately omit. The upstream MIT LICENSE is
+# preserved in the image at /app/LICENSE.
 #
-# NOTE (unfinished item, see docs/OPEN_TERMINAL.md): this build file was
-# authored in an environment without network access to the upstream
-# repository. Verify the clone URL, the pinned TERMINAL_SOURCE_REF, and the
-# install/run commands against the official Open Terminal repository on first
-# deploy, and pin TERMINAL_SOURCE_REF to a release tag.
+# Multi-user isolation is ON by default here: each distinct Kolb-Bot user
+# (identified by the X-User-Id header the app's terminal proxy already
+# sends) gets its own Linux account and home directory under /home, with
+# kernel-enforced (chmod) separation between users. This is upstream's
+# documented "small, trusted group" isolation model, not container-per-user
+# isolation — see docs/OPEN_TERMINAL.md for that stronger option.
 
-ARG TERMINAL_SOURCE_REF=main
+ARG TERMINAL_SOURCE_REF=v0.11.34
 
-FROM python:3.12-slim AS source
-
+FROM python:3.12.13 AS source
 ARG TERMINAL_SOURCE_REF
-RUN apt-get update && apt-get install -y --no-install-recommends git curl \
+RUN apt-get update && apt-get install -y --no-install-recommends git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /src
 RUN git clone --depth 1 --branch "${TERMINAL_SOURCE_REF}" \
-    https://github.com/open-webui/openterminal.git . \
-    && test -f LICENSE
+    https://github.com/open-webui/open-terminal.git . \
+    && test -f LICENSE \
+    && grep -qi 'MIT License' LICENSE
 
-FROM python:3.12-slim
+FROM python:3.12.13
 
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && useradd --create-home --uid 1000 terminal
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    coreutils findutils grep sed gawk diffutils patch \
+    less file tree bc man-db \
+    curl wget net-tools iputils-ping dnsutils netcat-openbsd socat telnet \
+    openssh-client rsync \
+    vim nano \
+    git \
+    build-essential cmake make \
+    jq sqlite3 \
+    ffmpeg pandoc imagemagick \
+    zip unzip tar gzip bzip2 xz-utils zstd \
+    procps htop lsof strace \
+    sudo tmux screen tini iptables ipset dnsmasq \
+    ca-certificates gnupg apt-transport-https \
+    libcap2-bin \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=source --chown=terminal:terminal /src /app
+COPY --from=source /src .
 
-RUN pip install --no-cache-dir -e . || pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir . \
+    && cp "$(readlink -f "$(which python3)")" /usr/local/bin/python3-ot \
+    && setcap cap_setgid+ep /usr/local/bin/python3-ot \
+    && sed -i "1s|.*|#!/usr/local/bin/python3-ot|" "$(which open-terminal)"
 
-# Branded display identity only; upstream package internals are untouched.
-ENV TERMINAL_DISPLAY_NAME="Kolb Terminal" \
-    HOME=/data
+RUN useradd -m -s /bin/bash user && echo 'user ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
-USER terminal
-VOLUME /data
-EXPOSE 8080
+# Multi-user isolation on by default — see file header. Disable per-deploy
+# with `-e OPEN_TERMINAL_MULTI_USER=false` if a single shared workspace is
+# preferred instead.
+ENV OPEN_TERMINAL_MULTI_USER=true \
+    SHELL=/bin/bash \
+    PATH="/home/user/.local/bin:${PATH}"
+
+USER user
+WORKDIR /home/user
+
+EXPOSE 8000
 
 LABEL org.opencontainers.image.title="Kolb Terminal" \
-      org.opencontainers.image.description="Kolb-Bot terminal service, built from Open Terminal source (MIT)." \
-      org.opencontainers.image.licenses="MIT"
+      org.opencontainers.image.description="Kolb-Bot terminal service, built from Open Terminal source (MIT), with per-user isolation." \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/open-webui/open-terminal"
 
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-    CMD curl --silent --fail http://localhost:8080/health || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=15s \
+    CMD curl --silent --fail http://localhost:8000/health || exit 1
 
-CMD ["python", "-m", "openterminal", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT ["/usr/bin/tini", "--", "/app/entrypoint.sh"]
+CMD ["run"]

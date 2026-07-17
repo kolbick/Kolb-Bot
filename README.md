@@ -9,8 +9,8 @@ of Open WebUI, deployed as its own Docker Compose stack and served at
 `https://kolb-bot.com`.
 
 - **Product**: Kolb-Bot (`kolb-bot`)
-- **Terminal**: Kolb Terminal (isolated, opt-in service)
-- **Computer workspace**: Kolb Computer (CPTR gateway connection)
+- **Terminal**: Kolb Terminal — on by default, per-user isolated
+- **Computer workspace**: Kolb Computer — CPTR gateway, auto-connects when configured, admin-only by default
 - **Default host port**: `3101` (behind the reverse proxy)
 
 The original build specification lives in `docs/BUILD_SPEC.md`. Upstream

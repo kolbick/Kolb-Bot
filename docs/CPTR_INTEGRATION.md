@@ -16,7 +16,7 @@ exist in the application. If written permission or a commercial license is
 ever obtained, a fully branded replacement can be swapped in by pointing the
 same connection at a different gateway.
 
-## Setup
+## Setup — it comes connected
 
 CPTR runs on the host (or as a separately managed container), not inside this
 stack. From the app container the host is reachable as
@@ -32,14 +32,42 @@ project's compose file maps it on Linux via `host-gateway`.
    CPTR_GATEWAY_KEY=<gateway key>
    ```
 
-3. In **Admin Settings → Connections**, add an OpenAI-compatible connection
-   with that URL and key.
-4. Set the model's display alias to **Kolb Computer** (model picker →
-   edit model → name), keeping the underlying provider/model id accurate.
-5. Enable `ENABLE_FORWARD_USER_INFO_HEADERS=true` if CPTR's integration
-   documentation calls for the conversation metadata headers
-   (`X-OpenWebUI-Chat-Id` and related user headers) — this gives CPTR
-   conversation continuity across messages.
+3. Restart the stack: `docker compose up -d`.
+
+That's it — no Admin Settings step. `backend/kolb-entrypoint.sh` (which the
+image runs instead of calling upstream's `start.sh` directly) checks for
+`CPTR_GATEWAY_URL` at container start and, if set, wires it in as an
+additional OpenAI-compatible connection automatically
+(`backend/kolb_wire_cptr.py`), tagged and ID-prefixed `kolb-computer` so its
+model reads as **Kolb Computer** in the picker. Leaving `CPTR_GATEWAY_URL`
+empty skips this entirely — normal chat is unaffected either way.
+
+If CPTR's own integration docs call for the conversation metadata headers
+(`X-OpenWebUI-Chat-Id` and related), set `ENABLE_FORWARD_USER_INFO_HEADERS=true`
+in `.env` too — that gives CPTR conversation continuity across messages.
+
+### Admin gets it by default; nobody else does
+
+This app's own access-control default handles the "admin-only" requirement
+for free: a model surfaced from a connection that has no explicit `Model`
+database record is visible **only to admins** — regular users won't see Kolb
+Computer in their model picker at all, and would get a 403 if they somehow
+targeted its model ID directly (`backend/open_webui/utils/models.py`,
+`get_filtered_models`). No extra configuration accomplishes this; it's the
+default the moment the connection exists.
+
+To grant specific users or groups access later, go to **Workspace → Models**,
+find the Kolb Computer model, and set its access control there — that
+creates the DB record that switches it from "admin-only by default" to
+whatever access you explicitly configure.
+
+### Manual setup (alternative)
+
+If you'd rather configure it by hand instead of via `.env` — for example, to
+set access control at creation time instead of afterward — skip the env vars
+above and add it directly in **Admin Settings → Connections** as an
+OpenAI-compatible connection, then rename the model to "Kolb Computer" in
+**Workspace → Models**.
 
 ## Diagnostics
 
