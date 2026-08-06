@@ -23,7 +23,20 @@
 			href="/static/apple-touch-icon.png"
 			crossorigin="use-credentials"
 		/>
+		<link
+			rel="apple-touch-startup-image"
+			href="/static/splash.png"
+			media="(prefers-color-scheme: light)"
+		/>
+		<link
+			rel="apple-touch-startup-image"
+			href="/static/splash-dark.png"
+			media="(prefers-color-scheme: dark)"
+		/>
 		<link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="format-detection" content="telephone=no" />
 		<meta
 			name="viewport"
 			content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
@@ -41,6 +54,22 @@
 		</script>
 
 		<script>
+			// Tag iOS / home-screen mode before paint so safe-area styles apply immediately.
+			(() => {
+				const ua = navigator.userAgent;
+				const ios =
+					/iPad|iPhone|iPod/.test(ua) ||
+					(navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+				const standalone =
+					window.matchMedia('(display-mode: standalone)').matches ||
+					window.navigator.standalone === true;
+				document.documentElement.classList.toggle('ios', ios);
+				document.documentElement.classList.toggle('standalone', standalone);
+				document.documentElement.classList.toggle('ios-standalone', ios && standalone);
+			})();
+		</script>
+
+		<script>
 			// On page load or when changing themes, best to add inline in `head` to avoid FOUC
 			(() => {
 				const metaThemeColorTag = document.querySelector('meta[name="theme-color"]');
@@ -49,6 +78,20 @@
 				if (!localStorage?.theme) {
 					localStorage.theme = 'system';
 				}
+
+				const isDarkTheme =
+					localStorage.theme === 'dark' ||
+					localStorage.theme === 'oled-dark' ||
+					localStorage.theme === 'her' ||
+					(localStorage.theme === 'system' && prefersDarkTheme);
+
+				let statusBarMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+				if (!statusBarMeta) {
+					statusBarMeta = document.createElement('meta');
+					statusBarMeta.setAttribute('name', 'apple-mobile-web-app-status-bar-style');
+					document.head.appendChild(statusBarMeta);
+				}
+				statusBarMeta.setAttribute('content', isDarkTheme ? 'black-translucent' : 'default');
 
 				if (localStorage.theme === 'system') {
 					document.documentElement.classList.add(prefersDarkTheme ? 'dark' : 'light');

@@ -3742,7 +3742,7 @@
 							{:else}
 								<div
 									id={embedded ? messageInputDropzoneId : undefined}
-									class=" pb-2 {dragged ? 'z-0' : 'z-10'}"
+									class="pb-2 pb-safe {dragged ? 'z-0' : 'z-10'}"
 								>
 									<MessageInput
 										bind:this={messageInput}

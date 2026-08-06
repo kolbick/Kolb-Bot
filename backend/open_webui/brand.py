@@ -37,3 +37,31 @@ COMPUTER_DISPLAY_NAME = os.environ.get('COMPUTER_DISPLAY_NAME', 'Kolb Computer')
 THEME_LIGHT_BACKGROUND = '#ffffff'
 THEME_DARK_BACKGROUND = '#171717'
 THEME_ACCENT = '#8f11b1'
+
+USER_PWA_BRANDING = {
+    'ateed120@gmail.com': {
+        'name': 'ABBY-BOT',
+        'short_name': 'ABBY-BOT',
+        'icons': [
+            {
+                'src': '/static/user-icons/abby-bot/web-app-manifest-192x192.png',
+                'sizes': '192x192',
+                'type': 'image/png',
+                'purpose': 'maskable',
+            },
+            {
+                'src': '/static/user-icons/abby-bot/web-app-manifest-512x512.png',
+                'sizes': '512x512',
+                'type': 'image/png',
+                'purpose': 'maskable',
+            },
+        ],
+        'apple_touch_icon': '/static/user-icons/abby-bot/apple-touch-icon.png',
+    },
+}
+
+
+def get_user_pwa_branding(email: str | None) -> dict | None:
+    if not email:
+        return None
+    return USER_PWA_BRANDING.get(email.lower())

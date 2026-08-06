@@ -493,6 +493,18 @@ def get_admin_user(user=Depends(get_current_user)):
     return user
 
 
+async def get_optional_user(
+    request: Request,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    auth_token: HTTPAuthorizationCredentials = Depends(bearer_security),
+):
+    try:
+        return await get_current_user(request, response, background_tasks, auth_token)
+    except HTTPException:
+        return None
+
+
 async def create_admin_user(email: str, password: str, name: str = 'Admin'):
     """
     Create an admin user from environment variables.
