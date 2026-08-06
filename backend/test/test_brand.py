@@ -56,8 +56,8 @@ class TestBrandModule(unittest.TestCase):
         for name in ('THEME_LIGHT_BACKGROUND', 'THEME_DARK_BACKGROUND', 'THEME_ACCENT'):
             self.assertRegex(getattr(brand, name), r'^#[0-9a-fA-F]{6}$', name)
 
-    def test_user_pwa_branding_for_ateed120(self):
-        branding = brand.get_user_pwa_branding('ateed120@gmail.com')
+    def test_user_pwa_branding_for_kolbyunderwood(self):
+        branding = brand.get_user_pwa_branding('kolbyunderwood@gmail.com')
         self.assertIsNotNone(branding)
         self.assertEqual(branding['short_name'], 'ABBY-BOT')
         icon = BACKEND_DIR / 'open_webui/static/user-icons/abby-bot/apple-touch-icon.png'

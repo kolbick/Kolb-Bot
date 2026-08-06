@@ -39,7 +39,7 @@ THEME_DARK_BACKGROUND = '#171717'
 THEME_ACCENT = '#8f11b1'
 
 USER_PWA_BRANDING = {
-    'ateed120@gmail.com': {
+    'kolbyunderwood@gmail.com': {
         'name': 'ABBY-BOT',
         'short_name': 'ABBY-BOT',
         'icons': [
