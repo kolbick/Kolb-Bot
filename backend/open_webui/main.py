@@ -70,7 +70,7 @@ from open_webui.config import (
     import_legacy_config_json,
     seed_registered_defaults,
 )
-from open_webui.brand import DEFAULT_DESCRIPTION, PRODUCT_NAME, THEME_DARK_BACKGROUND
+from open_webui.brand import DEFAULT_DESCRIPTION, PRODUCT_NAME, THEME_DARK_BACKGROUND, get_user_pwa_branding
 from open_webui.constants import ERROR_MESSAGES, TASKS
 from open_webui.env import (
     AIOHTTP_CLIENT_SESSION_SSL,
@@ -213,6 +213,7 @@ from open_webui.utils.auth import (
     get_admin_user,
     get_http_authorization_cred,
     get_license_data,
+    get_optional_user,
     get_verified_user,
 )
 from open_webui.utils.chat import (
@@ -2526,7 +2527,7 @@ async def oauth_backchannel_logout(
 
 
 @app.get('/manifest.json')
-async def get_manifest_json():
+async def get_manifest_json(user=Depends(get_optional_user)):
     external_pwa_manifest_url = getattr(app.state, 'EXTERNAL_PWA_MANIFEST_URL', None)
     if external_pwa_manifest_url:
         session = await get_session()
@@ -2536,34 +2537,43 @@ async def get_manifest_json():
         ) as r:
             r.raise_for_status()
             return await r.json()
-    else:
-        return {
-            'name': app.state.WEBUI_NAME,
-            'short_name': app.state.WEBUI_NAME,
-            'description': DEFAULT_DESCRIPTION,
-            'start_url': '/',
-            'display': 'standalone',
-            'background_color': THEME_DARK_BACKGROUND,
-            'icons': [
-                {
-                    'src': '/static/logo.png',
-                    'type': 'image/png',
-                    'sizes': '500x500',
-                    'purpose': 'any',
-                },
-                {
-                    'src': '/static/logo.png',
-                    'type': 'image/png',
-                    'sizes': '500x500',
-                    'purpose': 'maskable',
-                },
-            ],
-            'share_target': {
-                'action': '/',
-                'method': 'GET',
-                'params': {'text': 'shared'},
+
+    user_branding = get_user_pwa_branding(user.email if user else None)
+    app_name = user_branding['name'] if user_branding else app.state.WEBUI_NAME
+    short_name = user_branding['short_name'] if user_branding else app.state.WEBUI_NAME
+    icons = (
+        user_branding['icons']
+        if user_branding
+        else [
+            {
+                'src': '/static/logo.png',
+                'type': 'image/png',
+                'sizes': '500x500',
+                'purpose': 'any',
             },
-        }
+            {
+                'src': '/static/logo.png',
+                'type': 'image/png',
+                'sizes': '500x500',
+                'purpose': 'maskable',
+            },
+        ]
+    )
+
+    return {
+        'name': app_name,
+        'short_name': short_name,
+        'description': DEFAULT_DESCRIPTION,
+        'start_url': '/',
+        'display': 'standalone',
+        'background_color': THEME_DARK_BACKGROUND,
+        'icons': icons,
+        'share_target': {
+            'action': '/',
+            'method': 'GET',
+            'params': {'text': 'shared'},
+        },
+    }
 
 
 @app.get('/opensearch.xml')

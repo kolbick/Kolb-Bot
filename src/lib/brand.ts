@@ -50,3 +50,30 @@ export const BRAND = {
 } as const;
 
 export type Brand = typeof BRAND;
+
+export type UserPwaBranding = {
+	appName: string;
+	shortName: string;
+	appleTouchIcon: string;
+	icon192: string;
+	icon512: string;
+};
+
+/** Per-user home-screen branding when saved as a PWA. Keys are lower-case emails. */
+export const USER_PWA_BRANDING: Record<string, UserPwaBranding> = {
+	'ateed120@gmail.com': {
+		appName: 'ABBY-BOT',
+		shortName: 'ABBY-BOT',
+		appleTouchIcon: '/static/user-icons/abby-bot/apple-touch-icon.png',
+		icon192: '/static/user-icons/abby-bot/web-app-manifest-192x192.png',
+		icon512: '/static/user-icons/abby-bot/web-app-manifest-512x512.png'
+	}
+};
+
+export function getUserPwaBranding(email?: string | null): UserPwaBranding | null {
+	if (!email) {
+		return null;
+	}
+
+	return USER_PWA_BRANDING[email.toLowerCase()] ?? null;
+}

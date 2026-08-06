@@ -1,3 +1,5 @@
+import { BRAND, getUserPwaBranding } from '$lib/brand';
+
 export function isIOS(): boolean {
 	if (typeof navigator === 'undefined') {
 		return false;
@@ -50,4 +52,36 @@ export function updateIosStatusBarStyle(isDark: boolean): void {
 	}
 
 	statusBarMeta.setAttribute('content', isDark ? 'black-translucent' : 'default');
+}
+
+function setLinkHref(rel: string, href: string, sizes?: string): void {
+	let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+	if (!link) {
+		link = document.createElement('link');
+		link.rel = rel;
+		if (sizes) {
+			link.sizes = sizes;
+		}
+		document.head.appendChild(link);
+	}
+	link.href = href;
+}
+
+/** Swap home-screen icons and titles for users with custom PWA branding. */
+export function applyUserPwaBranding(email?: string | null, fallbackAppName = BRAND.productShortName): void {
+	const branding = getUserPwaBranding(email);
+	const root = document.documentElement;
+
+	root.classList.toggle('user-pwa-branded', Boolean(branding));
+
+	setLinkHref(
+		'apple-touch-icon',
+		branding?.appleTouchIcon ?? BRAND.pwaIcons.appleTouchIcon,
+		'180x180'
+	);
+
+	const titleMeta = document.querySelector<HTMLMetaElement>('meta[name="apple-mobile-web-app-title"]');
+	if (titleMeta) {
+		titleMeta.content = branding?.shortName ?? fallbackAppName;
+	}
 }

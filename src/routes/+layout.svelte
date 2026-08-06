@@ -9,6 +9,7 @@
 	});
 
 	import { onMount, tick, setContext, onDestroy } from 'svelte';
+	import { get } from 'svelte/store';
 	import {
 		config,
 		user,
@@ -70,7 +71,7 @@
 		removeAllDetails
 	} from '$lib/utils';
 	import { setTextScale } from '$lib/utils/text-scale';
-	import { initStandalonePwaClasses } from '$lib/utils/pwa';
+	import { initStandalonePwaClasses, applyUserPwaBranding } from '$lib/utils/pwa';
 
 	import NotificationToast from '$lib/components/NotificationToast.svelte';
 	import AppSidebar from '$lib/components/app/AppSidebar.svelte';
@@ -1119,6 +1120,8 @@
 		window.addEventListener('resize', onResize);
 
 		user.subscribe(async (value) => {
+			applyUserPwaBranding(value?.email, get(WEBUI_NAME));
+
 			if (value) {
 				$socket?.off('events', chatEventHandler);
 				$socket?.off('events:channel', channelEventHandler);

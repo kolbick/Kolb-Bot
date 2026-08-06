@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { BRAND } from './brand';
+import { BRAND, getUserPwaBranding } from './brand';
 import { APP_NAME } from './constants';
 
 const FORBIDDEN = [/open[\s_-]?web[\s_-]?ui/i, /tide[\s_-]?bot/i, /changing[\s_-]?tides/i];
@@ -55,6 +55,20 @@ describe('brand configuration', () => {
 		for (const [name, value] of Object.entries(BRAND.theme)) {
 			expect(value, `theme token ${name}`).toMatch(/^#[0-9a-fA-F]{6}$/);
 		}
+	});
+
+	it('defines Abby-Bot home-screen branding for ateed120@gmail.com', () => {
+		const branding = getUserPwaBranding('ateed120@gmail.com');
+		const root = path.resolve(__dirname, '../..');
+		expect(branding?.shortName).toBe('ABBY-BOT');
+		expect(branding?.appleTouchIcon).toBe('/static/user-icons/abby-bot/apple-touch-icon.png');
+		expect(fs.existsSync(path.join(root, 'static/static/user-icons/abby-bot/apple-touch-icon.png'))).toBe(
+			true
+		);
+	});
+
+	it('keeps the default Kolb-Bot branding for other users', () => {
+		expect(getUserPwaBranding('other@example.com')).toBeNull();
 	});
 });
 
