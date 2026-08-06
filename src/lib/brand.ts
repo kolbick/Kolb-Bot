@@ -61,7 +61,7 @@ export type UserPwaBranding = {
 
 /** Per-user home-screen branding when saved as a PWA. Keys are lower-case emails. */
 export const USER_PWA_BRANDING: Record<string, UserPwaBranding> = {
-	'kolbyunderwood@gmail.com': {
+	'ateed120@gmail.com': {
 		appName: 'ABBY-BOT',
 		shortName: 'ABBY-BOT',
 		appleTouchIcon: '/static/user-icons/abby-bot/apple-touch-icon.png',

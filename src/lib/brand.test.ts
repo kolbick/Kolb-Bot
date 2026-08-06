@@ -57,8 +57,8 @@ describe('brand configuration', () => {
 		}
 	});
 
-	it('defines Abby-Bot home-screen branding for kolbyunderwood@gmail.com', () => {
-		const branding = getUserPwaBranding('kolbyunderwood@gmail.com');
+	it('defines Abby-Bot home-screen branding for ateed120@gmail.com', () => {
+		const branding = getUserPwaBranding('ateed120@gmail.com');
 		const root = path.resolve(__dirname, '../..');
 		expect(branding?.shortName).toBe('ABBY-BOT');
 		expect(branding?.appleTouchIcon).toBe('/static/user-icons/abby-bot/apple-touch-icon.png');
@@ -69,6 +69,7 @@ describe('brand configuration', () => {
 
 	it('keeps the default Kolb-Bot branding for other users', () => {
 		expect(getUserPwaBranding('other@example.com')).toBeNull();
+		expect(getUserPwaBranding('kolbyunderwood@gmail.com')).toBeNull();
 	});
 });
 
