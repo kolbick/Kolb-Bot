@@ -13,6 +13,7 @@
 	import UserSettingRow from './UserSettingRow.svelte';
 	import UserSettingSection from './UserSettingSection.svelte';
 	import SettingsSelect from '$lib/components/common/SettingsSelect.svelte';
+	import { updateIosStatusBarStyle } from '$lib/utils/pwa';
 	export let saveSettings: Function;
 	export let getModels: Function;
 
@@ -152,6 +153,14 @@
 		});
 
 		const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+		const isDarkTheme =
+			_theme.includes('dark') ||
+			_theme === 'her' ||
+			(_theme.includes('system') &&
+				window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+		updateIosStatusBarStyle(isDarkTheme);
+
 		if (metaThemeColor) {
 			if (_theme.includes('system')) {
 				const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches

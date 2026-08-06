@@ -378,7 +378,7 @@
 					</div>
 				</div>
 
-				<div class=" pb-[1rem] px-2.5">
+				<div class="pb-[1rem] pb-safe px-2.5">
 					<MessageInput
 						id="root"
 						bind:chatInputElement

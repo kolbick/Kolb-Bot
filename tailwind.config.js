@@ -19,7 +19,10 @@ export default {
 				}
 			},
 			padding: {
-				'safe-bottom': 'env(safe-area-inset-bottom)'
+				'safe-top': 'max(0px, env(safe-area-inset-top))',
+				'safe-bottom': 'max(0px, env(safe-area-inset-bottom))',
+				'safe-left': 'max(0px, env(safe-area-inset-left))',
+				'safe-right': 'max(0px, env(safe-area-inset-right))'
 			},
 			transitionProperty: {
 				width: 'width'

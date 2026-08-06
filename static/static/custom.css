@@ -1,0 +1,82 @@
+/* Kolb-Bot iOS / standalone PWA polish */
+
+:root {
+	--safe-area-top: env(safe-area-inset-top, 0px);
+	--safe-area-right: env(safe-area-inset-right, 0px);
+	--safe-area-bottom: env(safe-area-inset-bottom, 0px);
+	--safe-area-left: env(safe-area-inset-left, 0px);
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
+html.ios {
+	-webkit-tap-highlight-color: transparent;
+}
+
+html.ios-standalone,
+html.ios-standalone body {
+	overscroll-behavior: none;
+	overscroll-behavior-y: none;
+}
+
+html.ios-standalone body {
+	min-height: 100dvh;
+	min-height: -webkit-fill-available;
+	touch-action: manipulation;
+}
+
+/* Prevent iOS zoom when focusing inputs */
+@media screen and (max-width: 767px) {
+	html.ios input[type='text'],
+	html.ios input[type='email'],
+	html.ios input[type='password'],
+	html.ios input[type='search'],
+	html.ios input[type='tel'],
+	html.ios input[type='url'],
+	html.ios input[type='number'],
+	html.ios textarea,
+	html.ios select,
+	html.ios [contenteditable='true'] {
+		font-size: 16px !important;
+	}
+}
+
+.pt-safe {
+	padding-top: max(0px, env(safe-area-inset-top));
+}
+
+.pb-safe {
+	padding-bottom: max(0px, env(safe-area-inset-bottom));
+}
+
+.pl-safe {
+	padding-left: max(0px, env(safe-area-inset-left));
+}
+
+.pr-safe {
+	padding-right: max(0px, env(safe-area-inset-right));
+}
+
+.px-safe {
+	padding-left: max(0px, env(safe-area-inset-left));
+	padding-right: max(0px, env(safe-area-inset-right));
+}
+
+html.ios-standalone #splash-screen {
+	padding-top: env(safe-area-inset-top);
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+html.ios-standalone [data-sonner-toaster] {
+	top: max(12px, env(safe-area-inset-top)) !important;
+}
+
+html.ios .overflow-auto,
+html.ios .overflow-y-auto,
+html.ios .overflow-x-auto,
+html.ios .scrollbar-hidden {
+	-webkit-overflow-scrolling: touch;
+}
